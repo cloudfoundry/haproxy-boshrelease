@@ -1,13 +1,38 @@
 ---
 name: haproxy
-packages: []
+
+description: "The HAProxy server can be used to terminate SSL in front of the Routers. Each HAProxy instance should point to multiple Routers."
+
+packages:
+- haproxy
+
 templates:
-  bin/monit_debugger: bin/monit_debugger
-  bin/haproxy_ctl: bin/haproxy_ctl
-  config/haproxy.conf.erb: config/haproxy.conf
-  data/properties.sh.erb: data/properties.sh
-  helpers/ctl_setup.sh: helpers/ctl_setup.sh
-  helpers/ctl_utils.sh: helpers/ctl_utils.sh
+  haproxy.config.erb:        config/haproxy.config
+  haproxy_ctl:               bin/haproxy_ctl
+  cert.pem.erb:              config/cert.pem
+
 properties:
-  haproxy.leader_address:
-    description: Hostname/IP to the leader/master of the cluster
+  ha_proxy.ssl_pem:
+    description: "SSL certificate (PEM file)"
+    default: ~
+  ha_proxy.disable_http:
+    description: "Disable port 80 traffic"
+    default: false
+  ha_proxy.ssl_ciphers:
+    default: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:ECDHE-RSA-RC4-SHA:ECDHE-ECDSA-RC4-SHA:AES128:AES256:RC4-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!3DES:!MD5:!PSK
+    description: "List of SSL Ciphers that are passed to HAProxy"
+  request_timeout_in_seconds:
+    description: "Server and client timeouts in seconds"
+    default: 900
+  router.servers.z1:
+    description: "Array of the router IPs acting as the first group of HTTP/TCP backends"
+    default: []
+  router.servers.z2:
+    description: "Array of the router IPs acting as the second group of HTTP/TCP backends"
+    default: []
+  router.port:
+    description: "Listening port for Router"
+    default: 80
+
+  networks.apps:
+    description: "HAProxy network information."

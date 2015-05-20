@@ -12,13 +12,8 @@ update:
   update_watch_time: 1000-30000
 
 jobs:
-  - name: haproxy_leader_z1
-    instances: 1
-    networks:
-      - name: haproxy1
-        static_ips: (( static_ips(0) ))
   - name: haproxy_z1
-    instances: 2
+    instances: 1
     networks:
       - name: haproxy1
         static_ips: ~

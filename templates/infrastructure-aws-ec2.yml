@@ -9,19 +9,11 @@ meta:
     version: latest
 
 jobs:
-  - name: haproxy_leader_z1
+  - name: haproxy_z1
     instances: 1
     networks:
       - name: haproxy1
     persistent_disk: (( meta.persistent_disk ))
-  - name: haproxy_z1
-    instances: 2
-    networks:
-      - name: haproxy1
-    persistent_disk: (( meta.persistent_disk ))
-    properties:
-      haproxy:
-        leader_address: (( "0.haproxy-leader-z1.haproxy1." meta.environment "." meta.dns_root ))
 
 compilation:
   cloud_properties:

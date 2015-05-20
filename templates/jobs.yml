@@ -9,28 +9,28 @@ update:
   serial: false
 
 jobs:
-  - name: haproxy_leader_z1
-    templates:
-    - name: haproxy
-      release: haproxy
-    instances: 0
-    resource_pool: small_z1
-    networks: (( merge ))
-    persistent_disk: 0
-    properties: {}
   - name: haproxy_z1
     templates:
     - name: haproxy
       release: haproxy
-    instances: 0
+    instances: 1
     resource_pool: small_z1
     networks: (( merge ))
     persistent_disk: 0
     update:
       canaries: 10
     properties:
-      haproxy:
-        leader_address: (( merge ))
+      networks: (( meta.networks.z1 ))
+      ha_proxy:
+        ssl_pem: ~
+        disable_http: false
+        ssl_ciphers: ~
+      router:
+        servers:
+          z1: (( jobs.router_z1.networks.cf1.static_ips ))
+          z2: (( jobs.router_z2.networks.cf2.static_ips ))
+      metron_agent:
+        zone: z1
 
 networks: (( merge ))
 
