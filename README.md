@@ -1,76 +1,40 @@
-# BOSH Release for haproxy
+# BOSH Release for cf-haproxy
+
+This BOSH release is an attempt to get a more customizable/secure haproxy
+release than what is provided in [cf-release](https://github.com/cloudfoundry/cf-release).
+It allows users to blacklist internal-only domains, preventing potential Host header spoofing
+from allowing unauthorized access of internal APIs. It also allows for better control over haproxy's
+timeouts, for greater resiliency under heavy load.
 
 ## Usage
 
 To use this bosh release, first upload it to your bosh:
 
 ```
-bosh target BOSH_HOST
-git clone https://github.com/cloudfoundry-community/haproxy-boshrelease.git
-cd haproxy-boshrelease
-bosh upload release releases/haproxy-1.yml
+bosh upload release https://bosh.io/d/github.com/cloudfoundry-community/sslproxy-boshrelease
 ```
 
-For [bosh-lite](https://github.com/cloudfoundry/bosh-lite), you can quickly create a deployment manifest & deploy a cluster:
+To deploy it, you will need the repository that contains templates:
 
 ```
-templates/make_manifest warden
-bosh -n deploy
+git clone https://github.com/cloudfoundry-community/sslproxy-boshrelease.git
+cd sslproxy-boshrelease
+git checkout latest
 ```
 
-For AWS EC2, create a single VM:
+Now update the examples/<iaas>*.yml with your settings.
+
+Finally, target and deploy:
 
 ```
-templates/make_manifest aws-ec2
-bosh -n deploy
-```
-
-### Override security groups
-
-For AWS & Openstack, the default deployment assumes there is a `default` security group. If you wish to use a different security group(s) then you can pass in additional configuration when running `make_manifest` above.
-
-Create a file `my-networking.yml`:
-
-``` yaml
----
-networks:
-  - name: haproxy1
-    type: dynamic
-    cloud_properties:
-      security_groups:
-        - haproxy
-```
-
-Where `- haproxy` means you wish to use an existing security group called `haproxy`.
-
-You now suffix this file path to the `make_manifest` command:
-
-```
-templates/make_manifest openstack-nova my-networking.yml
-bosh -n deploy
+bosh deployment examples/<iaas>.yml
+bosh verify deployment
+bosh deploy
 ```
 
 ### Development
 
-As a developer of this release, create new releases and upload them:
-
-```
-bosh create release --force && bosh -n upload release
-```
-
-### Final releases
-
-To share final releases:
-
-```
-bosh create release --final
-```
-
-By default the version number will be bumped to the next major number. You can specify alternate versions:
-
-
-```
-bosh create release --final --version 2.1
-```
+Feel free to contribute back to this via a pull request on a feature branch! Once merged, we'll
+cut a new final release for you.
 
 After the first release you need to contact [Dmitriy Kalinin](mailto://dkalinin@pivotal.io) to request your project is added to https://bosh.io/releases (as mentioned in README above).
