@@ -3,6 +3,7 @@
 
 set -e
 
+source /var/vcap/jobs/haproxy/helpers/ctl_setup.sh 'haproxy'
 PATH=/var/vcap/packages/haproxy/bin:$PATH
 
 NAME=haproxy

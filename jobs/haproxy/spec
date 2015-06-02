@@ -9,9 +9,15 @@ packages:
 templates:
   haproxy.config.erb:        config/haproxy.config
   haproxy_ctl:               bin/haproxy_ctl
+  monit_debugger:            bin/monit_debugger
   cert.pem.erb:              config/cert.pem
+  helpers/ctl_setup.sh       helpers/ctl_setup.sh
+  helpers/ctl_utils.sh       helpers/ctl_utils.sh
 
 properties:
+  ha_proxy.internal_only_domains:
+    description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
+    default: []
   ha_proxy.ssl_pem:
     description: "SSL certificate (PEM file)"
     default: ~
@@ -21,15 +27,29 @@ properties:
   ha_proxy.ssl_ciphers:
     default: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:ECDHE-RSA-RC4-SHA:ECDHE-ECDSA-RC4-SHA:AES128:AES256:RC4-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!3DES:!MD5:!PSK
     description: "List of SSL Ciphers that are passed to HAProxy"
-  ha_proxy.allow_tcp_proxying:
-    default: true
-    description: "Should we explicitly disable TCP mode proxying?"
-  ha_proxy.internal_only_domains:
-    description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
-    default: []
-  request_timeout_in_seconds:
-    description: "Server and client timeouts in seconds"
-    default: 900
+
+  connect_timeout:
+    description: "Timeout waiting for connections to establish to a server (in seconds)"
+    default:     5
+  client_timeout:
+    description: "Timeout waiting for data from a client (in seconds)"
+    default:     30
+  server_timeout:
+    description: "Timeout waiting for data from a server (in seconds)"
+    default:     30
+  websocket_timeout:
+    description: "Timeout for websocket/tunnel traffic (in seconds)"
+    default:     3600
+  keepalive_timeout:
+    description: "Timeout waiting for new HTTP requests under http keep-alive mode (in seconds)"
+    default:     1
+  request_timeout:
+    description: "Maximum HTTP request length (in seconds)"
+    default:     30
+  queue_timeout:
+    description: "Timeout for requests queued waiting for free connection slots (in seconds)"
+    default:     30
+
   router.servers.z1:
     description: "Array of the router IPs acting as the first group of HTTP/TCP backends"
     default: []
