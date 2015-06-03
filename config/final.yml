@@ -4,4 +4,4 @@ blobstore:
   options:
     bucket_name: haproxy-boshrelease
 
-final_name: haproxy
+final_name: cf-haproxy
