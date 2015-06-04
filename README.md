@@ -11,23 +11,23 @@ timeouts, for greater resiliency under heavy load.
 To use this bosh release, first upload it to your bosh:
 
 ```
-bosh upload release https://bosh.io/d/github.com/cloudfoundry-community/sslproxy-boshrelease
+bosh upload release https://bosh.io/d/github.com/cloudfoundry-community/cf-haproxy-boshrelease
 ```
 
 To deploy it, you will need the repository that contains templates:
 
 ```
-git clone https://github.com/cloudfoundry-community/sslproxy-boshrelease.git
-cd sslproxy-boshrelease
+git clone https://github.com/cloudfoundry-community/cf-haproxy-boshrelease.git
+cd cf-haproxy-boshrelease
 git checkout latest
 ```
 
-Now update the examples/<iaas>*.yml with your settings.
-
-Finally, target and deploy:
+You can either use the templates + examples provided to merge this in with an existing CloudFoundry
+deployment, or create a new deployment, via `make_manifest <aws-ec2|warden> <comma-separated-list-of-router-servers> <additional_templates>`
 
 ```
-bosh deployment examples/<iaas>.yml
+# Example for bare bones bosh-lite cloudfoundry release on warden
+templates/make_manifest warden 10.244.0.22
 bosh verify deployment
 bosh deploy
 ```
