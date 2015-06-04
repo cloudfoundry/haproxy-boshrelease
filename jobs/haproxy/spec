@@ -54,15 +54,9 @@ properties:
     description: "Timeout for requests queued waiting for free connection slots (in seconds)"
     default:     30
 
-  router.servers.z1:
-    description: "Array of the router IPs acting as the first group of HTTP/TCP backends"
-    default: []
-  router.servers.z2:
-    description: "Array of the router IPs acting as the second group of HTTP/TCP backends"
+  router.servers:
+    description: "Array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used"
     default: []
   router.port:
     description: "Listening port for Router"
     default: 80
-
-  networks.apps:
-    description: "HAProxy network information."
