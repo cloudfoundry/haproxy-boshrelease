@@ -1,25 +1,16 @@
 meta:
-  environment: haproxy-warden
+  environment: cf-haproxy-warden
 
   stemcell:
     name: bosh-warden-boshlite-ubuntu
     version: latest
 
-update:
-  canaries: 1
-  max_in_flight: 50
-  canary_watch_time: 1000-30000
-  update_watch_time: 1000-30000
-
-jobs:
-  - name: haproxy_z1
-    instances: 1
-    networks:
-      - name: haproxy1
-        static_ips: ~
-    properties:
-      haproxy:
-        leader_address: (( jobs.haproxy_leader_z1.networks.haproxy1.static_ips.[0] ))
+  instances:
+    ha_proxy:
+      public_z1:  (( merge || 1 ))
+      public_z2:  (( merge || 0 ))
+      private_z1: (( merge || 1 ))
+      private_z2: (( merge || 0 ))
 
 compilation:
   cloud_properties:
@@ -29,73 +20,178 @@ resource_pools:
   - name: small_z1
     cloud_properties:
       name: random
+  - name: small_z2
+    cloud_properties:
+      name: random
+
+jobs:
+  - name: public_haproxy_z1
+    instances: (( meta.instances.ha_proxy.public_z1 ))
+    resource_pool: small_z1
+    networks:
+    - name: cf_haproxy1
+      static_ips: (( static_ips(0) ))
+  - name: private_haproxy_z1
+    instances: (( meta.instances.ha_proxy.private_z1 ))
+    resource_pool: small_z1
+    networks:
+    - name: cf_haproxy1
+      static_ips: (( static_ips(3) ))
+  - name: public_haproxy_z2
+    instances: (( meta.instances.ha_proxy.public_z2 ))
+    resource_pool: small_z2
+    networks:
+    - name: cf_haproxy2
+      static_ips: (( static_ips(0) ))
+  - name: private_haproxy_z2
+    instances: (( meta.instances.ha_proxy.private_z2 ))
+    resource_pool: small_z2
+    networks:
+    - name: cf_haproxy2
+      static_ips: (( static_ips(3) ))
 
 networks:
-- name: haproxy1
+- name: cf_haproxy1
+  # Assumes up to 10 VMs, including 5 static and 5 dynamic.
+  # Plus 5 (double the size) unused IPs, due to BOSH bug/quirk.
+  subnets:
+  - cloud_properties:
+      name: random
+    range: 10.244.50.0/30
+    reserved:
+    - 10.244.50.1
+    static:
+    - 10.244.50.2
+
+  - cloud_properties:
+      name: random
+    range: 10.244.50.4/30
+    reserved:
+    - 10.244.50.5
+    static:
+    - 10.244.50.6
+  - cloud_properties:
+      name: random
+    range: 10.244.50.8/30
+    reserved:
+    - 10.244.50.9
+    static:
+    - 10.244.50.10
+  - cloud_properties:
+      name: random
+    range: 10.244.50.12/30
+    reserved:
+    - 10.244.50.13
+    static:
+    - 10.244.50.14
+  - cloud_properties:
+      name: random
+    range: 10.244.50.16/30
+    reserved:
+    - 10.244.50.17
+    static:
+    - 10.244.50.18
+
+  # Bonus double-sized network required due to BOSH oddity
+  - cloud_properties:
+      name: random
+    range: 10.244.50.20/30
+    reserved:
+    - 10.244.50.21
+    static: []
+  - cloud_properties:
+      name: random
+    range: 10.244.50.24/30
+    reserved:
+    - 10.244.50.25
+    static: []
+  - cloud_properties:
+      name: random
+    range: 10.244.50.28/30
+    reserved:
+    - 10.244.50.29
+    static: []
+  - cloud_properties:
+      name: random
+    range: 10.244.50.32/30
+    reserved:
+    - 10.244.50.33
+    static: []
+  - cloud_properties:
+      name: random
+    range: 10.244.50.36/30
+    reserved:
+    - 10.244.50.37
+    static: []
+- name: cf_haproxy2
   # Assumes up to 5 VMs, including 1 static and 4 dynamic.
   # Plus 5 (double the size) unused IPs, due to BOSH bug/quirk.
   subnets:
   - cloud_properties:
       name: random
-    range: 10.244.2.0/30
+    range: 10.244.51.0/30
     reserved:
-    - 10.244.2.1
+    - 10.244.51.1
     static:
-    - 10.244.2.2
+    - 10.244.51.2
 
   - cloud_properties:
       name: random
-    range: 10.244.2.4/30
+    range: 10.244.51.4/30
     reserved:
-    - 10.244.2.5
-    static: []
+    - 10.244.51.5
+    static:
+    - 10.244.51.6
   - cloud_properties:
       name: random
-    range: 10.244.2.8/30
+    range: 10.244.51.8/30
     reserved:
-    - 10.244.2.9
-    static: []
+    - 10.244.51.9
+    static:
+    - 10.244.51.10
   - cloud_properties:
       name: random
-    range: 10.244.2.12/30
+    range: 10.244.51.12/30
     reserved:
-    - 10.244.2.13
-    static: []
+    - 10.244.51.13
+    static:
+    - 10.244.51.14
   - cloud_properties:
       name: random
-    range: 10.244.2.16/30
+    range: 10.244.51.16/30
     reserved:
-    - 10.244.2.17
-    static: []
+    - 10.244.51.17
+    static:
+    - 10.244.51.18
 
   # Bonus double-sized network required due to BOSH oddity
   - cloud_properties:
       name: random
-    range: 10.244.2.20/30
+    range: 10.244.51.20/30
     reserved:
-    - 10.244.2.21
+    - 10.244.51.21
     static: []
   - cloud_properties:
       name: random
-    range: 10.244.2.24/30
+    range: 10.244.51.24/30
     reserved:
-    - 10.244.2.25
+    - 10.244.51.25
     static: []
   - cloud_properties:
       name: random
-    range: 10.244.2.28/30
+    range: 10.244.51.28/30
     reserved:
-    - 10.244.2.29
+    - 10.244.51.29
     static: []
   - cloud_properties:
       name: random
-    range: 10.244.2.32/30
+    range: 10.244.51.32/30
     reserved:
-    - 10.244.2.33
+    - 10.244.51.33
     static: []
   - cloud_properties:
       name: random
-    range: 10.244.2.36/30
+    range: 10.244.51.36/30
     reserved:
-    - 10.244.2.37
+    - 10.244.51.37
     static: []

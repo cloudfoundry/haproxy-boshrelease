@@ -3,12 +3,18 @@ meta:
   environment: NAME
   dns_root: microbosh
   security_groups:
-    - haproxy
+    - cf-haproxy
   stemcell:
     name: STEMCELL
+
+  properties:
+    ha_proxy:
+      <<: (( merge ))
+      backend_servers:
+      - PLACEHOLDER-SERVER-IP
 
 director_uuid: PLACEHOLDER-DIRECTOR-UUID
 
 releases:
-  - name: haproxy
+  - name: cf-haproxy
     version: latest

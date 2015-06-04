@@ -5,7 +5,7 @@ global
     group vcap
     maxconn 64000
     spread-checks 4
-    tune.ssl.default-dh-param <%= p("ha_proxy.default-dh-param") %>
+    tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
 
 defaults
     log global
@@ -39,7 +39,7 @@ frontend http-in
     reqadd X-Forwarded-Proto:\ http
 <% end %>
 
-<% if p("ha_proxy.ssl_pem") %>
+<% if_p("ha_proxy.ssl_pem") do |pem| %>
 frontend https-in
     mode http
     bind :443 ssl crt /var/vcap/jobs/haproxy/config/cert.pem no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
@@ -59,6 +59,6 @@ frontend https-in
 backend http-routers
     mode http
     balance roundrobin
-    <% p("router.servers").each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= p("router.port") %> check inter 1000
+    <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
+        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> check inter 1000
     <% end %>

@@ -2,18 +2,21 @@
 
 set -e
 
-template_prefix="haproxy"
+template_prefix="cf-haproxy"
 STEMCELL_OS=${STEMCELL_OS:-ubuntu}
 
 infrastructure=$1
+servers=$2
+shift
+shift
 
 if [ "$infrastructure" != "aws-ec2" ] && \
-    [ "$infrastructure" != "warden" ] ; then
-  echo "usage: ./make_manifest <aws-ec2|warden>"
+    [ "$infrastructure" != "warden" ] || \
+    [ -z "$servers" ]; then
+  echo $infrastructure
+  echo "usage: ./make_manifest <aws-ec2|warden> <backend_server1>,[<backend_server2>,...,<backend_serverN>]"
   exit 1
 fi
-
-shift
 
 BOSH_STATUS=$(bosh status)
 DIRECTOR_UUID=$(echo "$BOSH_STATUS" | grep UUID | awk '{print $2}')
@@ -58,6 +61,11 @@ echo $DIRECTOR_NAME $DIRECTOR_CPI $DIRECTOR_UUID $STEMCELL
 perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$DIRECTOR_UUID/g" $tmpdir/stub-with-uuid.yml
 perl -pi -e "s/NAME/$NAME/g" $tmpdir/stub-with-uuid.yml
 perl -pi -e "s/STEMCELL/$STEMCELL/g" $tmpdir/stub-with-uuid.yml
+#perl -pi -e "for my \$server (split(\",\", \"$servers\")) { s/(\s+)- PLACEHOLDER-SERVER-IP/\$1- \$server\n\$1- PLACEHOLDER-SERVER-IP/ }" $tmpdir/stub-with-uuid.yml
+for server in $(echo $servers | tr "," "\n"); do
+  perl -pi -e "s/(\s+)- PLACEHOLDER-SERVER-IP/\$1- $server\n\$1- PLACEHOLDER-SERVER-IP/" $tmpdir/stub-with-uuid.yml
+done
+perl -pi -e "s/\s+- PLACEHOLDER-SERVER-IP//" $tmpdir/stub-with-uuid.yml
 
 spiff merge \
   $templates/deployment.yml \

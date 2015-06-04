@@ -1,37 +1,51 @@
 meta:
   environment: ~
-
-update:
-  canaries: 1
-  max_in_flight: 50
-  canary_watch_time: 1000-30000
-  update_watch_time: 1000-30000
-  serial: false
+  properties:
+    ha_proxy: (( merge ))
 
 jobs:
-  - name: haproxy_z1
+  - name: public_haproxy_z1
     templates:
     - name: haproxy
-      release: haproxy
-    instances: 1
-    resource_pool: small_z1
+      release: cf-haproxy
     networks: (( merge ))
+    instances: (( merge ))
+    resource_pool: (( merge ))
     persistent_disk: 0
-    update:
-      canaries: 10
+  - name: private_haproxy_z1
+    templates:
+    - name: haproxy
+      release: cf-haproxy
+    networks: (( merge ))
+    instances: (( merge ))
+    resource_pool: (( merge ))
+    persistent_disk: 0
     properties:
-      networks: (( meta.networks.z1 ))
       ha_proxy:
-        ssl_pem: ~
-        disable_http: false
-        ssl_ciphers: ~
-      router:
-        servers:
-          z1: (( jobs.router_z1.networks.cf1.static_ips ))
-          z2: (( jobs.router_z2.networks.cf2.static_ips ))
-      metron_agent:
-        zone: z1
+        internal_only_domains: []
+
+  - name: public_haproxy_z2
+    templates:
+    - name: haproxy
+      release: cf-haproxy
+    networks: (( merge ))
+    instances: (( merge ))
+    resource_pool: (( merge ))
+    persistent_disk: 0
+  - name: private_haproxy_z2
+    templates:
+    - name: haproxy
+      release: cf-haproxy
+    networks: (( merge ))
+    instances: (( merge ))
+    resource_pool: (( merge ))
+    persistent_disk: 0
+    properties:
+      ha_proxy:
+        internal_only_domains: []
 
 networks: (( merge ))
 
-properties: {}
+properties:
+  <<: (( merge ))
+  ha_proxy: (( meta.properties.ha_proxy ))
