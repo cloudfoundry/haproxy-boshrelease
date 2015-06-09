@@ -32,8 +32,8 @@ frontend http-in
     acl public src 0.0.0.0/0
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
-    http-request deny if internal public
 <% end %>
+    http-request deny if internal public
 <% end %>
 
     reqadd X-Forwarded-Proto:\ http
@@ -49,8 +49,8 @@ frontend https-in
     acl public src 0.0.0.0/0
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
-    http-request deny if internal public
 <% end %>
+    http-request deny if internal public
 <% end %>
 
     reqadd X-Forwarded-Proto:\ https
