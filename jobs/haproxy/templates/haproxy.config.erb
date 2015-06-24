@@ -56,7 +56,7 @@ frontend https-in
     reqadd X-Forwarded-Proto:\ https
 <% end %>
 
-<% if_p("ha_proxy.enable_4443") do |wss| %>
+<% if p("ha_proxy.enable_4443") == true %>
 frontend wss-in
     mode http
     bind :4443 ssl crt /var/vcap/jobs/haproxy/config/cert.pem no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
