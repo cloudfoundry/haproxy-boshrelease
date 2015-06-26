@@ -36,7 +36,8 @@ frontend http-in
     http-request deny if internal public
 <% end %>
 
-    reqadd X-Forwarded-Proto:\ http
+    acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
+    reqadd X-Forwarded-Proto:\ http if ! xfp_exists
 <% end %>
 
 <% if_p("ha_proxy.ssl_pem") do |pem| %>
