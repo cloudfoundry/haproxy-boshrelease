@@ -30,11 +30,9 @@ update:
 resource_pools:
   - name: small_z1
     network: cf_haproxy1
-    size: (( auto ))
     stemcell: (( meta.stemcell ))
     cloud_properties: (( merge ))
   - name: small_z2
     network: cf_haproxy2
-    size: (( auto ))
     stemcell: (( meta.stemcell ))
     cloud_properties: (( merge ))
