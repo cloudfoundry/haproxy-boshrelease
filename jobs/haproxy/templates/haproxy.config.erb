@@ -1,5 +1,5 @@
 global
-    log 127.0.0.1   syslog info
+    log <%= p('ha_proxy.syslog_server') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
     user vcap
     group vcap

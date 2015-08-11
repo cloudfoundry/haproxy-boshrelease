@@ -16,6 +16,12 @@ templates:
   properties.sh.erb:    data/properties.sh
 
 properties:
+  ha_proxy.syslog_server:
+    description: "An IPv4 address optionally followed by a colon and a UDP port. It can also be an IPv6 address or filesystem path to a UNIX domain socket."
+    default: "127.0.0.1"
+  ha_proxy.log_level:
+    description: "Log level"
+    default: "info"
   ha_proxy.internal_only_domains:
     description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
     default: []
