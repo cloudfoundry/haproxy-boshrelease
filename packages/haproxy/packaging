@@ -9,8 +9,8 @@ make
 make install
 cd ..
 
-tar xzf haproxy/haproxy-1.5.10.tar.gz
-cd haproxy-1.5.10
+tar xzf haproxy/haproxy-1.5.14.tar.gz
+cd haproxy-1.5.14
 make TARGET=linux2628 USE_OPENSSL=1 USE_STATIC_PCRE=1
 mkdir ${BOSH_INSTALL_TARGET}/bin
 cp haproxy ${BOSH_INSTALL_TARGET}/bin/
