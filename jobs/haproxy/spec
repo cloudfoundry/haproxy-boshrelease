@@ -69,3 +69,14 @@ properties:
   ha_proxy.backend_port:
     description: "Listening port for Router"
     default: 80
+
+  app_ssh.servers:
+    description: "A list of hosts that run ssh proxy"
+    default: []
+  app_ssh.port:
+    description: "Enables a port for ssh access to an application container running on diego."
+    default: 2222
+
+  cc.allow_app_ssh_access:
+    default: false
+    description: "Allow users to change the value of the app-level allow_ssh attribute"
