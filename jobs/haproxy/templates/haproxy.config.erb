@@ -89,7 +89,7 @@ frontend ssh
 backend ssh
     mode tcp
     balance leastconn
-    <% properties.app_ssh.servers.each_with_index |node, i| do %>
+    <% properties.app_ssh.servers.each_with_index do |node, i| %>
       server node<%= i %> <%= node %>:<%= properties.app_ssh.port %>
     <% end %>
     timeout server 2h
