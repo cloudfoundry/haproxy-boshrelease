@@ -79,3 +79,18 @@ backend http-routers
     <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
         server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> check inter 1000
     <% end %>
+
+<% if p("cc.allow_app_ssh_access") %>
+frontend ssh
+    mode tcp
+    bind :<%= properties.app_ssh.port %>
+    default_backend ssh
+
+backend ssh
+    mode tcp
+    balance leastconn
+    <% properties.app_ssh.servers.each_with_index do |node, i| %>
+      server node<%= i %> <%= node %>:<%= properties.app_ssh.port %>
+    <% end %>
+    timeout server 2h
+<% end %>
