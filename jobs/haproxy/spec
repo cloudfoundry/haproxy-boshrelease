@@ -11,6 +11,7 @@ templates:
   haproxy_ctl:               bin/haproxy_ctl
   monit_debugger:            bin/monit_debugger
   cert.pem.erb:              config/cert.pem
+  ssl_redirect.map.erb:      config/ssl_redirect.map
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
   properties.sh.erb:    data/properties.sh
