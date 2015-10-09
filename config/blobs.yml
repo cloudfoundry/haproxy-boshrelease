@@ -1,8 +1,4 @@
 ---
-haproxy/haproxy-1.5.10.tar.gz:
-  object_id: 352f0f12-2931-492f-b53b-a0c93262e6ce
-  sha: 2af3b740e84f10cbd0c90a78c30a222a24fb2945
-  size: 1339873
 haproxy/pcre-8.36.tar.gz:
   object_id: bbbb840d-c7f5-4745-b4e3-c6b617069c02
   sha: fb537757756818133d8157ec878bc11f5a93ef4d
