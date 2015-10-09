@@ -40,6 +40,14 @@ frontend http-in
     reqadd X-Forwarded-Proto:\ http if ! xfp_exists
 <% end %>
 
+<% if p("ha_proxy.https_redirect_all") == true %>
+    redirect scheme https code 301 if !{ ssl_fc }
+<% end %>
+<% unless p("ha_proxy.https_redirect_all") == true %>
+    acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
+    redirect scheme https code 301 if ssl_redirect
+<% end %>
+
 <% if_p("ha_proxy.ssl_pem") do |pem| %>
 frontend https-in
     mode http
