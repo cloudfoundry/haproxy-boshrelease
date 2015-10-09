@@ -84,6 +84,10 @@ frontend wss-in
 backend http-routers
     mode http
     balance roundrobin
+    <% if p("ha_proxy.compress_types") != "" %>
+    compression algo gzip
+    compression type <%= p("ha_proxy.compress_types") %>
+    <% end %>
     <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
         server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> check inter 1000
     <% end %>

@@ -76,3 +76,6 @@ properties:
   ha_proxy.backend_port:
     description: "Listening port for Router"
     default: 80
+  ha_proxy.compress_types:
+    description: "If this property is set, gzip compression will be activated for the mime types named in this property. definition like 'text/html text/plain text/css'"
+    default: ""
