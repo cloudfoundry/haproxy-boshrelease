@@ -1,3 +1,5 @@
+<% require "digest"%>
+
 global
     log <%= p('ha_proxy.syslog_server') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
@@ -22,6 +24,8 @@ defaults
     timeout http-request    <%= p("ha_proxy.request_timeout").to_i    * 1000 %>ms
     timeout queue           <%= p("ha_proxy.queue_timeout").to_i      * 1000 %>ms
 
+<%# HTTP Frontend %>
+
 <% unless p("ha_proxy.disable_http") %>
 frontend http-in
     mode http
@@ -36,6 +40,11 @@ frontend http-in
     http-request deny if internal public
 <% end %>
 
+<% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
+<% prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] %>
+    acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
+    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+<% end %>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     reqadd X-Forwarded-Proto:\ http if ! xfp_exists
 <% end %>
@@ -47,6 +56,8 @@ frontend http-in
     acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
     redirect scheme https code 301 if ssl_redirect
 <% end %>
+
+<%# HTTPS Frontend %>
 
 <% if_p("ha_proxy.ssl_pem") do |pem| %>
 frontend https-in
@@ -62,8 +73,15 @@ frontend https-in
     http-request deny if internal public
 <% end %>
 
+<% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
+<% prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] %>
+  acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
+  use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+<% end %>
     reqadd X-Forwarded-Proto:\ https
 <% end %>
+
+<%# HTTPS Websockets Frontend %>
 
 <% if p("ha_proxy.enable_4443") == true %>
 frontend wss-in
@@ -79,7 +97,15 @@ frontend wss-in
     http-request deny if internal public
 <% end %>
 
+<% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
+<% prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] %>
+  acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
+  use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+<% end %>
     reqadd X-Forwarded-Proto:\ https
+
+<%# Default Backend %>
+
 <% end %>
 backend http-routers
     mode http
@@ -91,3 +117,19 @@ backend http-routers
     <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
         server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> check inter 1000
     <% end %>
+
+<%# Routed Backends %>
+
+<% p('ha_proxy.routed_backend_servers').each do |prefix, data| %>
+<% prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] %>
+backend http-routed-backend-<%= prefix_hash %>
+    mode http
+    balance roundrobin
+    <% if p("ha_proxy.compress_types") != "" %>
+    compression algo gzip
+    compression type <%= p("ha_proxy.compress_types") %>
+    <% end %>
+    <% data["servers"].each_with_index do |ip, index| %>
+        server node<%= index %> <%= ip %>:<%= data["port"] %> check inter 1000
+    <% end %>
+<% end %>
