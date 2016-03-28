@@ -25,7 +25,6 @@ You can either use the templates + examples provided to merge this in with an ex
 ```
 # Example for bare bones bosh-lite cloudfoundry release on warden
 templates/make_manifest warden 10.244.0.22
-bosh verify deployment
 bosh deploy
 ```
 
