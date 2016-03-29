@@ -162,3 +162,17 @@ backend http-routed-backend-<%= prefix_hash %>
         server node<%= index %> <%= ip %>:<%= data["port"] %> check inter 1000
     <% end %>
 <% end %>
+
+<%# TCP Backend %>
+<% if p("ha_proxy.tcp.frontend_port") != "0" %>
+frontend tcp-frontend
+    mode tcp
+    bind :<%= p("ha_proxy.tcp.frontend_port") %>
+    default_backend tcp-routers
+
+backend tcp-routers
+    mode tcp
+    <% p("ha_proxy.tcp.backend_servers").each_with_index do |ip, index| %>
+        server node<%= index %> <%= ip %>:<%= p("ha_proxy.tcp.backend_port") %> check inter 1000
+    <% end %>
+<% end %>

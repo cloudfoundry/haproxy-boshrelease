@@ -90,3 +90,12 @@ properties:
       headers:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
+  ha_proxy.tcp.frontend_port:
+    description: "Listening port for TCP frontend"
+    default: 0
+  ha_proxy.tcp.backend_port:
+    description: "Listening port for TCP backend"
+    default: 0
+  ha_proxy.tcp.backend_servers:
+    description: "Array of the tcp backends"
+    default: []
