@@ -90,12 +90,16 @@ properties:
       headers:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
-  ha_proxy.tcp.frontend_port:
-    description: "Listening port for TCP frontend"
-    default: 0
-  ha_proxy.tcp.backend_port:
-    description: "Listening port for TCP backend"
-    default: 0
-  ha_proxy.tcp.backend_servers:
-    description: "Array of the tcp backends"
+
+  ha_proxy.tcp:
+    description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"
     default: []
+    example:
+      tcp:
+        - name: wss        # required - name of backend
+          port: 4443       # required - port haproxy should listen on
+          backend_servers: # required - list of backend IPs to connect to
+          - 10.20.10.10
+          - 10.20.10.11
+          backend_port: 80 # optional - sets backend port - otherwise defaults to `port`
+          ssl: true        # optional - enables ssl, and uses the `ha_proxy.ssl_pem` provided key

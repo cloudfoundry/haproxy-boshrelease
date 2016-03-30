@@ -163,16 +163,25 @@ backend http-routed-backend-<%= prefix_hash %>
     <% end %>
 <% end %>
 
-<%# TCP Backend %>
-<% if p("ha_proxy.tcp.frontend_port") != "0" %>
-frontend tcp-frontend
+<%# TCP Backends %>
+<% p("ha_proxy.tcp").each do |tcp_proxy| %>
+    frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
-    bind :<%= p("ha_proxy.tcp.frontend_port") %>
-    default_backend tcp-routers
+<% if tcp_proxy["ssl"] %>
+    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/cert.pem no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+<% else %>
+    bind :<%= tcp_proxy["port"] %>
+<% end %>
+    default_backend tcp-<%= tcp_proxy["name"] %>
 
-backend tcp-routers
+backend tcp-<%= tcp_proxy["name"] %>
     mode tcp
-    <% p("ha_proxy.tcp.backend_servers").each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= p("ha_proxy.tcp.backend_port") %> check inter 1000
-    <% end %>
+<%
+backend_port = tcp_proxy["port"]
+if tcp_proxy["backend_port"]
+  backend_port = tcp_proxy["backend_port"]
+end %>
+<% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
+        server node<%= index %> <%= ip %>:<%= backend_port %> check inter 1000
+<% end %>
 <% end %>
