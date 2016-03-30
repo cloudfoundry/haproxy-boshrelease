@@ -85,4 +85,8 @@ properties:
     default: {}
 
   ha_proxy.headers:
-    description: "Hash of custom headers you wish you have set on each request"
+    description: "Hash of custom headers you wish you have set on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
+    example: |
+      headers:
+        X-Application-ID: my-custom-header
+        MyCustomHeader: 3
