@@ -1,0 +1,14 @@
+<%
+if_p("ha_proxy.ssl_pem") do |pem|
+  if !pem.is_a?(Array)
+    pem = [pem]
+  end
+
+  pem.each_with_index do |cert, i|
+%>
+========================== 0600 /var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem
+<%= cert %>
+<%
+  end
+end
+%>
