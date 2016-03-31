@@ -97,7 +97,8 @@ end
   acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
   use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
 <% end %>
-    reqadd X-Forwarded-Proto:\ https
+    acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
+    reqadd X-Forwarded-Proto:\ http if ! xfp_exists
 <% end %>
 
 <%# HTTPS Websockets Frontend %>
@@ -105,7 +106,7 @@ end
 <% if p("ha_proxy.enable_4443") == true %>
 frontend wss-in
     mode http
-    bind :4443 ssl crt /var/vcap/jobs/haproxy/config/cert.pem no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :4443 ssl crt /var/vcap/jobs/haproxy/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -168,7 +169,7 @@ backend http-routed-backend-<%= prefix_hash %>
     frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
 <% if tcp_proxy["ssl"] %>
-    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/cert.pem no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
 <% else %>
     bind :<%= tcp_proxy["port"] %>
 <% end %>
