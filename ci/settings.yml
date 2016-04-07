@@ -14,4 +14,4 @@ meta:
     target: https://10.58.111.46
   slack:
     webhook: (( vault "secret/pipelines/cf-haproxy-boshrelease/slack:webhook" ))
-    channel: "@tmitchell"
+    channel: "#haproxy-boshrelease"
