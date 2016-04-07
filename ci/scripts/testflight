@@ -19,7 +19,7 @@ auth:
     password: ${BOSH_LITE_PASSWORD}
 EOF
 
-set -e
+set -ex
 cd ${REPO_ROOT}
 git submodule update --init --recursive --force
 
@@ -27,5 +27,6 @@ bosh target ${BOSH_LITE_TARGET}
 bosh -n delete deployment ${BOSH_LITE_DEPLOYMENT} --force || echo "continuing on..."
 bosh -n create release
 bosh -n upload release --rebase || echo "Continuing..."
+echo Generating warden-specific manifest
 ./templates/make_manifest warden 10.244.0.22
 bosh -n deploy
