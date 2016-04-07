@@ -11,7 +11,7 @@ meta:
     private_key:  (( vault "secret/pipelines/cf-haproxy-boshrelease/github:private" ))
     access_token: (( vault "secret/pipelines/cf-haproxy-boshrelease/github:token" ))
   bosh-lite:
-    target: https://10.58.111.46
+    target: https://10.58.111.46:25555
   slack:
     webhook: (( vault "secret/pipelines/cf-haproxy-boshrelease/slack:webhook" ))
     channel: "#haproxy-boshrelease"
