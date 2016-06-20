@@ -98,7 +98,7 @@ end
   use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
 <% end %>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
-    reqadd X-Forwarded-Proto:\ http if ! xfp_exists
+    reqadd X-Forwarded-Proto:\ https if ! xfp_exists
 <% end %>
 
 <%# HTTPS Websockets Frontend %>
