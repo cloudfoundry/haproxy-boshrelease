@@ -92,6 +92,13 @@ properties:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
 
+  ha_proxy.rsp_headers:
+    description: "Hash of custom headers you wish you have set on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
+    example: |
+      rsp_headers:
+        X-Application-ID: my-custom-header
+        MyCustomHeader: 3
+
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"
     default: []
