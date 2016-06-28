@@ -1,3 +1,7 @@
+# New Features
+
+- Added support for force-setting response headers in haproxy via the `ha_proxy.rsp_headers` property
+
 # Bug Fixes
 
-- Added support for response headers in haproxy.
+- Fixed an issue preventing `ha_proxy.disable_http` from working correctly.
