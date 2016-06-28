@@ -41,6 +41,16 @@ if_p("ha_proxy.headers") do |headers|
 end
 %>
 
+<%
+if_p("ha_proxy.rsp_headers") do |rsp_headers|
+  rsp_headers.each do |rsp_header, value|
+%>
+    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+<%
+  end
+end
+%>
+
 <% if p("ha_proxy.internal_only_domains").size > 0 %>
     acl public src 0.0.0.0/0
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
@@ -78,6 +88,16 @@ if_p("ha_proxy.headers") do |headers|
   headers.each do |header, value|
 %>
     reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+<%
+  end
+end
+%>
+
+<%
+if_p("ha_proxy.rsp_headers") do |rsp_headers|
+  rsp_headers.each do |rsp_header, value|
+%>
+    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
 <%
   end
 end
