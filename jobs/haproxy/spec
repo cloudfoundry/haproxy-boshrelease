@@ -99,6 +99,15 @@ properties:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
 
+  ha_proxy.restricted_endpoints: 
+    description: "Array of api endpoints whose accessibility should be restricted from a cidr block(s) as defined the trusted_endpoints_cidrs property"
+    default: []
+    example: ["api.cloudfoundry.com", "login.cloudfoundry.com", "doppler.cloudfoundry.com"]
+  ha_proxy.trusted_endpoint_cidrs: 
+    description: "Space separated cidr blocks for restricted_endpoints"
+    default: 0.0.0.0/0
+
+
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"
     default: []
