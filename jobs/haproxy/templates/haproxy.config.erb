@@ -52,11 +52,11 @@ end
 %>
 
 <% if p("ha_proxy.internal_only_domains").size > 0 %>
-    acl public src 0.0.0.0/0
+    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
 <% end %>
-    http-request deny if internal public
+    http-request deny if internal !private
 <% end %>
 
 <% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
@@ -73,14 +73,6 @@ end
 <% unless p("ha_proxy.https_redirect_all") == true %>
     acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
     redirect scheme https code 301 if ssl_redirect
-<% end %>
-
-<% if p("ha_proxy.restricted_endpoints").size > 0 %>
-    acl allowed_endpoint_cidrs src <%= p("ha_proxy.trusted_endpoint_cidrs") %>
-<% p("ha_proxy.restricted_endpoints").each do |endpoint| %>
-    acl <%= endpoint %>_acl hdr(Host) -i <%= endpoint %>
-    http-request deny if  <%= endpoint %>_acl !allowed_endpoint_cidrs
-<% end %>
 <% end %>
 
 <% end %>
@@ -112,13 +104,12 @@ if_p("ha_proxy.rsp_headers") do |rsp_headers|
 end
 %>
 
-
 <% if p("ha_proxy.internal_only_domains").size > 0 %>
-    acl public src 0.0.0.0/0
+    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
 <% end %>
-    http-request deny if internal public
+    http-request deny if internal !private
 <% end %>
 
 <% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
@@ -128,14 +119,6 @@ end
 <% end %>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     reqadd X-Forwarded-Proto:\ https if ! xfp_exists
-
-<% if p("ha_proxy.restricted_endpoints").size > 0 %>
-    acl allowed_endpoint_cidrs src <%= p("ha_proxy.trusted_endpoint_cidrs") %>
-<% p("ha_proxy.restricted_endpoints").each do |endpoint| %>
-    acl <%= endpoint %>_acl hdr(Host) -i <%= endpoint %>
-    http-request deny if  <%= endpoint %>_acl !allowed_endpoint_cidrs
-<% end %>
-<% end %>
 
 <% end %>
 

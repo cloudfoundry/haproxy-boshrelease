@@ -27,6 +27,9 @@ properties:
   ha_proxy.internal_only_domains:
     description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
     default: []
+  ha_proxy.trusted_domain_cidrs: 
+    description: "Space separated trusted cidr blocks for internal_only_domains"
+    default: 0.0.0.0/0
   ha_proxy.ssl_pem:
     description: "SSL certificate (PEM file), or an array of SSL certificates (PEM files)"
     default: ~
@@ -98,15 +101,6 @@ properties:
       rsp_headers:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
-
-  ha_proxy.restricted_endpoints: 
-    description: "Array of api endpoints whose accessibility should be restricted from a cidr block(s) as defined the trusted_endpoints_cidrs property"
-    default: []
-    example: ["api.cloudfoundry.com", "login.cloudfoundry.com", "doppler.cloudfoundry.com"]
-  ha_proxy.trusted_endpoint_cidrs: 
-    description: "Space separated cidr blocks for restricted_endpoints"
-    default: 0.0.0.0/0
-
 
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"
