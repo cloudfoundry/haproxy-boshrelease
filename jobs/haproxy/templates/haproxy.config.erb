@@ -52,11 +52,11 @@ end
 %>
 
 <% if p("ha_proxy.internal_only_domains").size > 0 %>
-    acl public src 0.0.0.0/0
+    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
 <% end %>
-    http-request deny if internal public
+    http-request deny if internal !private
 <% end %>
 
 <% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
@@ -74,6 +74,7 @@ end
     acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
     redirect scheme https code 301 if ssl_redirect
 <% end %>
+
 <% end %>
 
 <%# HTTPS Frontend %>
@@ -103,13 +104,12 @@ if_p("ha_proxy.rsp_headers") do |rsp_headers|
 end
 %>
 
-
 <% if p("ha_proxy.internal_only_domains").size > 0 %>
-    acl public src 0.0.0.0/0
+    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
 <% end %>
-    http-request deny if internal public
+    http-request deny if internal !private
 <% end %>
 
 <% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
@@ -119,6 +119,7 @@ end
 <% end %>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     reqadd X-Forwarded-Proto:\ https if ! xfp_exists
+
 <% end %>
 
 <%# HTTPS Websockets Frontend %>
