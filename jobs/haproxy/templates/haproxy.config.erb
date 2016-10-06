@@ -82,7 +82,7 @@ end
 <% if_p("ha_proxy.ssl_pem") do |pem| %>
 frontend https-in
     mode http
-    bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :443 <%= p("ha_proxy.accept_proxy") %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -127,7 +127,7 @@ end
 <% if p("ha_proxy.enable_4443") == true %>
 frontend wss-in
     mode http
-    bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :4443 <%= p("ha_proxy.accept_proxy") %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -190,7 +190,7 @@ backend http-routed-backend-<%= prefix_hash %>
     frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
 <% if tcp_proxy["ssl"] %>
-    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :<%= tcp_proxy["port"] %> <%= p("ha_proxy.accept_proxy") %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
 <% else %>
     bind :<%= tcp_proxy["port"] %>
 <% end %>
