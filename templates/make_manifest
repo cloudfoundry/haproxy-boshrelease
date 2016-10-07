@@ -11,16 +11,17 @@ shift
 shift
 
 if [ "$infrastructure" != "aws-ec2" ] && \
+    [ "$infrastructure" != "openstack" ] && \
     [ "$infrastructure" != "warden" ] || \
     [ -z "$servers" ]; then
   echo $infrastructure
-  echo "usage: ./make_manifest <aws-ec2|warden> <backend_server1>,[<backend_server2>,...,<backend_serverN>]"
+  echo "usage: ./make_manifest <aws-ec2|warden|openstack> <backend_server1>,[<backend_server2>,...,<backend_serverN>]"
   exit 1
 fi
 
 BOSH_STATUS=$(bosh status)
 DIRECTOR_UUID=$(echo "$BOSH_STATUS" | grep UUID | awk '{print $2}')
-DIRECTOR_CPI=$(echo "$BOSH_STATUS" | grep CPI | awk '{print $2}')
+DIRECTOR_CPI=$(echo "$BOSH_STATUS" | grep CPI | awk '{print $2}' | sed 's/_cpi$//')
 DIRECTOR_NAME=$(echo "$BOSH_STATUS" | grep Name | awk '{print $2}')
 NAME=$template_prefix-$infrastructure
 
@@ -34,6 +35,13 @@ fi
 if [[ $infrastructure = "aws-ec2" ]]; then
   if [[ $DIRECTOR_CPI != "aws" ]]; then
     echo "Not targeting an AWS BOSH. Please use 'bosh target' before running this script."
+    exit 1
+  fi
+fi
+
+if [[ $infrastructure = "openstack" ]]; then
+  if [[ $DIRECTOR_CPI != "openstack" ]]; then
+    echo "Not targeting an OpenStack BOSH. Please use 'bosh target' before running this script."
     exit 1
   fi
 fi
