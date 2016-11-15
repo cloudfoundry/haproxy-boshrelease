@@ -6,7 +6,7 @@ meta:
 
   stemcell:
     name: bosh-openstack-kvm-ubuntu-trusty-go_agent
-    version: (( merge || 3232 ))
+    version: (( merge || latest ))
   instances:
     ha_proxy:
       public_z1:  (( merge || 1 ))
@@ -71,3 +71,6 @@ networks:
     type: dynamic
     cloud_properties:
       security_groups: (( meta.security_groups ))
+
+properties: (( merge ))
+

@@ -12,6 +12,7 @@ jobs:
     instances: (( merge ))
     resource_pool: (( merge ))
     persistent_disk: 0
+    properties:
   - name: private_haproxy_z1
     templates:
     - name: haproxy
@@ -32,6 +33,7 @@ jobs:
     instances: (( merge ))
     resource_pool: (( merge ))
     persistent_disk: 0
+    properties:
   - name: private_haproxy_z2
     templates:
     - name: haproxy
@@ -49,3 +51,4 @@ networks: (( merge ))
 properties:
   <<: (( merge ))
   ha_proxy: (( meta.properties.ha_proxy ))
+

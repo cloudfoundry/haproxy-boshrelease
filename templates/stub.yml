@@ -3,7 +3,9 @@ meta:
   environment: NAME
   dns_root: microbosh
   security_groups:
-    - cf-haproxy
+    - cf
+  public_security_groups:
+    - cf
   stemcell:
     name: STEMCELL
 
@@ -13,8 +15,20 @@ meta:
       backend_servers:
       - PLACEHOLDER-SERVER-IP
 
+  floatings:
+    ha_proxy:
+      public_z1: 172.16.2.6
+
+  instances:
+    ha_proxy:
+      public_z1: 1
+      public_z2: 0
+      private_z1: 0
+      private_z2: 0
+
 director_uuid: PLACEHOLDER-DIRECTOR-UUID
 
 releases:
   - name: cf-haproxy
     version: latest
+
