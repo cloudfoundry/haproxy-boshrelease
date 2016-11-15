@@ -45,7 +45,7 @@ meta:
     channel:       (( param "Please specify the channel (#name) or user (@user) to send messages to" ))
     username:      concourse
     icon:          http://cl.ly/image/3e1h0H3H2s0P/concourse-logo.png
-    fail_url: '(( concat "<" meta.url "/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| Concourse Failure! " meta.slack.upset_moji ">" ))'
+    fail_url: '(( concat "<" meta.url "/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| Concourse Failure! " meta.slack.upset_moji ">" ))'
 
 groups:
   - name: (( grab meta.pipeline ))
@@ -79,6 +79,7 @@ jobs:
             BOSH_LITE_USERNAME:   (( grab meta.bosh-lite.username ))
             BOSH_LITE_PASSWORD:   (( grab meta.bosh-lite.password ))
             BOSH_LITE_DEPLOYMENT: (( grab meta.bosh-lite.deployment ))
+            TEST_ERRAND:          (( grab meta.test-errand || ~ ))
       on_failure:
         put: notify
         params:
