@@ -2,7 +2,7 @@
 
 set -e
 
-template_prefix="cf-haproxy"
+template_prefix="haproxy"
 STEMCELL_OS=${STEMCELL_OS:-ubuntu}
 
 infrastructure=$1

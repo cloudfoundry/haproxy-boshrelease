@@ -1,5 +1,5 @@
 meta:
-  environment: cf-haproxy-warden
+  environment: haproxy-warden
 
   stemcell:
     name: bosh-warden-boshlite-ubuntu
@@ -29,29 +29,29 @@ jobs:
     instances: (( meta.instances.ha_proxy.public_z1 ))
     resource_pool: small_z1
     networks:
-    - name: cf_haproxy1
+    - name: haproxy1
       static_ips: (( static_ips(0) ))
   - name: private_haproxy_z1
     instances: (( meta.instances.ha_proxy.private_z1 ))
     resource_pool: small_z1
     networks:
-    - name: cf_haproxy1
+    - name: haproxy1
       static_ips: (( static_ips(3) ))
   - name: public_haproxy_z2
     instances: (( meta.instances.ha_proxy.public_z2 ))
     resource_pool: small_z2
     networks:
-    - name: cf_haproxy2
+    - name: haproxy2
       static_ips: (( static_ips(0) ))
   - name: private_haproxy_z2
     instances: (( meta.instances.ha_proxy.private_z2 ))
     resource_pool: small_z2
     networks:
-    - name: cf_haproxy2
+    - name: haproxy2
       static_ips: (( static_ips(3) ))
 
 networks:
-- name: cf_haproxy1
+- name: haproxy1
   # Assumes up to 10 VMs, including 5 static and 5 dynamic.
   # Plus 5 (double the size) unused IPs, due to BOSH bug/quirk.
   subnets:
@@ -123,7 +123,7 @@ networks:
     reserved:
     - 10.244.50.37
     static: []
-- name: cf_haproxy2
+- name: haproxy2
   # Assumes up to 5 VMs, including 1 static and 4 dynamic.
   # Plus 5 (double the size) unused IPs, due to BOSH bug/quirk.
   subnets:
