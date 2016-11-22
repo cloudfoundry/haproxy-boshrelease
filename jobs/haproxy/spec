@@ -27,7 +27,7 @@ properties:
   ha_proxy.internal_only_domains:
     description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
     default: []
-  ha_proxy.trusted_domain_cidrs: 
+  ha_proxy.trusted_domain_cidrs:
     description: "Space separated trusted cidr blocks for internal_only_domains"
     default: 0.0.0.0/32
   ha_proxy.ssl_pem:
@@ -114,3 +114,12 @@ properties:
           - 10.20.10.11
           backend_port: 80 # optional - sets backend port - otherwise defaults to `port`
           ssl: true        # optional - enables ssl, and uses the `ha_proxy.ssl_pem` provided key
+  ha_proxy.resolvers:
+    description: "List of DNS servers"
+    example:
+      resolvers:
+        private: 10.0.0.2
+        public: 8.8.8.8
+  ha_proxy.dns_hold:
+    description: "DNS Hold time"
+    default: 10s

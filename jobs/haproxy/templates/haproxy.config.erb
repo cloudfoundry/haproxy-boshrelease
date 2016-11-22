@@ -32,9 +32,9 @@ if_p("ha_proxy.resolvers") do |resolvers|
 resolvers default
     hold valid <%= p("ha_proxy.dns_hold") %>
 <%
-    resolvers.each do |resolver, value|
+    resolvers.each do |resolver|
 %>
-    nameserver <%= resolver %> <%= value %>:53
+    nameserver <%= resolver.keys[0] %> <%= resolver.values[0] %>:53
 <%
   end
 end
@@ -181,7 +181,7 @@ backend http-routers
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
     <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> check inter 1000
+        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
     <% end %>
 
 <%# Routed Backends %>
@@ -219,6 +219,6 @@ if tcp_proxy["backend_port"]
   backend_port = tcp_proxy["backend_port"]
 end %>
 <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= backend_port %> check inter 1000
+        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
 <% end %>
 <% end %>
