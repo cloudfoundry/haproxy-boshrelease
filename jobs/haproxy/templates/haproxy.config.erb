@@ -26,6 +26,21 @@ defaults
 
 <%# HTTP Frontend %>
 
+<%
+if_p("ha_proxy.resolvers") do |resolvers|
+%>
+resolvers default
+    hold valid <%= p("ha_proxy.dns_hold") %>
+<%
+    resolvers.each do |resolver, value|
+%>
+    nameserver <%= resolver %> <%= value %>:53
+<%
+  end
+end
+%>
+
+
 <% unless p("ha_proxy.disable_http") %>
 frontend http-in
     mode http
