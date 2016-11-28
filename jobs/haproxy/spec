@@ -117,4 +117,4 @@ properties:
 
   ha_proxy.accept_proxy:
     description: "Allow accept proxy"
-    default: ""
+    default: false
