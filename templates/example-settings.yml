@@ -16,3 +16,4 @@ meta:
       websocket_timeout: 3600
       keepalive_timeout:    1
       queue_timeout:       30
+      accept_proxy: "accept-proxy"
