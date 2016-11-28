@@ -27,7 +27,7 @@ properties:
   ha_proxy.internal_only_domains:
     description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
     default: []
-  ha_proxy.trusted_domain_cidrs: 
+  ha_proxy.trusted_domain_cidrs:
     description: "Space separated trusted cidr blocks for internal_only_domains"
     default: 0.0.0.0/32
   ha_proxy.ssl_pem:
@@ -73,6 +73,16 @@ properties:
   ha_proxy.queue_timeout:
     description: "Timeout for requests queued waiting for free connection slots (in seconds)"
     default:     30
+
+  ha_proxy.stats_enable:
+    description: "If true, haproxy will enable a socket for stats. You can see the stats on haproxy_ip:9000/haproxy_stats"
+    default: false
+  ha_proxy.stats_user:
+    description: "User name to authenticate haproxy stats"
+    default: admin
+  ha_proxy.stats_password:
+    description: "Password to authenticate haproxy stats"
+    default: admin
 
   ha_proxy.backend_servers:
     description: "Array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used)"
