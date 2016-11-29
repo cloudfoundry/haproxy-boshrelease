@@ -196,7 +196,7 @@ backend http-routed-backend-<%= prefix_hash %>
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
     <% data["servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= data["port"] %> check inter 1000
+        server node<%= index %> <%= ip %>:<%= data["port"] %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
     <% end %>
 <% end %>
 
