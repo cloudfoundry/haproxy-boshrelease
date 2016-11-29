@@ -79,10 +79,8 @@ properties:
     default: false
   ha_proxy.stats_user:
     description: "User name to authenticate haproxy stats"
-    default: admin
   ha_proxy.stats_password:
     description: "Password to authenticate haproxy stats"
-    default: admin
 
   ha_proxy.backend_servers:
     description: "Array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used)"
