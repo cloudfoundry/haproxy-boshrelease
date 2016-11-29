@@ -24,16 +24,17 @@ defaults
     timeout http-request    <%= p("ha_proxy.request_timeout").to_i    * 1000 %>ms
     timeout queue           <%= p("ha_proxy.queue_timeout").to_i      * 1000 %>ms
 
-  <% if p("ha_proxy.stats_enable") %>
-  listen stats :9000
-      acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
-      mode http
-      stats enable
-      stats hide-version
-      stats realm Haproxy\ Statistics
-      stats uri /<%= p("ha_proxy.stats_uri") %>
-      stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
-  <% end %>
+<% if p("ha_proxy.stats_enable") %>
+listen stats :9000
+    acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
+    http-request deny unless private
+    mode http
+    stats enable
+    stats hide-version
+    stats realm Haproxy\ Statistics
+    stats uri /<%= p("ha_proxy.stats_uri") %>
+    stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+<% end %>
 
 <%# HTTP Frontend %>
 
