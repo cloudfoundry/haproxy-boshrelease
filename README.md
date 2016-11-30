@@ -1,4 +1,4 @@
-BOSH Release for cf-haproxy
+BOSH Release for haproxy
 ===========================
 
 Questions? Pop in our [slack channel](https://cloudfoundry.slack.com/messages/haproxy-boshrelease/)!
@@ -11,14 +11,14 @@ Usage
 To use this bosh release, first upload it to your bosh:
 
 ```
-bosh upload release https://bosh.io/d/github.com/cloudfoundry-community/cf-haproxy-boshrelease
+bosh upload release https://bosh.io/d/github.com/cloudfoundry-community/haproxy-boshrelease
 ```
 
 To deploy it, you will need the repository that contains templates:
 
 ```
-git clone https://github.com/cloudfoundry-community/cf-haproxy-boshrelease.git
-cd cf-haproxy-boshrelease
+git clone https://github.com/cloudfoundry-community/haproxy-boshrelease.git
+cd haproxy-boshrelease
 git checkout latest
 ```
 

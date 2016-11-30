@@ -2,6 +2,6 @@
 blobstore:
   provider: s3
   options:
-    bucket_name: cf-haproxy-boshrelease
+    bucket_name: cf-haproxy-boshrelease # leaving as old release name for blob compatibility
 
-final_name: cf-haproxy
+final_name: haproxy

@@ -24,7 +24,35 @@ defaults
     timeout http-request    <%= p("ha_proxy.request_timeout").to_i    * 1000 %>ms
     timeout queue           <%= p("ha_proxy.queue_timeout").to_i      * 1000 %>ms
 
+<% if p("ha_proxy.stats_enable") %>
+listen stats
+    bind :9000
+    acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
+    http-request deny unless private
+    mode http
+    stats enable
+    stats hide-version
+    stats realm Haproxy\ Statistics
+    stats uri /<%= p("ha_proxy.stats_uri") %>
+    stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+<% end %>
+
 <%# HTTP Frontend %>
+
+<%
+if_p("ha_proxy.resolvers") do |resolvers|
+%>
+resolvers default
+    hold valid <%= p("ha_proxy.dns_hold") %>
+<%
+    resolvers.each do |resolver|
+%>
+    nameserver <%= resolver.keys[0] %> <%= resolver.values[0] %>:53
+<%
+  end
+end
+%>
+
 
 <% unless p("ha_proxy.disable_http") %>
 frontend http-in
@@ -82,7 +110,11 @@ end
 <% if_p("ha_proxy.ssl_pem") do |pem| %>
 frontend https-in
     mode http
+    <% if p("ha_proxy.accept_proxy") %>
+    bind :443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% else %>
     bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% end %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -127,7 +159,11 @@ end
 <% if p("ha_proxy.enable_4443") == true %>
 frontend wss-in
     mode http
+    <% if p("ha_proxy.accept_proxy") %>
+    bind :4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% else %>
     bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% end %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -166,7 +202,7 @@ backend http-routers
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
     <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> check inter 1000
+        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
     <% end %>
 
 <%# Routed Backends %>
@@ -181,7 +217,7 @@ backend http-routed-backend-<%= prefix_hash %>
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
     <% data["servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= data["port"] %> check inter 1000
+        server node<%= index %> <%= ip %>:<%= data["port"] %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
     <% end %>
 <% end %>
 
@@ -190,7 +226,11 @@ backend http-routed-backend-<%= prefix_hash %>
     frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
 <% if tcp_proxy["ssl"] %>
+    <% if p("ha_proxy.accept_proxy") %>
+    bind :<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% else %>
     bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% end %>
 <% else %>
     bind :<%= tcp_proxy["port"] %>
 <% end %>
@@ -204,6 +244,6 @@ if tcp_proxy["backend_port"]
   backend_port = tcp_proxy["backend_port"]
 end %>
 <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= backend_port %> check inter 1000
+        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
 <% end %>
 <% end %>

@@ -1,0 +1,25 @@
+---
+packages:
+- name: ttar
+  version: 3d35c54bf484b59a22c9bf783ff62d08eb30353f
+  fingerprint: 3d35c54bf484b59a22c9bf783ff62d08eb30353f
+  sha1: 6380c6e9e3a2e92f32ca75a37922099343110b68
+  dependencies: []
+- name: haproxy
+  version: 9c86ced8448e9810347630666c9299bb41d80038
+  fingerprint: 9c86ced8448e9810347630666c9299bb41d80038
+  sha1: ad57803a69bf12dd13f1e5160851c740c1b7a71b
+  dependencies: []
+jobs:
+- name: haproxy
+  version: ec8cde016affa1cc8380e55818a845225726bf3d
+  fingerprint: ec8cde016affa1cc8380e55818a845225726bf3d
+  sha1: ccdab829bfb7f71256d9a519f7cd334faea10350
+license:
+  version: 1128a8ae7526393e7fbf22a18a92b4d0dfdd78c0
+  fingerprint: 1128a8ae7526393e7fbf22a18a92b4d0dfdd78c0
+  sha1: a519125dcf6220495de8f2a487c5d2bb8df6e348
+commit_hash: eb6fa409
+uncommitted_changes: true
+name: haproxy
+version: 8.0.7

@@ -16,7 +16,7 @@ properties: (( merge ))
 
 compilation:
   workers: 6
-  network: cf_haproxy1
+  network: haproxy1
   reuse_compilation_vms: true
   cloud_properties: (( merge ))
 
@@ -29,10 +29,10 @@ update:
 
 resource_pools:
   - name: small_z1
-    network: cf_haproxy1
+    network: haproxy1
     stemcell: (( meta.stemcell ))
     cloud_properties: (( merge ))
   - name: small_z2
-    network: cf_haproxy2
+    network: haproxy2
     stemcell: (( meta.stemcell ))
     cloud_properties: (( merge ))

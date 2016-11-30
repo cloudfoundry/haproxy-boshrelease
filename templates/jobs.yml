@@ -7,7 +7,7 @@ jobs:
   - name: public_haproxy_z1
     templates:
     - name: haproxy
-      release: cf-haproxy
+      release: haproxy
     networks: (( merge ))
     instances: (( merge ))
     resource_pool: (( merge ))
@@ -16,7 +16,7 @@ jobs:
   - name: private_haproxy_z1
     templates:
     - name: haproxy
-      release: cf-haproxy
+      release: haproxy
     networks: (( merge ))
     instances: (( merge ))
     resource_pool: (( merge ))
@@ -28,7 +28,7 @@ jobs:
   - name: public_haproxy_z2
     templates:
     - name: haproxy
-      release: cf-haproxy
+      release: haproxy
     networks: (( merge ))
     instances: (( merge ))
     resource_pool: (( merge ))
@@ -37,7 +37,7 @@ jobs:
   - name: private_haproxy_z2
     templates:
     - name: haproxy
-      release: cf-haproxy
+      release: haproxy
     networks: (( merge ))
     instances: (( merge ))
     resource_pool: (( merge ))

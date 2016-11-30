@@ -18,22 +18,22 @@ meta:
 jobs:
   - name: public_haproxy_z1
     networks:
-      - name: cf_haproxy1
+      - name: haproxy1
     resource_pool: small_z1
     instances: (( meta.instances.ha_proxy.public_z1 ))
   - name: private_haproxy_z1
     network:
-      - name: cf_haproxy1
+      - name: haproxy1
     resource_pool: small_z1
     instances: (( meta.instances.ha_proxy.private_z1 ))
   - name: public_haproxy_z2
     networks:
-      - name: cf_haproxy2
+      - name: haproxy2
     resource_pool: small_z1
     instances: (( meta.instances.ha_proxy.public_z2 ))
   - name: private_haproxy_z2
     network:
-      - name: cf_haproxy2
+      - name: haproxy2
     resource_pool: small_z1
     instances: (( meta.instances.ha_proxy.private_z2 ))
 
@@ -53,11 +53,11 @@ networks:
   - name: floating
     type: vip
     cloud_properties: {}
-  - name: cf_haproxy1
+  - name: haproxy1
     type: dynamic
     cloud_properties:
       security_groups: (( meta.security_groups ))
-  - name: cf_haproxy2
+  - name: haproxy2
     type: dynamic
     cloud_properties:
       security_groups: (( meta.security_groups ))
