@@ -11,3 +11,7 @@ ttar/ttar:
   object_id: 8876e372-2ece-4e29-bc9f-6f256d5e326b
   sha: 60bfdea4d0d50d5316ba1a9aca217f1d3f0ad1f5
   size: 567
+haproxy/haproxy-1.6.10.tar:
+  object_id: '06223917-b077-44ec-ab6f-9ce50377139a'
+  sha: a339ec35c4100b6edc06bf71ece41cd521d4b894
+  size: 6512640
