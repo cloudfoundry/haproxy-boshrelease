@@ -128,7 +128,15 @@ properties:
           - 10.20.10.11
           backend_port: 80 # optional - sets backend port - otherwise defaults to `port`
           ssl: true        # optional - enables ssl, and uses the `ha_proxy.ssl_pem` provided key
-
+  ha_proxy.resolvers:
+    description: "List of DNS servers"
+    example:
+      resolvers:
+        private: 10.0.0.2
+        public: 8.8.8.8
+  ha_proxy.dns_hold:
+    description: "DNS Hold time"
+    default: 10s
   ha_proxy.accept_proxy:
     description: "Allow accept proxy"
     default: false
