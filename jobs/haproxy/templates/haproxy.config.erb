@@ -24,6 +24,18 @@ defaults
     timeout http-request    <%= p("ha_proxy.request_timeout").to_i    * 1000 %>ms
     timeout queue           <%= p("ha_proxy.queue_timeout").to_i      * 1000 %>ms
 
+<% if p("ha_proxy.stats_enable") %>
+listen stats :9000
+    acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
+    http-request deny unless private
+    mode http
+    stats enable
+    stats hide-version
+    stats realm Haproxy\ Statistics
+    stats uri /<%= p("ha_proxy.stats_uri") %>
+    stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+<% end %>
+
 <%# HTTP Frontend %>
 
 <%
@@ -97,7 +109,11 @@ end
 <% if_p("ha_proxy.ssl_pem") do |pem| %>
 frontend https-in
     mode http
+    <% if p("ha_proxy.accept_proxy") %>
+    bind :443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% else %>
     bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% end %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -142,7 +158,11 @@ end
 <% if p("ha_proxy.enable_4443") == true %>
 frontend wss-in
     mode http
+    <% if p("ha_proxy.accept_proxy") %>
+    bind :4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% else %>
     bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% end %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -205,7 +225,11 @@ backend http-routed-backend-<%= prefix_hash %>
     frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
 <% if tcp_proxy["ssl"] %>
+    <% if p("ha_proxy.accept_proxy") %>
+    bind :<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% else %>
     bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    <% end %>
 <% else %>
     bind :<%= tcp_proxy["port"] %>
 <% end %>
