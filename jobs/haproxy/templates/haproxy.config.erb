@@ -25,7 +25,8 @@ defaults
     timeout queue           <%= p("ha_proxy.queue_timeout").to_i      * 1000 %>ms
 
 <% if p("ha_proxy.stats_enable") %>
-listen stats :9000
+listen stats
+    bind :9000
     acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
     http-request deny unless private
     mode http
