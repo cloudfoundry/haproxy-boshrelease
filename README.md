@@ -29,11 +29,7 @@ You can either use the templates + examples provided to merge this in with an ex
 templates/make_manifest warden 10.244.0.22
 bosh deploy
 ```
-```
-# Example for bare bones bosh-lite cloudfoundry release on openstack
-templates/make_manifest openstack 10.244.0.22 cf.yml
-bosh deploy
-```
+
 ### Development
 
 Feel free to contribute back to this via a pull request on a feature branch! Once merged, we'll cut a new final release for you.
