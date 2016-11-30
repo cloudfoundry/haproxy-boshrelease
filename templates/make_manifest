@@ -7,7 +7,6 @@ STEMCELL_OS=${STEMCELL_OS:-ubuntu}
 
 infrastructure=$1
 servers=$2
-cf_manifest=$3
 shift
 shift
 
@@ -16,7 +15,7 @@ if [ "$infrastructure" != "aws-ec2" ] && \
     [ "$infrastructure" != "warden" ] || \
     [ -z "$servers" ]; then
   echo $infrastructure
-  echo "usage: ./make_manifest <aws-ec2|warden|openstack> <backend_server1>,[<backend_server2>,...,<backend_serverN>] [<cf_manifest>]"
+  echo "usage: ./make_manifest <aws-ec2|warden|openstack> <backend_server1>,[<backend_server2>,...,<backend_serverN>]"
   exit 1
 fi
 
@@ -76,28 +75,12 @@ for server in $(echo $servers | tr "," "\n"); do
 done
 perl -pi -e "s/\s+- PLACEHOLDER-SERVER-IP//" $tmpdir/stub-with-uuid.yml
 
-if [ "$infrastructure" == "openstack" ]; then
-  spiff merge \
-    $templates/infrastructure-${infrastructure}.yml \
-    $cf_manifest \
-    $tmpdir/stub-with-uuid.yml > $tmpdir/infrastructure-${infrastructure}.yml
-
-  spiff merge \
-    $templates/deployment.yml \
-    $templates/jobs.yml \
-    $tmpdir/infrastructure-${infrastructure}.yml \
-    $tmpdir/stub-with-uuid.yml > $tmpdir/$NAME-manifest.yml
-fi
-
-if [ "$infrastructure" != "openstack" ]; then
-  spiff merge \
-    $templates/deployment.yml \
-    $templates/jobs.yml \
-    $templates/infrastructure-${infrastructure}.yml \
-    $tmpdir/stub-with-uuid.yml \
-    $* > $tmpdir/$NAME-manifest.yml
-fi
+spiff merge \
+  $templates/deployment.yml \
+  $templates/jobs.yml \
+  $templates/infrastructure-${infrastructure}.yml \
+  $tmpdir/stub-with-uuid.yml \
+  $* > $tmpdir/$NAME-manifest.yml
 
 bosh deployment $tmpdir/$NAME-manifest.yml
 bosh status
-
