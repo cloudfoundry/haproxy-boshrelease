@@ -23,6 +23,9 @@ defaults
     timeout http-keep-alive <%= p("ha_proxy.keepalive_timeout").to_i  * 1000 %>ms
     timeout http-request    <%= p("ha_proxy.request_timeout").to_i    * 1000 %>ms
     timeout queue           <%= p("ha_proxy.queue_timeout").to_i      * 1000 %>ms
+    <% if p("ha_proxy.init_addr") %>
+    default-server init-addr <%= p("ha_proxy.init_addr").join(",") %>
+    <% end %>
 
 <% if p("ha_proxy.stats_enable") %>
 listen stats
@@ -223,7 +226,7 @@ backend http-routed-backend-<%= prefix_hash %>
 
 <%# TCP Backends %>
 <% p("ha_proxy.tcp").each do |tcp_proxy| %>
-    frontend tcp-frontend_<%= tcp_proxy["name"]%>
+frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
 <% if tcp_proxy["ssl"] %>
     <% if p("ha_proxy.accept_proxy") %>
@@ -244,6 +247,6 @@ if tcp_proxy["backend_port"]
   backend_port = tcp_proxy["backend_port"]
 end %>
 <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
+    server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
 <% end %>
 <% end %>

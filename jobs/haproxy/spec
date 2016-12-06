@@ -15,7 +15,7 @@ templates:
   ssl_redirect.map.erb:      config/ssl_redirect.map
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
-  properties.sh.erb:    data/properties.sh
+  properties.sh.erb:         data/properties.sh
 
 properties:
   ha_proxy.syslog_server:
@@ -128,15 +128,24 @@ properties:
           - 10.20.10.11
           backend_port: 80 # optional - sets backend port - otherwise defaults to `port`
           ssl: true        # optional - enables ssl, and uses the `ha_proxy.ssl_pem` provided key
+
   ha_proxy.resolvers:
     description: "List of DNS servers"
     example:
       resolvers:
-        private: 10.0.0.2
-        public: 8.8.8.8
+        - private: 10.0.0.2
+          public: 8.8.8.8
   ha_proxy.dns_hold:
     description: "DNS Hold time"
     default: 10s
   ha_proxy.accept_proxy:
     description: "Allow accept proxy"
     default: false
+  ha_proxy.allow_delayed_resolution:
+    description: "Allow HAProxy to start even when a DNS may not resolve yet"
+  ha_proxy.init_addr:
+    description: "List of options for the init-addr line.  Include 'last', 'libc', and 'none' to allow delayed name resolution"
+    default: [ "last", "libc" ]
+    example:
+      init_addr: [ "last", "libc", "none" ]
+
