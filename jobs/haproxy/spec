@@ -141,8 +141,6 @@ properties:
   ha_proxy.accept_proxy:
     description: "Allow accept proxy"
     default: false
-  ha_proxy.allow_delayed_resolution:
-    description: "Allow HAProxy to start even when a DNS may not resolve yet"
   ha_proxy.init_addr:
     description: "List of options for the init-addr line.  Include 'last', 'libc', and 'none' to allow delayed name resolution"
     default: [ "last", "libc" ]
