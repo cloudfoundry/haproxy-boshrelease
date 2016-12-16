@@ -177,11 +177,11 @@ end
 
 
 <% if p("ha_proxy.internal_only_domains").size > 0 %>
-    acl public src 0.0.0.0/0
+    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
 <% p("ha_proxy.internal_only_domains").each do |domain| %>
     acl internal hdr(Host) -m sub <%= domain %>
 <% end %>
-    http-request deny if internal public
+    http-request deny if internal !private
 <% end %>
 
 <% p('ha_proxy.routed_backend_servers').keys.each do |prefix| %>
