@@ -8,6 +8,8 @@ global
     maxconn 64000
     spread-checks 4
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
+    stats socket /var/vcap/sys/run/haproxy/stats.sock mode 600 level admin
+    stats timeout 2m
 
 defaults
     log global

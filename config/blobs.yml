@@ -15,3 +15,7 @@ haproxy/haproxy-1.6.10.tar.gz:
   object_id: 2bf5332a-f13d-40f7-b6c3-f32afa944275
   sha: 012f4caca3f39999e36229537798122c5f3698ac
   size: 1578385
+haproxy/socat-1.7.3.1.tar.gz:
+  object_id: bcc504b7-e970-4469-ad93-d030b082e14c
+  sha: a6f1d8ab3e85f565dbe172f33a9be6708dd52ffb
+  size: 606049
