@@ -79,7 +79,7 @@ properties:
     default: false
   ha_proxy.stats_bind:
     description: "Defines to what address should stats be bound to."
-    default: ":9000"
+    default: "*:9000"
   ha_proxy.stats_user:
     description: "User name to authenticate haproxy stats"
   ha_proxy.stats_password:
