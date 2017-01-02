@@ -45,15 +45,15 @@ jobs:
 
 compilation:
   cloud_properties:
-    instance_type: (( merge || m1.small ))
+    instance_type: (( merge || "m1.small" ))
 
 resource_pools:
   - name: small_z1
     cloud_properties:
-      instance_type: (( merge || m1.small ))
+      instance_type: (( merge || "m1.small" ))
   - name: small_z2
     cloud_properties:
-      instance_type: (( merge || m1.small ))
+      instance_type: (( merge || "m1.small" ))
 
 networks:
   - name: floating
