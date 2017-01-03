@@ -28,7 +28,7 @@ defaults
 
 <% if p("ha_proxy.stats_enable") %>
 listen stats
-    bind :9000
+    bind <%= p("ha_proxy.stats_bind") %>
     acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
     http-request deny unless private
     mode http
