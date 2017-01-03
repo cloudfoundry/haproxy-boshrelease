@@ -78,7 +78,7 @@ properties:
     description: "If true, haproxy will enable a socket for stats. You can see the stats on haproxy_ip:9000/haproxy_stats"
     default: false
   ha_proxy.stats_bind:
-    description: "Defines to what address should stats be bound to."
+    description: "Define one or several listening addresses and/or ports in a frontend."
     default: "*:9000"
   ha_proxy.stats_user:
     description: "User name to authenticate haproxy stats"
