@@ -13,6 +13,7 @@ templates:
   monit_debugger:            bin/monit_debugger
   certs.ttar.erb:            config/certs.ttar
   ssl_redirect.map.erb:      config/ssl_redirect.map
+  backend-ca-certs.erb:      config/backend-ca-certs.pem
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
   properties.sh.erb:    data/properties.sh
@@ -33,6 +34,8 @@ properties:
   ha_proxy.ssl_pem:
     description: "SSL certificate (PEM file), or an array of SSL certificates (PEM files)"
     default: ~
+  ha_proxy.backend_ca_file:
+    description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
   ha_proxy.disable_http:
     description: "Disable port 80 traffic"
     default: false
@@ -94,17 +97,29 @@ properties:
   ha_proxy.backend_servers:
     description: "Array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used)"
     default: []
+  ha_proxy.backend_ssl:
+    description: "Optionally enable SSL verification for backend servers, one of `verify`, `noverify`, any other value assumes no ssl backend.  Setting `verify` requires `ha_proxy.backend_ca_file` key to be set."
+    default: "off"
+  ha_proxy.backend_ssl_verifyhost:
+    description: "Optional hostname to verify in the x509 certificate subject for SSL-enabled backend servers.  Requires `ha_proxy.backend_ssl` is set to `verify` when using this."
   ha_proxy.backend_port:
     description: "Listening port for Router"
     default: 80
   ha_proxy.compress_types:
     description: "If this property is set, gzip compression will be activated for the mime types named in this property. definition like 'text/html text/plain text/css'"
     default: ""
-
   ha_proxy.routed_backend_servers:
     description: "Hash of the URL prefixes -> array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used)"
     default: {}
-
+    example:
+      routed_backend_servers:
+        /images:
+          servers: [10.0.0.2, 10.0.0.3]  # required - list of backend IPs to connect to
+          port: 4443       # required - port haproxy should listen on
+          backend_ssl: "verify"  # optional - enables ssl backend, one of `verify`, `noverify`, any other value assumes no ssl backend.
+                                 # Setting `verify` requires `ha_proxy.backend_ca_file` key to be set.
+          backend_verifyhost: example.com # optional - hostname to verify in the x509 certificate subject for SSL-enabled backend servers
+                                          # only used if backend_ssl: `verify` is set
   ha_proxy.headers:
     description: "Hash of custom headers you wish you have set on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
     example: |
@@ -131,6 +146,10 @@ properties:
           - 10.20.10.11
           backend_port: 80 # optional - sets backend port - otherwise defaults to `port`
           ssl: true        # optional - enables ssl, and uses the `ha_proxy.ssl_pem` provided key
+          backend_ssl: "verify"  # optional - enables ssl backend, one of `verify`, `noverify`, any other value assumes no ssl backend.  
+                                 # Setting `verify` requires `ha_proxy.backend_ca_file` key to be set.
+          backend_verifyhost: example.com # optional - hostname to verify in the x509 certificate subject for SSL-enabled backend servers
+                                          # only used if backend_ssl: `verify` is set
   ha_proxy.resolvers:
     description: "List of DNS servers"
     example:
