@@ -22,7 +22,7 @@ popd
 
 tar xzf haproxy/haproxy-1.6.10.tar.gz
 pushd haproxy-1.6.10
-  make TARGET=linux2628 USE_OPENSSL=1 USE_STATIC_PCRE=1 USE_ZLIB=1
+  make TARGET=linux2628 USE_OPENSSL=1 USE_STATIC_PCRE=1 USE_ZLIB=1 SSL_LIB=/var/vcap/packages/openssl/lib SSL_INC=/var/vcap/packages/openssl/include
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd

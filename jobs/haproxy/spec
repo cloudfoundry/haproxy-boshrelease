@@ -6,6 +6,8 @@ description: "The HAProxy server can be used to terminate SSL in front of the Ro
 packages:
 - haproxy
 - ttar
+- openssl
+- openssl-fips
 
 templates:
   haproxy.config.erb:        config/haproxy.config

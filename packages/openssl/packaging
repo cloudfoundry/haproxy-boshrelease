@@ -1,0 +1,12 @@
+set -eux
+
+tar xvf openssl/openssl-1.0.2j.tar.gz 
+cd openssl-1.0.2j 
+export CFLAGS="-I/var/vcap/packages/openssl-fips/include"
+export LDFLAGS="-L/var/vcap/packages/openssl-fips/lib"
+./config \
+  --prefix=${BOSH_INSTALL_TARGET} \
+  --with-fipsdir=/var/vcap/packages/openssl-fips \
+  fips shared
+make
+make install

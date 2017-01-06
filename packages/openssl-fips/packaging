@@ -1,0 +1,9 @@
+set -eux
+
+tar xvf openssl-fips/openssl-fips-2.0.14.tar.gz
+cd openssl-fips-2.0.14
+./config \
+  --prefix=${BOSH_INSTALL_TARGET} \
+  fips
+make
+make install
