@@ -50,6 +50,9 @@ jobs:
     - name: haproxy2
       static_ips: (( static_ips(3) ))
 
+properties:
+  keepalived: ~
+
 networks:
 - name: haproxy1
   # Assumes up to 10 VMs, including 5 static and 5 dynamic.
