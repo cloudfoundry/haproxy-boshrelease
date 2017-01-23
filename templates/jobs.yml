@@ -49,3 +49,4 @@ networks: (( merge ))
 properties:
   <<: (( merge ))
   ha_proxy: (( meta.properties.ha_proxy ))
+  keepalived: (( meta.properties.keepalived ))

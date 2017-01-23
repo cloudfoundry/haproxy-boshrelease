@@ -17,3 +17,6 @@ meta:
       keepalive_timeout:    1
       queue_timeout:       30
       accept_proxy: "accept-proxy"
+    keepalived:
+    #vip is the only mandatory parameter
+      vip: '192.168.0.1'

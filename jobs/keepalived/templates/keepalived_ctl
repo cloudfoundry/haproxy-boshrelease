@@ -1,0 +1,33 @@
+#!/bin/bash
+APP_DIR=/var/vcap/jobs/keepalived
+PKG_DIR=/var/vcap/packages/keepalived
+BIN_DIR=${PKG_DIR}/bin
+SBIN_DIR=${PKG_DIR}/sbin
+CONF_DIR=${APP_DIR}/config
+RUN_DIR=/var/vcap/sys/run/keepalived
+LOG_DIR=/var/vcap/sys/log/keepalived
+PIDFILE=${RUN_DIR}/pid
+
+case $1 in
+
+  start)
+    mkdir -p $RUN_DIR $LOG_DIR
+    chown -R vcap:vcap $RUN_DIR $LOG_DIR
+    echo $$ > $PIDFILE
+	$SBIN_DIR/keepalived \
+		-f $CONF_DIR/keepalived.config \
+		--pid=$PIDFILE \
+		&
+		
+    ;;
+
+  stop)
+    kill -9 -$(cat $PIDFILE)
+    rm -f $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: keepalived_ctl {start|stop}" ;;
+
+esac

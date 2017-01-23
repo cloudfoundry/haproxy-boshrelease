@@ -1,0 +1,8 @@
+---
+name: keepalived
+
+dependencies: []
+
+files:
+- keepalived/keepalived-1.2.24.tar.gz
+
