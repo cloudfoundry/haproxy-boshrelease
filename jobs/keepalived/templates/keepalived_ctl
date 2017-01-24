@@ -6,24 +6,34 @@ SBIN_DIR=${PKG_DIR}/sbin
 CONF_DIR=${APP_DIR}/config
 RUN_DIR=/var/vcap/sys/run/keepalived
 LOG_DIR=/var/vcap/sys/log/keepalived
-PIDFILE=${RUN_DIR}/pid
+
+exec >>${LOG_DIR}/keepalived.log 2>&1
 
 case $1 in
 
   start)
+    echo "Starting keepalived... ($(date))"
     mkdir -p $RUN_DIR $LOG_DIR
     chown -R vcap:vcap $RUN_DIR $LOG_DIR
-    echo $$ > $PIDFILE
-	$SBIN_DIR/keepalived \
-		-f $CONF_DIR/keepalived.config \
-		--pid=$PIDFILE \
-		&
-		
+    interface=$(ip route get 8.8.8.8 | tr -s "\n" " " | sed 's/.*\dev \(\S\+\).*/\1/')
+    if grep "interface auto" ${CONF_DIR}/keepalived.config > /dev/null; then
+        sed -i "s/interface auto/interface ${interface}/" ${CONF_DIR}/keepalived.config
+    fi
+
+    $SBIN_DIR/keepalived -l -D \
+        -f $CONF_DIR/keepalived.config \
+        --pid=$RUN_DIR/keepalived.pid \
+        --vrrp_pid=${RUN_DIR}/vrrp.pid \
+        --checkers_pid=${RUN_DIR}/vrrp.pid \
+        >> ${LOG_DIR}/keepalived.log 2>&1 &
     ;;
 
   stop)
-    kill -9 -$(cat $PIDFILE)
-    rm -f $PIDFILE
+    echo "Stopping keepalived... ($(date))"
+    for PIDFILE in ${RUN_DIR}/*.pid; do
+        kill -9 -$(cat $PIDFILE)
+        rm -f $PIDFILE
+    done
 
     ;;
 
