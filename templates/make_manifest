@@ -7,17 +7,17 @@ STEMCELL_OS=${STEMCELL_OS:-ubuntu}
 
 infrastructure=$1
 servers=$2
-shift
-shift
 
-if [ "$infrastructure" != "aws-ec2" ] && \
-    [ "$infrastructure" != "openstack" ] && \
-    [ "$infrastructure" != "warden" ] || \
-    [ -z "$servers" ]; then
-  echo $infrastructure
-  echo "usage: ./make_manifest <aws-ec2|warden|openstack> <backend_server1>,[<backend_server2>,...,<backend_serverN>]"
+if [[ "$infrastructure" != "aws-ec2" ]] && \
+    [[ "$infrastructure" != "openstack" ]] && \
+    [[ "$infrastructure" != "warden" ]] || \
+    [[ -z "$servers" ]]; then
+  echo >&2 "usage: ./make_manifest <aws-ec2|warden|openstack> <backend_server1>,[<backend_server2>,...,<backend_serverN>]"
   exit 1
 fi
+
+shift
+shift
 
 BOSH_STATUS=$(bosh status)
 DIRECTOR_UUID=$(echo "$BOSH_STATUS" | grep UUID | awk '{print $2}')
@@ -64,21 +64,37 @@ release=$templates/..
 tmpdir=$release/tmp
 
 mkdir -p $tmpdir
-cp $templates/stub.yml $tmpdir/stub-with-uuid.yml
-echo $DIRECTOR_NAME $DIRECTOR_CPI $DIRECTOR_UUID $STEMCELL
-perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$DIRECTOR_UUID/g" $tmpdir/stub-with-uuid.yml
-perl -pi -e "s/NAME/$NAME/g" $tmpdir/stub-with-uuid.yml
-perl -pi -e "s/STEMCELL/$STEMCELL/g" $tmpdir/stub-with-uuid.yml
-#perl -pi -e "for my \$server (split(\",\", \"$servers\")) { s/(\s+)- PLACEHOLDER-SERVER-IP/\$1- \$server\n\$1- PLACEHOLDER-SERVER-IP/ }" $tmpdir/stub-with-uuid.yml
-for server in $(echo $servers | tr "," "\n"); do
-  perl -pi -e "s/(\s+)- PLACEHOLDER-SERVER-IP/\$1- $server\n\$1- PLACEHOLDER-SERVER-IP/" $tmpdir/stub-with-uuid.yml
-done
-perl -pi -e "s/\s+- PLACEHOLDER-SERVER-IP//" $tmpdir/stub-with-uuid.yml
+cat <<EOF > $tmpdir/stub-with-uuid.yml
+---
+properties:
+  ha_proxy:
+    backend_servers:
+    - ${servers}
 
-spiff merge \
-  $templates/deployment.yml \
-  $templates/jobs.yml \
-  $templates/infrastructure-${infrastructure}.yml \
+name: ${NAME}
+director_uuid: ${DIRECTOR_UUID}
+EOF
+
+
+if [[ $(bosh cloud-config | spruce json | jq -r '.networks[] | select(.name == "haproxy") | .name') != "haproxy" ]]; then
+	echo >&2 "Your cloud-config does not have the 'haproxy' network in it. See templates/cloud-config-warden.yml for an example."
+	exit 1
+fi
+if [[ $(bosh cloud-config | spruce json | jq -r '.vm_types[] | select(.name == "haproxy") | .name') != "haproxy" ]]; then
+	echo >&2 "Your cloud-config does not have the 'haproxy' vm_type in it. See templates/cloud-config-warden.yml for an example."
+	exit 1
+fi
+
+bosh cloud-config | spruce merge --cherry-pick networks > $tmpdir/cc-networks.yml
+
+if [[ -n "${KEEPALIVED_VIP}" ]]; then
+	keepalived=$templates/keepalived.yml
+fi
+
+spruce merge --prune networks \
+  $templates/haproxy.yml \
+  $keepalived \
+  $tmpdir/cc-networks.yml \
   $tmpdir/stub-with-uuid.yml \
   $* > $tmpdir/$NAME-manifest.yml
 

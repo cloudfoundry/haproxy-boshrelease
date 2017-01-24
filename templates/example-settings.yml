@@ -1,22 +1,21 @@
-meta:
-  properties:
-    ha_proxy:
-    # Feel free to override any of these settings, or add any settings provided by jobs/haproxy/spec.
-    # internal_only_domains will be forced to an empty array for the private_haproxy_z* servers.
-    # backend_servers will be supplied by make_manifest parameters (but if not using that, feel free to add here
-    # and make sure to save this example elsewhere
-      internal_only_domains: []
-      disable_http: false
-      enable_4443:  false
-      backend_port: 80
-      connect_timeout:      5
-      client_timeout:      30
-      server_timeout:      30
-      request_timeout:     30
-      websocket_timeout: 3600
-      keepalive_timeout:    1
-      queue_timeout:       30
-      accept_proxy: "accept-proxy"
-    keepalived:
-    #vip is the only mandatory parameter
-      vip: '192.168.0.1'
+properties:
+  ha_proxy:
+  # Feel free to override any of these settings, or add any settings provided by jobs/haproxy/spec.
+  # internal_only_domains will be forced to an empty array for the private_haproxy_z* servers.
+  # backend_servers will be supplied by make_manifest parameters (but if not using that, feel free to add here
+  # and make sure to save this example elsewhere
+    internal_only_domains: []
+    disable_http: false
+    enable_4443:  false
+    backend_port: 80
+    connect_timeout:      5
+    client_timeout:      30
+    server_timeout:      30
+    request_timeout:     30
+    websocket_timeout: 3600
+    keepalive_timeout:    1
+    queue_timeout:       30
+    accept_proxy: "accept-proxy"
+  keepalived:
+  # vip is the only mandatory parameter
+    vip: '192.168.0.1'
