@@ -8,7 +8,7 @@ packages:
 
 templates:
   keepalived_ctl: 		bin/keepalived_ctl
-  keepalived.config.erb: 	config/keepalived.config
+  keepalived.config.erb: 	config/keepalived.config.template
 
 properties:
   keepalived.vip:
