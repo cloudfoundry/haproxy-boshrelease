@@ -2,6 +2,54 @@
 
 set -e
 
+version_checker() {
+	if [[ $1 == $2 ]]
+	then
+		return 0
+	fi
+	local IFS=.
+	local i actual=($1) expected=($2)
+	# fill empty fields in actual with zeros
+	for ((i=${#actual[@]}; i<${#expected[@]}; i++))
+	do
+		actual[i]=0
+	done
+	actual_numeric=0
+	expected_numeric=0
+	for ((i=0; i<${#actual[@]}; i++))
+	do
+		if [[ -z ${expected[i]} ]]
+		then
+			# fill empty fields in expected with zeros
+			expected[i]=0
+		fi
+		actual_numeric=$((actual_numeric+${actual[i]}*1000**(${#actual[@]}-i)))
+		expected_numeric=$((expected_numeric+${expected[i]}*1000**(${#expected[@]}-i)))
+	done
+
+
+	if [[ ${actual_numeric} -lt ${expected_numeric} ]]; then
+		return 1
+	fi
+	return 0
+}
+
+required_version="1.8.9"
+dev_version=$(spruce -v 2>&1 | perl -pe 's/.*development.*/DEV/')
+if [[ ${dev_version} == "DEV" ]]; then
+	echo "Treating 'development' version as up-to-date with spruce v${required_version}"
+else
+	spruce_version=$(spruce -v 2>&1 | perl -pe 's|.*?(\d+\.\d+(\.\d+)*).*|$1|')
+	if [[ -z ${spruce_version} || $(echo ${current_version} | egrep '[^0-9\.]') ]]; then
+		echo "make_manifest requires spruce version ${required_version} or newer, but the current version could not be parsed: ${spruce_version}"
+		exit 1
+	fi
+	if ! version_checker ${spruce_version} ${required_version}; then
+		echo "make_manifest requires spruce version ${required_version} or newer, but found version ${spruce_version}"
+		exit
+	fi
+fi
+
 template_prefix="haproxy"
 STEMCELL_OS=${STEMCELL_OS:-ubuntu}
 
