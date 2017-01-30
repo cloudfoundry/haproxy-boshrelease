@@ -85,7 +85,7 @@ case $1 in
         sed "s/interface auto/interface ${interface}/" ${CONF_DIR}/keepalived.config.template > ${CONF_DIR}/keepalived.config
     fi
 
-    $SBIN_DIR/keepalived -l -D \
+    $SBIN_DIR/keepalived -l -D -n \
         -f $CONF_DIR/keepalived.config \
         --pid=$RUN_DIR/keepalived.pid \
         --vrrp_pid=${RUN_DIR}/vrrp.pid \
