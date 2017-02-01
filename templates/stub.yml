@@ -6,15 +6,45 @@ meta:
     - haproxy
   stemcell:
     name: STEMCELL
+    version: latest
 
   properties:
     ha_proxy:
       <<: (( merge ))
       backend_servers:
       - PLACEHOLDER-SERVER-IP
+  floatings:
+    ha_proxy:
+      public_z1: PUBLIC-Z1-IP
+      public_z2: PUBLIC-Z2-IP
+      private_z1: PRIVATE-Z1-IP
+      private_z2: PRIVATE-Z2-IP
+  instances:
+    ha_proxy:
+      public_z1: 1
+      public_z2: 0
+      private_z1: 1
+      private_z2: 0
 
 director_uuid: PLACEHOLDER-DIRECTOR-UUID
 
 releases:
   - name: haproxy
     version: latest
+
+networks:
+  - name: floating
+    type: vip
+    cloud_properties:
+      security_groups: cf
+      net_id: NET-ID
+  - name: haproxy1
+    type: dynamic
+    cloud_properties:
+      security_groups: cf
+      net_id: NET-ID
+  - name: haproxy2
+    type: dynamic
+    cloud_properties:
+      security_groups: cf
+      net_id: NET-ID

@@ -1,12 +1,10 @@
 meta:
   environment: (( merge ))
   dns_root: (( merge ))
-  security_groups: (( merge ))
   persistent_disk: 4096
-
   stemcell:
     name: bosh-openstack-kvm-ubuntu-trusty-go_agent
-    version: (( merge || 3232 ))
+    version: (( merge || latest ))
   instances:
     ha_proxy:
       public_z1:  (( merge || 1 ))
@@ -15,9 +13,10 @@ meta:
       private_z2: (( merge || 0 ))
   floatings:
     ha_proxy:
-      public_z1:  (( merge ))
-  public_security_groups: (( merge ))
-
+      public_z1: (( merge ))
+      public_z2: (( merge ))
+      private_z1: (( merge ))
+      private_z2: (( merge ))
 
 jobs:
   - name: public_haproxy_z1
@@ -46,28 +45,29 @@ jobs:
 
 compilation:
   cloud_properties:
-    instance_type: (( merge || m1.small ))
+    instance_type: (( merge || "m1.small" ))
 
 resource_pools:
   - name: small_z1
     cloud_properties:
-      instance_type: (( merge || m1.small ))
+      instance_type: (( merge || "m1.small" ))
   - name: small_z2
     cloud_properties:
-      instance_type: (( merge || m1.small ))
+      instance_type: (( merge || "m1.small" ))
 
 networks:
   - name: floating
+    <<: (( merge ))
     type: vip
     cloud_properties:
-      security_groups: (( meta.public_security_groups ))
+      security_groups: (( merge ))
   - name: haproxy1
     <<: (( merge ))
     type: dynamic
     cloud_properties:
-      security_groups: (( meta.security_groups ))
+      security_groups: (( merge ))
   - name: haproxy2
     <<: (( merge ))
     type: dynamic
     cloud_properties:
-      security_groups: (( meta.security_groups ))
+      security_groups: (( merge ))

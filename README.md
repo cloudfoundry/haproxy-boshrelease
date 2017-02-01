@@ -22,7 +22,7 @@ cd haproxy-boshrelease
 git checkout latest
 ```
 
-You can either use the templates + examples provided to merge this in with an existing CloudFoundry deployment, or create a new deployment, via `make_manifest <aws-ec2|warden> <comma-separated-list-of-router-servers> <additional_templates>`
+You can either use the templates + examples provided to merge this in with an existing CloudFoundry deployment, or create a new deployment, via `make_manifest <aws-ec2|warden|openstack> <comma-separated-list-of-router-servers> <additional_templates>`
 
 ```
 # Example for bare bones bosh-lite cloudfoundry release on warden
