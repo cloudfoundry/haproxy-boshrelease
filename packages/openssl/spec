@@ -3,4 +3,4 @@ name: openssl
 dependencies:
 - openssl-fips
 files:
-- openssl/openssl-1.0.2j.tar.gz
+- openssl/openssl-1.0.2k.tar.gz

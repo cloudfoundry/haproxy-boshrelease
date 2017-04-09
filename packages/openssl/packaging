@@ -1,7 +1,7 @@
 set -eux
 
-tar xvf openssl/openssl-1.0.2j.tar.gz 
-cd openssl-1.0.2j 
+tar xvf openssl/openssl-1.0.2k.tar.gz 
+cd openssl-1.0.2k 
 export CFLAGS="-I/var/vcap/packages/openssl-fips/include"
 export LDFLAGS="-L/var/vcap/packages/openssl-fips/lib"
 ./config \

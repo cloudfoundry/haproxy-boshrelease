@@ -14,4 +14,6 @@ builds:
     version: 8.0.11
   41bcfed2-7f91-4413-b40a-312306372e70:
     version: 8.0.12
+  235b3e06-b31a-4443-ad83-b765cd458df7:
+    version: 8.0.12.ssl
 format-version: '2'

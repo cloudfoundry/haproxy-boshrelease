@@ -19,10 +19,6 @@ haproxy/socat-1.7.3.1.tar.gz:
   object_id: bcc504b7-e970-4469-ad93-d030b082e14c
   sha: a6f1d8ab3e85f565dbe172f33a9be6708dd52ffb
   size: 606049
-openssl/openssl-1.0.2j.tar.gz:
-  object_id: c81eff19-1563-4c78-9326-f9d3f6544417
-  sha: bdfbdb416942f666865fa48fe13c2d0e588df54f
-  size: 5307912
 openssl-fips/openssl-fips-2.0.14.tar.gz:
   object_id: 828289fb-446a-4582-83dc-3fe7b516d7a0
   sha: 29e8e25d6bcdb800911d6d3bb82514af1c256670
@@ -32,3 +28,7 @@ keepalived/keepalived-1.2.24.tar.gz:
   sha: !binary |-
     YTY5YjJjNDA2MjdhOWJkNjk2OThhNTdlODFhOGM4Yzk3ODI2MDI1ZA==
   size: 601873
+openssl/openssl-1.0.2k.tar.gz:
+  object_id: 28d2a52d-35b5-477b-8583-81fd37416eac
+  sha: 5f26a624479c51847ebd2f22bb9f84b3b44dcb44
+  size: 5309236
