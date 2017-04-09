@@ -1,0 +1,6 @@
+check process keepalived
+  with pidfile /var/vcap/sys/run/keepalived/keepalived.pid
+  start program "/var/vcap/jobs/keepalived/bin/keepalived_ctl start"
+  stop program "/var/vcap/jobs/keepalived/bin/keepalived_ctl stop"
+  group vcap
+

@@ -1,0 +1,30 @@
+global_defs {
+	# Keepalived process identifier
+	lvs_id <%= spec.name %> 
+}
+# Healthcheck test to be performed, if rc is different than 0, new master election is required between all the remaining nodes
+vrrp_script <%= p('keepalived.healthcheck_name') %> {
+	script "<%= p('keepalived.healthcheck_command') %>"
+	interval 2
+	weight 2
+}
+# Virtual interface
+# The priority specifies the order in which the assigned interface to take over in a failover
+vrrp_instance <%= spec.name+'_'+p('keepalived.healthcheck_name') %> {
+	<% if spec.bootstrap %>
+	state MASTER
+	priority 101
+	<% else %>
+	state SLAVE
+	priority 100
+	<% end %>
+	interface <%= p('keepalived.interface') %>
+	virtual_router_id <%= p('keepalived.virtual_router_id') %>
+# The virtual ip address shared between the two loadbalancers
+	virtual_ipaddress {
+		<%= p('keepalived.vip') %>
+	}
+	track_script {
+		<%= p('keepalived.healthcheck_name') %>
+	}
+}

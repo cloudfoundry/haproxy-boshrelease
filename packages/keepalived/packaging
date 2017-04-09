@@ -1,0 +1,13 @@
+# abort script on any command that exits with a non zero value
+set -e -x
+
+#Source can be downloaded at : http://www.keepalived.org/software/keepalived-1.2.24.tar.gz
+tar xzvf keepalived/keepalived-1.2.24.tar.gz
+cd keepalived-1.2.24/
+
+#compile keepalive
+./configure --prefix=${BOSH_INSTALL_TARGET}
+make 
+make install
+
+

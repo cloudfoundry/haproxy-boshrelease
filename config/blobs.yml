@@ -27,3 +27,8 @@ openssl-fips/openssl-fips-2.0.14.tar.gz:
   object_id: 828289fb-446a-4582-83dc-3fe7b516d7a0
   sha: 29e8e25d6bcdb800911d6d3bb82514af1c256670
   size: 1474857
+keepalived/keepalived-1.2.24.tar.gz:
+  object_id: aa936bbe-fe82-49cc-82c8-99d867e5b4bb
+  sha: !binary |-
+    YTY5YjJjNDA2MjdhOWJkNjk2OThhNTdlODFhOGM4Yzk3ODI2MDI1ZA==
+  size: 601873

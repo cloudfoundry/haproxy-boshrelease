@@ -1,0 +1,27 @@
+---
+name: keepalived
+
+description: "The keepalived job can be used to add a VRRP IP address to enforce HA on haproxy release"
+
+packages:
+- keepalived
+
+templates:
+  keepalived_ctl: 		bin/keepalived_ctl
+  keepalived.config.erb: 	config/keepalived.config.template
+
+properties:
+  keepalived.vip:
+    description: Virtual IP V4 address that will be given to master 
+  keepalived.healthcheck_name:
+    description: label displayed for the health check. Will appear in keepalive traces e.g. "Keepalived_vrrp[4558] VRRP_Script(check_haproxy) failed"
+    default: check_haproxy
+  keepalived.healthcheck_command:
+    description: when health check fails, this triggers a fail over. The default command checks the haproxy process is still alive.
+    default: killall -0 haproxy
+  keepalived.interface:
+    description: interface keepalived will use to mount the VIP. If set to 'auto', uses the default interface on the VM
+    default: auto
+  keepalived.virtual_router_id:                
+    description : Specifies the VRRP virtual router identifier (VRID)(numerical from 1 to 255). A unique VRID value is needed for each VRRP cluster
+    default: 1

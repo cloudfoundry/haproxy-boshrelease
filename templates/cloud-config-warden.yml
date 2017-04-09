@@ -1,0 +1,22 @@
+compilation:
+  workers: 5
+  reuse_compilation_vms: true
+  vm_type: haproxy
+  network: haproxy
+
+vm_types:
+- name: haproxy
+  cloud_properties:
+    name: random
+
+networks:
+  - name: haproxy
+    subnets:
+      - cloud_properties:
+          name: random
+        range: 10.244.50.0/24
+        reserved:
+          - 10.244.50.1
+          - 10.244.50.2 # floating vip for keepalived?
+        static:
+          - 10.244.50.3 - 10.244.50.10
