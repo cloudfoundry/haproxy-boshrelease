@@ -203,9 +203,16 @@ backend http-routers
     compression algo gzip
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
-    <% p("ha_proxy.backend_servers").each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
-    <% end %>
+    <% p("ha_proxy.backend_servers").each_with_index do |ip, index| -%>
+        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> <% if_p("ha_proxy.resolvers") do -%>
+        resolvers default <% end -%>
+        check inter 1000 <% if p("ha_proxy.backend_ssl").downcase == "verify" then -%>
+        ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname | -%>
+        verifyhost <%= verify_hostname %> <% end -%>
+        <% elsif p("ha_proxy.backend_ssl").downcase == "noverify" then -%>
+        ssl verify none <% end -%>
+
+    <% end -%>
 
 <%# Routed Backends %>
 
@@ -219,9 +226,18 @@ backend http-routed-backend-<%= prefix_hash %>
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
     <% data["servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= data["port"] %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
-    <% end %>
-<% end %>
+        server node<%= index %> <%= ip %>:<%= data["port"] %> <% if_p("ha_proxy.resolvers") do -%>
+        resolvers default <% end -%>
+        check inter 1000 <% if data["backend_ssl"] then -%>
+           <% if data["backend_ssl"].downcase == "verify" then -%>
+             ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if data["backend_verifyhost"] then -%>
+             verifyhost <%= data["backend_verifyhost"] %> <% end -%>
+           <% elsif data["backend_ssl"].downcase == "noverify" then -%>
+             ssl verify none <% end -%>
+        <% end -%>
+
+    <% end -%>
+<% end -%>
 
 <%# TCP Backends %>
 <% p("ha_proxy.tcp").each do |tcp_proxy| %>
@@ -246,6 +262,14 @@ if tcp_proxy["backend_port"]
   backend_port = tcp_proxy["backend_port"]
 end %>
 <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %> resolvers default <% end %> check inter 1000
-<% end %>
-<% end %>
+        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
+        resolvers default <% end -%> check inter 1000  <% if tcp_proxy["backend_ssl"] then -%>
+           <% if tcp_proxy["backend_ssl"].downcase == "verify" then -%>
+             ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if tcp_proxy["backend_verifyhost"] then -%>
+             verifyhost <%= tcp_proxy["backend_verifyhost"] %> <% end -%>
+           <% elsif tcp_proxy["backend_ssl"].downcase == "noverify" then -%>
+             ssl verify none <% end -%>
+        <% end -%>
+     <% end -%>
+
+<% end -%>
