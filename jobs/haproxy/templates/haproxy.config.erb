@@ -11,6 +11,11 @@ global
     stats socket /var/vcap/sys/run/haproxy/stats.sock mode 600 level admin
     stats timeout 2m
 
+    ssl-default-bind-options no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>
+    ssl-default-bind-ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    ssl-default-server-options no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>
+    ssl-default-server-ciphers <%= p("ha_proxy.ssl_ciphers") %>
+
 defaults
     log global
     maxconn 64000
@@ -113,12 +118,12 @@ end
 frontend https-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind :443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
     <% if p("ha_proxy.hsts_enable") %>
-    http-response set-header Strict-Transport-Security max-age=<% p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
+    http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
     <% end %>
     default_backend http-routers
 <%
@@ -165,9 +170,9 @@ end
 frontend wss-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind :4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
     default_backend http-routers
 <%
@@ -248,9 +253,9 @@ backend http-routed-backend-<%= prefix_hash %>
     mode tcp
 <% if tcp_proxy["ssl"] %>
     <% if p("ha_proxy.accept_proxy") %>
-    bind :<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
+    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
 <% else %>
     bind :<%= tcp_proxy["port"] %>
