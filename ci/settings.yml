@@ -8,7 +8,7 @@ meta:
     access_key: (( vault "secret/aws/cfcommunity:access" ))
     secret_key: (( vault "secret/aws/cfcommunity:secret" ))
   github:
-    owner: cloudfoundry-community
+    owner: cloudfoundry-incubator
     repo:  haproxy-boshrelease
     private_key:  (( vault "secret/pipelines/haproxy-boshrelease/github:private" ))
     access_token: (( vault "secret/pipelines/haproxy-boshrelease/github:token" ))
