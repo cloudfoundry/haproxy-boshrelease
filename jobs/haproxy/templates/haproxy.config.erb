@@ -117,6 +117,9 @@ frontend https-in
     <% else %>
     bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>ciphers <%= p("ha_proxy.ssl_ciphers") %>
     <% end %>
+    <% if p("ha_proxy.hsts_enable") %>
+    http-response set-header Strict-Transport-Security max-age=<% p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
+    <% end %>
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
