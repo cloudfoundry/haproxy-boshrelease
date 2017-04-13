@@ -54,6 +54,9 @@ properties:
   ha_proxy.default_dh_param:
     default: 2048
     description: "Maximum size of DH params when generating epmehmeral keys during key exchange"
+  ha_proxy.disable_tls_tickets:
+    default: true
+    description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets"
 
   ha_proxy.connect_timeout:
     description: "Timeout waiting for connections to establish to a server (in seconds)"
