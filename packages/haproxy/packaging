@@ -4,24 +4,24 @@ set -e
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
 echo "Extracting pcre..."
-tar xzf haproxy/pcre-8.36.tar.gz
-pushd pcre-8.36
+tar xzf haproxy/pcre-8.40.tar.gz
+pushd pcre-8.40
   ./configure
   make
   make install
 popd
 
 echo "Installing socat..."
-tar xzf haproxy/socat-1.7.3.1.tar.gz
-pushd socat-1.7.3.1
+tar xzf haproxy/socat-1.7.3.2tar.gz
+pushd socat-1.7.3.2
   ./configure
   make
   cp socat ${BOSH_INSTALL_TARGET}/bin
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
-tar xzf haproxy/haproxy-1.6.10.tar.gz
-pushd haproxy-1.6.10
+tar xzf haproxy/haproxy-1.6.12.tar.gz
+pushd haproxy-1.6.12
   make TARGET=linux2628 USE_OPENSSL=1 USE_STATIC_PCRE=1 USE_ZLIB=1
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy

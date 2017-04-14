@@ -1,6 +1,6 @@
 ---
 name: haproxy
 files:
-- haproxy/haproxy-1.6.10.tar.gz
-- haproxy/pcre-8.36.tar.gz
-- haproxy/socat-1.7.3.1.tar.gz
+- haproxy/haproxy-1.6.12.tar.gz
+- haproxy/pcre-8.40.tar.gz
+- haproxy/socat-1.7.3.2.tar.gz
