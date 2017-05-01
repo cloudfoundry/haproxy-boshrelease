@@ -16,7 +16,16 @@ templates:
   backend-ca-certs.erb:      config/backend-ca-certs.pem
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
-  properties.sh.erb:    data/properties.sh
+  properties.sh.erb:         data/properties.sh
+
+consumes:
+  - name: http_backend
+    type: http_backend
+    optional: true
+
+  - name: tcp_backend
+    type: tcp_backend
+    optional: true
 
 properties:
   ha_proxy.syslog_server:
