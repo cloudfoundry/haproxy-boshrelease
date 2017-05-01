@@ -211,8 +211,21 @@ backend http-routers
     compression algo gzip
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
-    <% p("ha_proxy.backend_servers").each_with_index do |ip, index| -%>
-        server node<%= index %> <%= ip %>:<%= p("ha_proxy.backend_port") %> <% if_p("ha_proxy.resolvers") do -%>
+
+    <%
+    backend_servers = []
+    backend_port = nil
+    if_p("ha_proxy.backend_servers") do |servers|
+        backend_servers = servers
+        backend_port = p("ha_proxy.backend_port")
+    end.else_if_link("http_backend") do |backend|
+        backend_servers = backend.instances.map(&:address)
+        backend_port = backend.p("port") || p("ha_proxy.backend_port")
+    end
+    %>
+
+    <% backend_servers.each_with_index do |ip, index| -%>
+        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
         resolvers default <% end -%>
         check inter 1000 <% if p("ha_proxy.backend_ssl").downcase == "verify" then -%>
         ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname | -%>
