@@ -261,7 +261,15 @@ backend http-routed-backend-<%= prefix_hash %>
 <% end -%>
 
 <%# TCP Backends %>
-<% p("ha_proxy.tcp").each do |tcp_proxy| %>
+<%
+tcp = p("ha_proxy.tcp")
+if_link("tcp_backend") do |tcp_backend|
+  tcp << tcp_backend.properties.tap do |tcp_proxy|
+    tcp_proxy["name"] = tcp_backend.instances.first.name || "link"
+    tcp_proxy["backend_servers"] = tcp_backend.instances.map(&:address)
+  end
+end %>
+<% tcp.each do |tcp_proxy| %>
     frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
 <% if tcp_proxy["ssl"] %>
