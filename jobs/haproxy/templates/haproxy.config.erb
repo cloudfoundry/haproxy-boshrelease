@@ -264,10 +264,11 @@ backend http-routed-backend-<%= prefix_hash %>
 <%
 tcp = p("ha_proxy.tcp")
 if_link("tcp_backend") do |tcp_backend|
-  tcp << tcp_backend.properties.tap do |tcp_proxy|
-    tcp_proxy["name"] = tcp_backend.instances.first.name || "link"
-    tcp_proxy["backend_servers"] = tcp_backend.instances.map(&:address)
-  end
+  tcp << {
+    "name" => tcp_backend.instances.first.name || "link",
+    "backend_servers" => tcp_backend.instances.map(&:address),
+    "port" => tcp_backend.p("port", p("ha_proxy.tcp_link_port"))
+  }
 end %>
 <% tcp.each do |tcp_proxy| %>
     frontend tcp-frontend_<%= tcp_proxy["name"]%>
@@ -290,6 +291,7 @@ backend_port = tcp_proxy["port"]
 if tcp_proxy["backend_port"]
   backend_port = tcp_proxy["backend_port"]
 end %>
+
 <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
         server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
         resolvers default <% end -%> check inter 1000  <% if tcp_proxy["backend_ssl"] then -%>
