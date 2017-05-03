@@ -20,7 +20,7 @@ templates:
 
 consumes:
   - name: http_backend
-    type: http_backend
+    type: http-router
     optional: true
 
   - name: tcp_backend
