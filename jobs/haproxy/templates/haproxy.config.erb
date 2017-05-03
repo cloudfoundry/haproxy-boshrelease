@@ -217,7 +217,7 @@ backend http-routers
     backend_port = nil
     if_link("http_backend") do |backend|
         backend_servers = backend.instances.map(&:address)
-        backend_port = backend.p("port") || p("ha_proxy.backend_port")
+        backend_port = backend.p("port", p("ha_proxy.backend_port"))
     end.else_if_p("ha_proxy.backend_servers") do |servers|
         backend_servers = servers
         backend_port = p("ha_proxy.backend_port")
