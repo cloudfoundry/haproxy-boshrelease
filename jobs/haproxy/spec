@@ -16,7 +16,16 @@ templates:
   backend-ca-certs.erb:      config/backend-ca-certs.pem
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
-  properties.sh.erb:    data/properties.sh
+  properties.sh.erb:         data/properties.sh
+
+consumes:
+  - name: http_backend
+    type: http-router
+    optional: true
+
+  - name: tcp_backend
+    type: ssh_proxy
+    optional: true
 
 properties:
   ha_proxy.syslog_server:
@@ -165,6 +174,8 @@ properties:
                                  # Setting `verify` requires `ha_proxy.backend_ca_file` key to be set.
           backend_verifyhost: example.com # optional - hostname to verify in the x509 certificate subject for SSL-enabled backend servers
                                           # only used if backend_ssl: `verify` is set
+  ha_proxy.tcp_link_port:
+    description: "Port haproxy should listen on when using the tcp_backend link"
   ha_proxy.resolvers:
     description: "List of DNS servers"
     example:
