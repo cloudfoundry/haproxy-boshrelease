@@ -44,4 +44,6 @@ builds:
     version: 8.0.12
   2c765105-da0a-4e82-8db5-0e95805af095:
     version: 8.1.0
+  b4e7352a-35e8-4895-a215-05dc9b410d0c:
+    version: 8.1.1
 format-version: '2'
