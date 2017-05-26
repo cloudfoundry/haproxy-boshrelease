@@ -11,9 +11,21 @@ global
     stats socket /var/vcap/sys/run/haproxy/stats.sock mode 600 level admin
     stats timeout 2m
 
-    ssl-default-bind-options no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>
+<%
+    ssl_flags = "no-sslv3"
+    if p("ha_proxy.disable_tls_10")
+        ssl_flags = "#{ssl_flags} no-tlsv10"
+    end
+    if p("ha_proxy.disable_tls_11")
+        ssl_flags = "#{ssl_flags} no-tlsv11"
+    end
+    if p("ha_proxy.disable_tls_tickets")
+        ssl_flags = "#{ssl_flags} no-tls-tickets"
+    end
+-%>
+    ssl-default-bind-options <%= ssl_flags %>
     ssl-default-bind-ciphers <%= p("ha_proxy.ssl_ciphers") %>
-    ssl-default-server-options no-sslv3 <% if p("ha_proxy.disable_tls_tickets") %>no-tls-tickets <% end %>
+    ssl-default-server-options <%= ssl_flags %>
     ssl-default-server-ciphers <%= p("ha_proxy.ssl_ciphers") %>
 
 defaults

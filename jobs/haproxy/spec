@@ -78,6 +78,12 @@ properties:
   ha_proxy.disable_tls_tickets:
     default: true
     description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets"
+  ha_proxy.disable_tls_10:
+    default: false
+    description: "Disable TLS 1.0 in HA Proxy"
+  ha_proxy.disable_tls_11:
+    default: false
+    description: "Disable TLS 1.1 in HA Proxy"
 
   ha_proxy.connect_timeout:
     description: "Timeout waiting for connections to establish to a server (in seconds)"
