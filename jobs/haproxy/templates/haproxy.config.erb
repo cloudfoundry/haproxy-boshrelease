@@ -76,7 +76,7 @@ end
 <% unless p("ha_proxy.disable_http") %>
 frontend http-in
     mode http
-    bind :80
+    bind <%= p("ha_proxy.binding_ip") %>:80
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -130,9 +130,9 @@ end
 frontend https-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind :443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
     <% if p("ha_proxy.hsts_enable") %>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
@@ -182,9 +182,9 @@ end
 frontend wss-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind :4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:4443 ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
     default_backend http-routers
 <%
@@ -287,12 +287,12 @@ end %>
     mode tcp
 <% if tcp_proxy["ssl"] %>
     <% if p("ha_proxy.accept_proxy") %>
-    bind :<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind :<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
 <% else %>
-    bind :<%= tcp_proxy["port"] %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %>
 <% end %>
     default_backend tcp-<%= tcp_proxy["name"] %>
 
