@@ -99,10 +99,10 @@ properties:
     default:     3600
   ha_proxy.keepalive_timeout:
     description: "Timeout waiting for new HTTP requests under http keep-alive mode (in seconds)"
-    default:     1
+    default:     0.5
   ha_proxy.request_timeout:
-    description: "Maximum HTTP request length (in seconds)"
-    default:     30
+    description: "Timeout waiting for an HTTP request from the client (minus data)"
+    default:     5
   ha_proxy.queue_timeout:
     description: "Timeout for requests queued waiting for free connection slots (in seconds)"
     default:     30
