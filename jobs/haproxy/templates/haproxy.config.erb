@@ -77,6 +77,7 @@ end
 frontend http-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:80
+    capture request header Host len 256
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
@@ -137,6 +138,7 @@ frontend https-in
     <% if p("ha_proxy.hsts_enable") %>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
     <% end %>
+    capture request header Host len 256
     default_backend http-routers
 <%
 if_p("ha_proxy.headers") do |headers|
