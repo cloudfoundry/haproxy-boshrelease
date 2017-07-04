@@ -53,6 +53,9 @@ properties:
     default: ~
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
+  ha_proxy.enable_health_check_http:
+    description: "Optionally enable http health-check on `haproxy_ip:8080/health`"
+    default: false
   ha_proxy.disable_http:
     description: "Disable port 80 traffic"
     default: false
