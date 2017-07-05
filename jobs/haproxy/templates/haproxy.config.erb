@@ -77,6 +77,18 @@ end
 frontend http-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:80
+    <% if_p("ha_proxy.cidr_whitelist") do %>
+    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
+    tcp-request content accept if whitelist
+    <% end %>
+    <% if_p("ha_proxy.cidr_blacklist") do %>
+    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
+    tcp-request content reject if blacklist
+    <% end %>
+    <% if p("ha_proxy.block_all") then %>
+    tcp-request content reject
+    <% end %>
+
     capture request header Host len 256
     default_backend http-routers
 <%
@@ -135,6 +147,18 @@ frontend https-in
     <% else %>
     bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% end %>
+    <% if_p("ha_proxy.cidr_whitelist") do %>
+    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
+    tcp-request content accept if whitelist
+    <% end %>
+    <% if_p("ha_proxy.cidr_blacklist") do %>
+    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
+    tcp-request content reject if blacklist
+    <% end %>
+    <% if p("ha_proxy.block_all") then %>
+    tcp-request content reject
+    <% end %>
+
     <% if p("ha_proxy.hsts_enable") %>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
     <% end %>

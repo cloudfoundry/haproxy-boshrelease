@@ -17,6 +17,8 @@ templates:
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
   properties.sh.erb:         data/properties.sh
+  blacklist_cidrs.txt.erb:   config/blacklist_cidrs.txt
+  whitelist_cidrs.txt.erb:   config/whitelist_cidrs.txt
 
 consumes:
   - name: http_backend
@@ -197,3 +199,21 @@ properties:
   ha_proxy.binding_ip:
     description: "If there are multiple ethernet interfaces, specify which one to bind"
     default: ""
+
+  ha_proxy.cidr_blacklist:
+    description: "List of CIDRs to block for http(s). Format is string array of CIDRs or single string of base64 encoded gzip."
+    default: ~
+    example:
+      cidr_blacklist:
+      - 10.0.0.0/8
+      - 192.168.2.0/24
+  ha_proxy.cidr_whitelist:
+    description: "List of CIDRs to allow for http(s). Format is string array of CIDRs or single string of base64 encoded gzip."
+    default: ~
+    example:
+      cidr_whitelist:
+      - 172.168.4.1/32
+      - 10.2.0.0/16
+  ha_proxy.block_all:
+    description: "Optionally block all incoming traffic to http(s). Use in conjunction with whitelist."
+    default: false
