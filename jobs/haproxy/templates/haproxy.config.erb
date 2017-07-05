@@ -3,14 +3,22 @@
 global
     log <%= p('ha_proxy.syslog_server') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
+    <% if p("ha_proxy.threads") > 1 %>
+    nbproc <%= p("ha_proxy.threads") %>
+    <% end %>
     user vcap
     group vcap
     maxconn 64000
     spread-checks 4
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
+    <% if p("ha_proxy.threads") > 1 %>
+      <% 1.upto(p("ha_proxy.threads")) do |proc| %>
+    stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 level admin process <%= proc%>
+      <% end %>
+    <% else %>
     stats socket /var/vcap/sys/run/haproxy/stats.sock mode 600 level admin
+    <% end %>
     stats timeout 2m
-
 <%
     ssl_flags = "no-sslv3"
     if p("ha_proxy.disable_tls_10")
@@ -44,16 +52,23 @@ defaults
     timeout queue           <%= (p("ha_proxy.queue_timeout").to_f      * 1000).to_i %>ms
 
 <% if p("ha_proxy.stats_enable") %>
-listen stats
-    bind <%= p("ha_proxy.stats_bind") %>
+  <% stat = p("ha_proxy.stats_bind").split(':');
+     stat_prefix = stat[0] + ":";
+     stat_port = stat[1].to_i;
+   %>
+  <% 1.upto(p("ha_proxy.threads")) do |proc| %>
+listen stats_<%= proc %>
+    bind <%= stat_prefix %><%= stat_port + (proc - 1) %>
+    bind-process <%= proc %>
     acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
     http-request deny unless private
     mode http
     stats enable
     stats hide-version
-    stats realm Haproxy\ Statistics
+    stats realm "Haproxy Statistics"
     stats uri /<%= p("ha_proxy.stats_uri") %>
     stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+  <% end %>
 <% end %>
 
 <%# HTTP Frontend %>
