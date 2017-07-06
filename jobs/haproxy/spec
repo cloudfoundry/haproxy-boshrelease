@@ -28,6 +28,9 @@ consumes:
     optional: true
 
 properties:
+  ha_proxy.threads:
+    description: "Optional number of threads per VM"
+    default: 1
   ha_proxy.syslog_server:
     description: "An IPv4 address optionally followed by a colon and a UDP port. It can also be an IPv6 address or filesystem path to a UNIX domain socket."
     default: "127.0.0.1"
@@ -108,10 +111,10 @@ properties:
     default:     30
 
   ha_proxy.stats_enable:
-    description: "If true, haproxy will enable a socket for stats. You can see the stats on haproxy_ip:9000/haproxy_stats"
+    description: "If true, haproxy will enable a socket for stats. You can see the stats on `haproxy_ip:9000/haproxy_stats`. If multithreading is enabled (`ha_proxy.threads > 1`) haproxy will create a separate socket and stat page for each thread. Each stat page is reachable on a different port ranging from `9000` to `9000 + ha_proxy.threads - 1`."
     default: false
   ha_proxy.stats_bind:
-    description: "Define one or several listening addresses and/or ports in a frontend."
+    description: "Define listening address and port for the stats frontend. If multithreading is enabled (`ha_proxy.threads > 1`) multiple stat pages are available - one for each thread. You can see the stat page for each thread on a separate port - starting at the defined port number."
     default: "*:9000"
   ha_proxy.stats_user:
     description: "User name to authenticate haproxy stats"
