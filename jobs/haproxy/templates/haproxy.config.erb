@@ -11,6 +11,7 @@ global
     maxconn 64000
     spread-checks 4
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
+    tune.bufsize <%= p("ha_proxy.buffer_size_bytes") %>
     <% if p("ha_proxy.threads") > 1 %>
       <% 1.upto(p("ha_proxy.threads")) do |proc| %>
     stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 level admin process <%= proc%>
