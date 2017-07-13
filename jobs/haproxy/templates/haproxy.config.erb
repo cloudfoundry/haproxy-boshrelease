@@ -360,7 +360,7 @@ if tcp_proxy["backend_port"]
   backend_port = tcp_proxy["backend_port"]
 end %>
 
-<% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
+  <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
         server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
         resolvers default <% end -%> check inter 1000  <% if tcp_proxy["backend_ssl"] then -%>
            <% if tcp_proxy["backend_ssl"].downcase == "verify" then -%>
@@ -369,6 +369,14 @@ end %>
            <% elsif tcp_proxy["backend_ssl"].downcase == "noverify" then -%>
              ssl verify none <% end -%>
         <% end -%>
-     <% end -%>
+  <% end -%>
 
+  <% if tcp_proxy["health_check_http"] then %>
+listen health_check_http_tcp-<%= tcp_proxy["name"] %>
+    bind :<%= tcp_proxy["health_check_http"] %>
+    mode http
+    monitor-uri /health
+    acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0
+    monitor fail if tcp-<%= tcp_proxy["name"] %>-routers_down
+  <% end -%>
 <% end -%>
