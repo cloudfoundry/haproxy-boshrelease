@@ -53,6 +53,9 @@ properties:
     default: ~
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
+  ha_proxy.enable_health_check_http:
+    description: "Optionally enable http health-check on `haproxy_ip:8080/health`. It shows `200 OK` if >0 backend servers are up."
+    default: false
   ha_proxy.disable_http:
     description: "Disable port 80 traffic"
     default: false
@@ -189,6 +192,8 @@ properties:
                                  # Setting `verify` requires `ha_proxy.backend_ca_file` key to be set.
           backend_verifyhost: example.com # optional - hostname to verify in the x509 certificate subject for SSL-enabled backend servers
                                           # only used if backend_ssl: `verify` is set
+          health_check_http: 4444 # optional port number - if provided a heath check http site is created at `haproxy_ip:4444/health`.
+                                  # It shows `200 OK` if >0 backend servers are up.
   ha_proxy.tcp_link_port:
     description: "Port haproxy should listen on when using the tcp_backend link"
   ha_proxy.resolvers:
