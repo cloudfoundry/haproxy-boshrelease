@@ -50,4 +50,6 @@ builds:
     version: 8.1.2
   24fa66cb-3141-45e7-9dc0-84c9067582d5:
     version: 8.2.0
+  6ceb8dca-6ccd-4937-becd-5790169c405c:
+    version: 8.3.0
 format-version: '2'
