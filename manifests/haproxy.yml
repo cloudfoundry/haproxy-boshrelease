@@ -1,0 +1,35 @@
+---
+name: haproxy
+
+instance_groups:
+- name: haproxy
+  azs: [z1]
+  instances: 1
+  vm_type: default
+  stemcell: default
+  networks: [{name: default}]
+  jobs:
+  - name: haproxy
+    release: haproxy
+    properties:
+      ha_proxy:
+        backend_port: ((haproxy-backend-port))
+        backend_servers: ((haproxy-backend-servers))
+
+update:
+  canaries: 1
+  max_in_flight: 1
+  canary_watch_time: 1000-30000
+  update_watch_time: 1000-30000
+  serial: false
+
+stemcells:
+  - alias: default
+    os: ubuntu-trusty
+    version: latest
+
+releases:
+- name: haproxy
+  version: 8.3.0
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/haproxy-boshrelease?v=8.3.0
+  sha1: 2a6be83b9712f80cb3dbd58aad18f1b45bb31a9a
