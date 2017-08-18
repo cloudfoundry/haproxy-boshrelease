@@ -49,7 +49,26 @@ properties:
     description: "Space separated trusted cidr blocks for internal_only_domains"
     default: 0.0.0.0/32
   ha_proxy.ssl_pem:
-    description: "SSL certificate (PEM file), or an array of SSL certificates (PEM files)"
+    description: |
+      Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing fields 'cert_chain' and 'private_key',
+      each of which supports a PEM block. Each element can also be a single string containing the cert chain and the private key.
+    example:
+      tls_pem:
+      - cert_chain: |
+          -----BEGIN CERTIFICATE-----
+          -----END CERTIFICATE-----
+          -----BEGIN CERTIFICATE-----
+          -----END CERTIFICATE-----
+        private_key: |
+          -----BEGIN RSA PRIVATE KEY-----
+          -----END RSA PRIVATE KEY-----
+      - |
+        -----BEGIN CERTIFICATE-----
+        -----END CERTIFICATE-----
+        -----BEGIN CERTIFICATE-----
+        -----END CERTIFICATE-----
+        -----BEGIN RSA PRIVATE KEY-----
+        -----END RSA PRIVATE KEY-----
     default: ~
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
