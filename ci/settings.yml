@@ -10,9 +10,10 @@ meta:
     password: (( vault "secret/bosh-lites/lite49/users/admin:password" ))
     cacert:   (( vault "secret/bosh-lites/lite49/certs:rootCA.pem" ))
 
-  vars: |-
-    haproxy-backend-port=8888
-    haproxy-backend-servers=10.10.10.10
+  manifest:
+    vars: |-
+      haproxy-backend-port=8888
+      haproxy-backend-servers=10.10.10.10
 
   aws:
     bucket: cf-haproxy-boshrelease-pipeline # re-use old ci bucket after boshrelease rename
