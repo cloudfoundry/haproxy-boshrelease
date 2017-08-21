@@ -53,7 +53,7 @@ properties:
       Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing fields 'cert_chain' and 'private_key',
       each of which supports a PEM block. Each element can also be a single string containing the cert chain and the private key.
     example:
-      tls_pem:
+      ssl_pem:
       - cert_chain: |
           -----BEGIN CERTIFICATE-----
           -----END CERTIFICATE-----
