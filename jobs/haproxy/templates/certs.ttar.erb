@@ -5,9 +5,13 @@ if_p("ha_proxy.ssl_pem") do |pem|
   end
 
   pem.each_with_index do |cert, i|
+    pem_block = cert
+    if cert.is_a?(Hash)
+      pem_block = cert['cert_chain'] + cert['private_key']
+    end
 %>
 ========================== 0600 /var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem
-<%= cert %>
+<%= pem_block %>
 <%
   end
 end
