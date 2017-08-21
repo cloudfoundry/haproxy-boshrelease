@@ -13,7 +13,7 @@ meta:
   manifest:
     vars: |-
       haproxy-backend-port=8888
-      haproxy-backend-servers=10.10.10.10
+      haproxy-backend-servers=[10.10.10.10]
 
   aws:
     bucket: cf-haproxy-boshrelease-pipeline # re-use old ci bucket after boshrelease rename
