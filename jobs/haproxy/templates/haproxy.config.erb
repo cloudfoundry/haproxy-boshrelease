@@ -331,7 +331,8 @@ if_link("tcp_backend") do |tcp_backend|
     "name" => tcp_backend.instances.first.name || "link",
     "backend_servers" => tcp_backend.instances.map(&:address),
     "port" => tcp_backend.p("port", p("ha_proxy.tcp_link_port")),
-    "backend_port" => tcp_backend.p("backend_port", p("ha_proxy.tcp_link_port"))
+    "backend_port" => tcp_backend.p("backend_port", p("ha_proxy.tcp_link_port")),
+    "health_check_http" => tcp_backend.p("health_check_http", p("ha_proxy.tcp_link_health_check_http", nil))
   }
 end %>
 <% tcp.each do |tcp_proxy| %>
