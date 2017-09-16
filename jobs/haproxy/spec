@@ -14,6 +14,7 @@ templates:
   certs.ttar.erb:            config/certs.ttar
   ssl_redirect.map.erb:      config/ssl_redirect.map
   backend-ca-certs.erb:      config/backend-ca-certs.pem
+  backend-crt.erb:           config/backend-crt.pem
   helpers/ctl_setup.sh:      helpers/ctl_setup.sh
   helpers/ctl_utils.sh:      helpers/ctl_utils.sh
   properties.sh.erb:         data/properties.sh
@@ -201,6 +202,16 @@ properties:
   ha_proxy.client_cert_ca:
     description: "path for CA certs to validate client certificate"
     default: /etc/ssl/certs/ca-certificates.crt
+
+  ha_proxy.backend_crt:
+    description: "provides client certificate to backend server to do mutual ssl"
+    example: |
+      -----BEGIN CERTIFICATE-----
+      ******
+      -----END CERTIFICATE-----
+      -----BEGIN PRIVATE KEY-----
+      ******
+      -----END PRIVATE KEY-----
 
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"

@@ -294,6 +294,7 @@ backend http-routers
     <% backend_servers.each_with_index do |ip, index| -%>
         server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
         resolvers default <% end -%>
+        <% if_p("ha_proxy.backend_crt") do -%> crt  /var/vcap/jobs/haproxy/config/backend-crt.pem <% end -%>
         check inter 1000 <% if p("ha_proxy.backend_ssl").downcase == "verify" then -%>
         ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname | -%>
         verifyhost <%= verify_hostname %> <% end -%>
