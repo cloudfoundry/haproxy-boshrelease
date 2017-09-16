@@ -194,6 +194,14 @@ properties:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
 
+  ha_proxy.client_cert:
+    description: "Enable haproxy mutual auth and produce a client cert header (X-Forwarded-Client-Cert) to offload mutual ssl client certificate to backend"
+    default: false
+
+  ha_proxy.client_cert_ca:
+    description: "path for CA certs to validate client certificate"
+    default: /etc/ssl/certs/ca-certificates.crt
+
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"
     default: []
