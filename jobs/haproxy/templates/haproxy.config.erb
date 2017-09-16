@@ -170,7 +170,7 @@ frontend https-in
     <% if p("ha_proxy.accept_proxy") %>
     bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.client_cert") == true %> ca-file <%= p("ha_proxy.client_cert_ca") %> verify optional crt-ignore-err all<% end %>
     <% end %>
     <% if_p("ha_proxy.cidr_whitelist") do %>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -182,6 +182,10 @@ frontend https-in
     <% end %>
     <% if p("ha_proxy.block_all") then %>
     tcp-request content reject
+    <% end %>
+
+    <% if p("ha_proxy.client_cert") == true %>
+      http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]
     <% end %>
 
     <% if p("ha_proxy.hsts_enable") %>
@@ -290,6 +294,7 @@ backend http-routers
     <% backend_servers.each_with_index do |ip, index| -%>
         server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
         resolvers default <% end -%>
+        <% if_p("ha_proxy.backend_crt") do -%> crt  /var/vcap/jobs/haproxy/config/backend-crt.pem <% end -%>
         check inter 1000 <% if p("ha_proxy.backend_ssl").downcase == "verify" then -%>
         ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname | -%>
         verifyhost <%= verify_hostname %> <% end -%>
