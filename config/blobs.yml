@@ -1,8 +1,4 @@
 ---
-ttar/ttar:
-  object_id: 8876e372-2ece-4e29-bc9f-6f256d5e326b
-  sha: 60bfdea4d0d50d5316ba1a9aca217f1d3f0ad1f5
-  size: 567
 keepalived/keepalived-1.2.24.tar.gz:
   object_id: aa936bbe-fe82-49cc-82c8-99d867e5b4bb
   sha: a69b2c40627a9bd69698a57e81a8c8c97826025d
