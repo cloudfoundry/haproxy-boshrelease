@@ -8,18 +8,20 @@ packages:
 - ttar
 
 templates:
-  haproxy.config.erb:        config/haproxy.config
-  haproxy_ctl:               bin/haproxy_ctl
-  monit_debugger:            bin/monit_debugger
-  certs.ttar.erb:            config/certs.ttar
-  ssl_redirect.map.erb:      config/ssl_redirect.map
-  backend-ca-certs.erb:      config/backend-ca-certs.pem
-  backend-crt.erb:           config/backend-crt.pem
-  helpers/ctl_setup.sh:      helpers/ctl_setup.sh
-  helpers/ctl_utils.sh:      helpers/ctl_utils.sh
-  properties.sh.erb:         data/properties.sh
-  blacklist_cidrs.txt.erb:   config/blacklist_cidrs.txt
-  whitelist_cidrs.txt.erb:   config/whitelist_cidrs.txt
+  haproxy.config.erb:         config/haproxy.config
+  haproxy_ctl:                bin/haproxy_ctl
+  monit_debugger:             bin/monit_debugger
+  certs.ttar.erb:             config/certs.ttar
+  ssl_redirect.map.erb:       config/ssl_redirect.map
+  backend-ca-certs.erb:       config/backend-ca-certs.pem
+  client-ca-certs.erb:        config/client-ca-certs.pem
+  backend-crt.erb:            config/backend-crt.pem
+  client-revocation-list.erb: config/client-revocation-list.pem
+  helpers/ctl_setup.sh:       helpers/ctl_setup.sh
+  helpers/ctl_utils.sh:       helpers/ctl_utils.sh
+  properties.sh.erb:          data/properties.sh
+  blacklist_cidrs.txt.erb:    config/blacklist_cidrs.txt
+  whitelist_cidrs.txt.erb:    config/whitelist_cidrs.txt
 
 consumes:
   - name: http_backend
@@ -204,6 +206,26 @@ properties:
       -----BEGIN PRIVATE KEY-----
       ******
       -----END PRIVATE KEY-----
+  ha_proxy.client_cert:
+    description: "Enable haproxy mutual auth and produce a client cert header (X-Forwarded-Client-Cert) to offload mutual ssl client certificate to backend"
+    default: false
+
+  ha_proxy.client_ca_file:
+    description: "path for CA certs to validate client certificate"
+    example: |
+      -----BEGIN CERTIFICATE-----
+      ******
+      -----END CERTIFICATE-----
+      -----BEGIN PRIVATE KEY-----
+      ******
+      -----END PRIVATE KEY-----
+
+  ha_proxy.client_cert_ignore_err:
+    description: "error code of client cert to ignore during mutual ssl handshake"
+    example: all|1
+
+  ha_proxy.client_revocation_list:
+    description: "provide a list of revocation certs"
 
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"

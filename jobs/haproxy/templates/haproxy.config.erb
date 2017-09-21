@@ -170,7 +170,18 @@ frontend https-in
     <% if p("ha_proxy.accept_proxy") %>
     bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.client_cert") == true -%>
+      <%
+        client_ca_certs = nil
+        if_p("ha_proxy.client_ca_file") { client_ca_certs = "/var/vcap/jobs/haproxy/config/client-ca-certs.pem" }
+        unless client_ca_certs
+          client_ca_certs = "/etc/ssl/certs/ca-certificates.crt"
+        end
+      -%> ca-file <%= client_ca_certs %> verify optional <% if_p("ha_proxy.client_cert_ignore_err") do -%>
+      crt-ignore-err <%= p("ha_proxy.client_cert_ignore_err")-%> <% end -%>
+      <% if_p("ha_proxy.client_revocation_list") do -%>
+        crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem <% end -%>
+      <% end -%>
     <% end %>
     <% if_p("ha_proxy.cidr_whitelist") do %>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -182,6 +193,10 @@ frontend https-in
     <% end %>
     <% if p("ha_proxy.block_all") then %>
     tcp-request content reject
+    <% end %>
+
+    <% if p("ha_proxy.client_cert") == true %>
+    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]
     <% end %>
 
     <% if p("ha_proxy.hsts_enable") %>
