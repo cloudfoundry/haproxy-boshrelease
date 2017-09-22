@@ -1,3 +1,3 @@
 [submodule "src/ttar"]
 	path = src/ttar
-	url = git@github.com:jhunt/ttar
+	url = https://github.com/jhunt/ttar.git
