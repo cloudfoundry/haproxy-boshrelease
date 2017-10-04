@@ -221,8 +221,8 @@ properties:
       -----END PRIVATE KEY-----
 
   ha_proxy.client_cert_ignore_err:
-    description: "error code of client cert to ignore during mutual ssl handshake"
-    example: all|1
+    description: "Error code(s) to ignore from verifying a client cert during a mutual ssl handshake, in a pipe-separated list. For example, 2 is if it cannot get the issuer certificate, 10 if the certificate has expired and 18 if the certificate is self-signed. The keyword 'all' will ignore all possible errors. See the openssl verify documentation [https://wiki.openssl.org/index.php/Manual:Verify(1)] for a full list of all error codes and their meanings."
+    example: 2|10|18
 
   ha_proxy.client_revocation_list:
     description: "provide a list of revocation certs"
