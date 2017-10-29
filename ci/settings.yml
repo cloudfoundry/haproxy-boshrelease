@@ -1,14 +1,11 @@
 ---
 meta:
   name:    haproxy
-  target:  sw
-  url:     https://ci.starkandwayne.com
+  target:  ci.spruce.cf
+  url:     https://ci.spruce.cf
 
-  bosh-lite:
-    target: https://10.58.111.49:25555
-    username: (( vault "secret/bosh-lites/lite49/users/admin:username" ))
-    password: (( vault "secret/bosh-lites/lite49/users/admin:password" ))
-    cacert:   (( vault "secret/bosh-lites/lite49/certs:rootCA.pem" ))
+  image:
+    bosh: gfranks/haproxy-boshrelease-testflight
 
   manifest:
     vars: |-
@@ -30,7 +27,7 @@ meta:
   slack:
     webhook: (( vault "secret/pipelines/haproxy-boshrelease/slack:webhook" ))
     channel: '#haproxy-boshrelease'
-    username:      starkandwayne-ci
+    username:      ci-bot
     icon:          https://cl.ly/0o401h3l1x3R/logo-50x50.png
     blob_success:  '(( concat "$BUILD_PIPELINE_NAME: New version of $BUILD_JOB_NAME was detected, and updated in master. <" meta.url "/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME| Cut a new release?>" ))'
     blob_failure:  '(( concat "$BUILD_PIPELINE_NAME: :airplane_arriving: <" meta.url "/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| Failed to update the blob for $BUILD_JOB_NAME>" ))'

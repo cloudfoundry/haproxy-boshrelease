@@ -42,10 +42,6 @@ meta:
     access_token: (( param "Please generate a Personal Access Token to be used for creating github releases (do you have a ci-bot?)" ))
 
   bosh-lite:
-    target:     (( param "Please specify the BOSH target URI for the bosh-lite to run test deployments against" ))
-    cacert:     (( param "Please specify the BOSH Director Root CA cert" ))
-    username:   admin
-    password:   (( param "Please specify the BOSH Director admin password" ))
     deployment:    (( concat meta.name "-testflight" ))
     deployment-pr: (( concat meta.name "-testflight-pr" ))
 
@@ -77,25 +73,24 @@ jobs:
     - do:
       - aggregate:
         - { get: git, trigger: true }
+        - { get: stemcell }
       - task: testflight
+        privileged: true
         config:
           platform: linux
           image_resource:
             type: docker-image
             source:
-              repository: (( grab meta.image.name ))
+              repository: (( grab meta.image.bosh ))
               tag:        (( grab meta.image.tag ))
           inputs:
             - { name: git }
+            - { name: stemcell }
           run:
             path: ./git/ci/scripts/testflight
             args: []
           params:
             REPO_ROOT:            git
-            BOSH_ENVIRONMENT:     (( grab meta.bosh-lite.target ))
-            BOSH_CA_CERT:         (( grab meta.bosh-lite.cacert ))
-            BOSH_CLIENT:          (( grab meta.bosh-lite.username ))
-            BOSH_CLIENT_SECRET:   (( grab meta.bosh-lite.password ))
             BOSH_DEPLOYMENT:      (( grab meta.bosh-lite.deployment ))
             TEST_ERRANDS:         (( grab meta.test-errands || meta.test-errand || ~ ))
             AWS_ACCESS_KEY:       (( grab meta.aws.access_key ))
@@ -103,6 +98,7 @@ jobs:
             MANIFEST_PATH:        (( grab meta.manifest.path ))
             MANIFEST_VARS:        (( grab meta.manifest.vars ))
             MANIFEST_OP_PATHS:    (( grab meta.manifest.operator_file_paths ))
+            stemcell:             ../stemcell/*.tgz
       on_failure:
         put: notify
         params:
@@ -117,29 +113,28 @@ jobs:
     plan:
     - do:
       - { get: git-pull-requests, trigger: true, version: every }
+      - { get: stemcell }
       - put: git-pull-requests
         params:
           path: git-pull-requests
           status: pending
       - task: testflight
+        privileged: true
         config:
           platform: linux
           image_resource:
             type: docker-image
             source:
-              repository: (( grab meta.image.name ))
+              repository: (( grab meta.image.bosh ))
               tag:        (( grab meta.image.tag ))
           inputs:
             - { name: git-pull-requests }
+            - { name: stemcell }
           run:
             path: ./git-pull-requests/ci/scripts/testflight
             args: []
           params:
             REPO_ROOT:            git-pull-requests
-            BOSH_ENVIRONMENT:     (( grab meta.bosh-lite.target ))
-            BOSH_CA_CERT:         (( grab meta.bosh-lite.cacert ))
-            BOSH_CLIENT:          (( grab meta.bosh-lite.username ))
-            BOSH_CLIENT_SECRET:   (( grab meta.bosh-lite.password ))
             BOSH_DEPLOYMENT:      (( grab meta.bosh-lite.deployment-pr ))
             TEST_ERRANDS:         (( grab meta.test-errands || meta.test-errand || ~ ))
             AWS_ACCESS_KEY:       (( grab meta.aws.access_key ))
@@ -147,6 +142,7 @@ jobs:
             MANIFEST_PATH:        (( grab meta.manifest.path ))
             MANIFEST_VARS:        (( grab meta.manifest.vars-pr ))
             MANIFEST_OP_PATHS:    (( grab meta.manifest.operator_file_paths ))
+            stemcell:             ../stemcell/*.tgz
         on_success:
           put: git-pull-requests
           params:
@@ -333,6 +329,11 @@ resources:
       private_key:  (( grab meta.github.private_key ))
       repo:         (( concat meta.github.owner "/" meta.github.repo ))
       base:         (( grab meta.github.branch ))
+
+  - name: stemcell
+    type: bosh-io-stemcell
+    source:
+      name: bosh-warden-boshlite-ubuntu-trusty-go_agent
 
   - name: version
     type: semver
