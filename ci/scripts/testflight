@@ -85,9 +85,9 @@ header "Deploying to ${BOSH_ENVIRONMENT}..."
 release_name=$(bosh int config/final.yml --path /final_name)
 
 header "Choosing cloud-config options"
-vm_type=$(bosh int <(bosh2 cloud-config) --path /vm_types/0/name)
-disk_type=$(bosh int <(bosh2 cloud-config) --path /disk_types/0/name)
-network=$(bosh int <(bosh2 cloud-config) --path /networks/0/name)
+vm_type=$(bosh int <(bosh cloud-config) --path /vm_types/0/name)
+disk_type=$(bosh int <(bosh cloud-config) --path /disk_types/0/name)
+network=$(bosh int <(bosh cloud-config) --path /networks/0/name)
 
 release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
 release_dev_version="${release_final_version}.latest"
