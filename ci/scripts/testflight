@@ -136,6 +136,9 @@ bosh int ${MANIFEST_PATH} \
   --var-errs \
     > tmp/manifest.yml
 
+header "Uploading stemcell"
+bosh -n upload-stemcell $stemcell
+
 bosh -n deploy tmp/manifest.yml
 
 TEST_ERRAND=${TEST_ERRAND:-} # backwards compatibility
