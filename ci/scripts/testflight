@@ -23,7 +23,7 @@ set -e
 : ${AWS_ACCESS_KEY:?required}
 : ${AWS_SECRET_KEY:?required}
 
-/usr/bin/start-bosh
+/usr/local/bin/start-bosh
 source /tmp/local-bosh/director/env
 
 cd ${REPO_ROOT:?required}
