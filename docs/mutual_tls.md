@@ -13,7 +13,7 @@ following property is set:
 ```
 properties:
   haproxy:
-    backend_cert: |
+    backend_crt: |
       ----- BEGIN CERTIFICATE -----
       YOUR CERT PEM HERE
       ----- END CERTIFICATE -----
