@@ -168,9 +168,9 @@ end
 frontend https-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.strict_sni") %> strict-sni <% end %>
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.client_cert") == true -%>
+    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.strict_sni") %> strict-sni <% end %> <% if p("ha_proxy.client_cert") == true -%>
       <%
         client_ca_certs = nil
         if_p("ha_proxy.client_ca_file") { client_ca_certs = "/var/vcap/jobs/haproxy/config/client-ca-certs.pem" }
