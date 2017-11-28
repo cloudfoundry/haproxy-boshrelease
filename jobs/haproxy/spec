@@ -51,6 +51,9 @@ properties:
   ha_proxy.trusted_domain_cidrs:
     description: "Space separated trusted cidr blocks for internal_only_domains"
     default: 0.0.0.0/32
+  ha_proxy.strict_sni:
+    description: "Optional setting to decide whether the SSL/TLS negotiation is allowed only if the client provided an SNI which strict match a certificate. If set to true, the default certificate is not used"
+    default: false
   ha_proxy.ssl_pem:
     description: |
       Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing fields 'cert_chain' and 'private_key',
