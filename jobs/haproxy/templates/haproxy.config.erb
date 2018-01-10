@@ -339,6 +339,19 @@ backend http-routed-backend-<%= prefix_hash %>
     <% end -%>
 <% end -%>
 
+<%# CF TCP Routing %>
+<% if_link("tcp_router") do |tcp_router| %>
+frontend cf_tcp_routing
+  mode tcp
+  bind <%= p("ha_proxy.binding_ip") %>:<%= p("ha_proxy.tcp_routing.port_range") %>
+  default_backend cf_tcp_routers
+backend cf_tcp_routers
+  mode tcp
+  <% tcp_router.instances.each_with_index do |instance, index| %>
+  server node<%= index %> <%= instance.address %> check port 80 inter 1000
+  <% end %>
+<% end %>
+
 <%# TCP Backends %>
 <%
 tcp = p("ha_proxy.tcp")
