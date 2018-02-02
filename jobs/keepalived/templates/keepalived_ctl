@@ -76,6 +76,7 @@ case $1 in
     mkdir -p $RUN_DIR $LOG_DIR
     chown -R vcap:vcap $RUN_DIR $LOG_DIR
 
+    <% if p("keepalived.interface") == "auto" -%>
     interface=$(interface_for_ip <%= p("keepalived.vip") %>)
     if [[ $? != 0 || -z ${interface} ]]; then
         echo "Could not autodetect interface to use for <%= p("keepalived.vip") %>. Cannot continue."
@@ -84,6 +85,9 @@ case $1 in
     if grep "interface auto" ${CONF_DIR}/keepalived.config.template > /dev/null; then
         sed "s/interface auto/interface ${interface}/" ${CONF_DIR}/keepalived.config.template > ${CONF_DIR}/keepalived.config
     fi
+    <% else -%>
+    cp ${CONF_DIR}/keepalived.config.template ${CONF_DIR}/keepalived.config
+    <% end -%>
 
     $SBIN_DIR/keepalived -l -D -n \
         -f $CONF_DIR/keepalived.config \
