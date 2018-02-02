@@ -7,6 +7,8 @@ CONF_DIR=${APP_DIR}/config
 RUN_DIR=/var/vcap/sys/run/keepalived
 LOG_DIR=/var/vcap/sys/log/keepalived
 
+source /var/vcap/packages/keepalived/common/utils.sh
+
 interface_for_ip() {
     local ip=$1
     local network=""
@@ -96,7 +98,13 @@ case $1 in
   stop)
     echo "Stopping keepalived... ($(date))"
     for PIDFILE in ${RUN_DIR}/*.pid; do
-        kill -9 -$(cat $PIDFILE)
+        pid=$(cat $PIDFILE)
+        [[ -z "${pid}" ]] && continue
+        kill "${pid}"
+        wait_pid_death "${pid}" 25
+        if pid_is_running "${pid}"; then
+            kill -9 ${pid}
+        fi
         rm -f $PIDFILE
     done
 
