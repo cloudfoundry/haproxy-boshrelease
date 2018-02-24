@@ -1,28 +1,32 @@
 # abort script on any command that exit with a non zero value
 set -e
 
+PCRE_VERSION=10.31
+SOCAT_VERSION=1.7.3.2
+HAPROXY_VERSION=1.8.4
+
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
 echo "Extracting pcre..."
-tar xzf haproxy/pcre-8.40.tar.gz
-pushd pcre-8.40
-  ./configure
+tar xzf haproxy/pcre2-${PCRE_VERSION}.tar.gz
+pushd pcre2-${PCRE_VERSION}
+  ./configure --prefix ${BOSH_INSTALL_TARGET}
   make
   make install
 popd
 
 echo "Installing socat..."
-tar xzf haproxy/socat-1.7.3.2.tar.gz
-pushd socat-1.7.3.2
+tar xzf haproxy/socat-${SOCAT_VERSION}.tar.gz
+pushd socat-${SOCAT_VERSION}
   ./configure
   make
   cp socat ${BOSH_INSTALL_TARGET}/bin
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
-tar xzf haproxy/haproxy-1.6.12.tar.gz
-pushd haproxy-1.6.12
-  make TARGET=linux2628 USE_OPENSSL=1 USE_STATIC_PCRE=1 USE_ZLIB=1
+tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
+pushd haproxy-${HAPROXY_VERSION}
+  make TARGET=linux2628 USE_OPENSSL=1 USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET}
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd
