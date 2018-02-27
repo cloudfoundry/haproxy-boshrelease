@@ -16,3 +16,70 @@ if_p("ha_proxy.ssl_pem") do |pem|
   end
 end
 %>
+<%
+if_p("ha_proxy.crt_list") do |crt_list|
+  if !crt_list.is_a?(Array)
+    crt_list = [crt_list]
+  end
+%>
+========================== 0600 /var/vcap/jobs/haproxy/config/ssl/crt-list
+<%
+  crt_list.each_with_index do |list_entry, i|
+    sslbindconf=""
+    if list_entry.key?("client_ca_file")
+      sslbindconf += " ca-file /var/vcap/jobs/haproxy/config/ssl/ca-file-"+i.to_s+".pem"
+    end
+    if list_entry.key?("client_revocation_list")
+      sslbindconf += " crl-file /var/vcap/jobs/haproxy/config/ssl/crl-file-"+i.to_s+".pem"
+    end
+    if list_entry.key?("verify")
+      sslbindconf += " verify " + list_entry["verify"]
+    end
+    if list_entry.key?("ssl_ciphers")
+      sslbindconf += " ciphers " + list_entry["ssl_ciphers"]
+    end
+
+    if sslbindconf != ""
+      sslbindconf = " ["+sslbindconf.strip+"]"
+    end
+
+    snifilter=""
+    if list_entry.key?("snifilter")
+      if list_entry["snifilter"].is_a?(Array)
+        list_entry["snifilter"].each { |sni|  snifilter += " " + sni }
+      else
+        snifilter=" "+list_entry["snifilter"]
+      end
+    end
+
+%>/var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem<%= sslbindconf %><%= snifilter%>
+<%
+  end
+
+  crt_list.each_with_index do |list_entry, i|
+    pem_block = list_entry["ssl_pem"];
+    client_ca_file=""
+    if pem_block.is_a?(Hash)
+      pem_block = pem_block['cert_chain'].strip + "\n" + pem_block['private_key'].strip
+    end
+%>
+========================== 0600 /var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem
+<%= pem_block %>
+<%
+    if list_entry.key?("client_ca_file")
+      pem_block=list_entry["client_ca_file"];
+%>
+========================== 0600 /var/vcap/jobs/haproxy/config/ssl/ca-file-<%= i %>.pem
+<%= pem_block %>
+<%
+    end
+    if list_entry.key?("client_revocation_list")
+      pem_block=list_entry["client_revocation_list"];
+%>
+========================== 0600 /var/vcap/jobs/haproxy/config/ssl/crl-file-<%= i %>.pem
+<%= pem_block %>
+<%
+    end
+  end
+end
+%>

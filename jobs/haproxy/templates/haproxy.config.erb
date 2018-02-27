@@ -164,13 +164,28 @@ end
 
 <%# HTTPS Frontend %>
 
-<% if_p("ha_proxy.ssl_pem") do |pem| %>
+<%
+ssl_enabled = false
+crt_config = ""
+if_p("ha_proxy.ssl_pem") do
+    ssl_enabled = true
+    crt_config="crt /var/vcap/jobs/haproxy/config/ssl"
+end
+if_p("ha_proxy.crt_list") do
+    if ssl_enabled == true
+        abort("Please configure eihter ssl_pem or crt_list, but not both")
+    end
+    ssl_enabled=true
+    crt_config="crt-list /var/vcap/jobs/haproxy/config/ssl/crt-list"
+end
+%>
+<% if ssl_enabled == true %>
 frontend https-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.strict_sni") %> strict-sni <% end %>
+    bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl <%= crt_config %> <% if p("ha_proxy.strict_sni") %> strict-sni <% end %>
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.strict_sni") %> strict-sni <% end %> <% if p("ha_proxy.client_cert") == true -%>
+    bind <%= p("ha_proxy.binding_ip") %>:443 ssl <%= crt_config %> <% if p("ha_proxy.strict_sni") %> strict-sni <% end %> <% if p("ha_proxy.client_cert") == true -%>
       <%
         client_ca_certs = nil
         if_p("ha_proxy.client_ca_file") { client_ca_certs = "/var/vcap/jobs/haproxy/config/client-ca-certs.pem" }
@@ -248,9 +263,9 @@ end
 frontend wss-in
     mode http
     <% if p("ha_proxy.accept_proxy") %>
-    bind <%= p("ha_proxy.binding_ip") %>:4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:4443 accept-proxy ssl <%= crt_config %>
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:4443 ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:4443 ssl <%= crt_config %>
     <% end %>
     default_backend http-routers
 <%
@@ -369,9 +384,9 @@ end %>
     mode tcp
 <% if tcp_proxy["ssl"] %>
     <% if p("ha_proxy.accept_proxy") %>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> accept-proxy ssl <%= crt_config %>
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> ssl crt /var/vcap/jobs/haproxy/config/ssl
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> ssl <%= crt_config %>
     <% end %>
 <% else %>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %>
