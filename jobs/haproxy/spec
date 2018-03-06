@@ -85,10 +85,10 @@ properties:
       Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing at least the field 'ssl_pem'.
       The field 'ssl_pem' itself is either an object containing fields 'cert_chain' and 'private_key', or a single string containing the cert chain and the private key.
       The following fields are optional:
-      - 'client_ca_file' (see ha_proxy.client_ca_file)
+      - 'client_ca_file' (overrides ha_proxy.client_ca_file)
       - 'verify' (allowed values: [none|optional|required])
-      - 'ssl_ciphers' (see ha_proxy.ssl_ciphers)
-      - 'client_revocation_list' (see ha_proxy.client_revocation_list)
+      - 'ssl_ciphers' (overrides ha_proxy.ssl_ciphers)
+      - 'client_revocation_list' (overrides ha_proxy.client_revocation_list)
       - 'snifilter' (either a string or an array of strings)
     example:
       crt_list:
