@@ -173,7 +173,7 @@ if_p("ha_proxy.ssl_pem") do
 end
 if_p("ha_proxy.crt_list") do
     if ssl_enabled == true
-        abort("Please configure either ssl_pem or crt_list, but not both")
+        abort("Conflicting configuration. Please configure either 'ssl_pem' OR 'crt_list', but not both")
     end
     ssl_enabled=true
     crt_config="crt-list /var/vcap/jobs/haproxy/config/ssl/crt-list"
