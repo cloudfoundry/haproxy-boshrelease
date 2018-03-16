@@ -155,7 +155,7 @@ resolvers default
 # HTTP Frontend {{{
 frontend http-in
     mode http
-    bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %>
+    bind <%= p("ha_proxy.binding_ip") %>:80
     <% if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -409,7 +409,7 @@ end -%>
 <% if tcp_proxy["ssl"] -%>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tls_bind_options %>
 <% else -%>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= accept_proxy %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %>
 <% end -%>
     default_backend tcp-<%= tcp_proxy["name"] %>
 
