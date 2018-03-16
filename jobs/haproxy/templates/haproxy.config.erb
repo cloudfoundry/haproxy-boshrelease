@@ -31,8 +31,11 @@ crt_config = ""
 if_p("ha_proxy.ssl_pem") do
     ssl_enabled = true
     crt_config="crt /var/vcap/jobs/haproxy/config/ssl"
-    if p("ha_proxy.client_ca_file") || p("ha_proxy.client_revocation_list")
-        mutual_tls_enabled = true
+    if_p("ha_proxy.client_ca_file") do
+      mutual_tls_enabled = true
+    end
+    if_p("ha_proxy.client_revocation_list") do
+      mutual_tls_enabled = true
     end
 end
 if_p("ha_proxy.crt_list") do
@@ -350,7 +353,7 @@ backend http-routers
         ssl verify none <% end -%>
 
     <% end -%>
-# }}} 
+# }}}
 # Routed Backends {{{
 <% p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
 <% prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] -%>
@@ -375,7 +378,7 @@ backend http-routed-backend-<%= prefix_hash %>
     <% end -%>
 <% end -%>
 # }}}
-# TCP Routing  {{{ 
+# TCP Routing  {{{
 <% if_link("tcp_router") do |tcp_router| -%>
 frontend cf_tcp_routing
   mode tcp
