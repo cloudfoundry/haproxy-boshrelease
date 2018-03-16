@@ -8,7 +8,7 @@ stat_port = stat[1].to_i;
 # }}}
 # Accept Proxy {{{
 accept_proxy = ""
-if p("ha_proxy.accept_proxy") == true
+if p("ha_proxy.accept_proxy")
     accept_proxy = "accept-proxy"
 end
 # }}}
@@ -39,7 +39,7 @@ if_p("ha_proxy.ssl_pem") do
     end
 end
 if_p("ha_proxy.crt_list") do
-    if ssl_enabled == true
+    if ssl_enabled
         abort("Conflicting configuration. Please configure either 'ssl_pem' OR 'crt_list', but not both")
     end
     ssl_enabled=true
@@ -58,13 +58,13 @@ end
 
 strict_sni = ""
 if_p("ha_proxy.strict_sni") do |sni|
-  if sni == true
+  if sni
     strict_sni = "strict-sni"
   end
 end
 
 tls_options = "#{crt_config} #{strict_sni}"
-if mutual_tls_enabled == true
+if mutual_tls_enabled
   tls_options = "#{tls_options} ca-file #{client_ca_certs} verify optional"
   if_p("ha_proxy.client_cert_ignore_err") do |ignore_errs|
     tls_options = "#{tls_options} crt-ignore-err #{ignore_errs}"
@@ -198,17 +198,17 @@ frontend http-in
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     reqadd X-Forwarded-Proto:\ http if ! xfp_exists
 
-<% if p("ha_proxy.https_redirect_all") == true -%>
+<% if p("ha_proxy.https_redirect_all") -%>
     redirect scheme https code 301 if !{ ssl_fc }
 <% end -%>
-<% unless p("ha_proxy.https_redirect_all") == true -%>
+<% unless p("ha_proxy.https_redirect_all") -%>
     acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
     redirect scheme https code 301 if ssl_redirect
 <% end -%>
 # }}}
 <% end -%>
 
-<% if ssl_enabled == true -%>
+<% if ssl_enabled -%>
 # HTTPS Frontend {{{
 frontend https-in
     mode http
@@ -225,7 +225,7 @@ frontend https-in
     tcp-request content reject
     <% end -%>
 
-    <% if mutual_tls_enabled == true -%>
+    <% if mutual_tls_enabled -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]
     <% end -%>
 
@@ -265,7 +265,7 @@ frontend https-in
 # }}}
 <% end -%>
 
-<% if p("ha_proxy.enable_4443") == true -%>
+<% if p("ha_proxy.enable_4443") -%>
 # HTTPS Websockets Frontend {{{
 frontend wss-in
     mode http
@@ -282,7 +282,7 @@ frontend wss-in
     tcp-request content reject
     <% end -%>
 
-    <% if mutual_tls_enabled == true -%>
+    <% if mutual_tls_enabled -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]
     <% end -%>
 
