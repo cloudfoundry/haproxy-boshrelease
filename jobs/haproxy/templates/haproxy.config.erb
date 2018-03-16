@@ -172,13 +172,13 @@ frontend http-in
     default_backend http-routers
 <% if_p("ha_proxy.headers") do |headers| -%>
   <% headers.each do |header, value| -%>
-    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
   <% end -%>
 <% end -%>
 
 <% if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
   <% rsp_headers.each do |rsp_header, value| -%>
-    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
   <% end -%>
 <% end -%>
 
@@ -236,13 +236,13 @@ frontend https-in
     default_backend http-routers
 <% if_p("ha_proxy.headers") do |headers| -%>
   <% headers.each do |header, value| -%>
-    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
   <% end -%>
 <% end -%>
 
 <% if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
   <%  rsp_headers.each do |rsp_header, value| -%>
-    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
   <% end -%>
 <% end -%>
 
@@ -293,13 +293,13 @@ frontend wss-in
     default_backend http-routers
 <% if_p("ha_proxy.headers") do |headers| -%>
   <% headers.each do |header, value| -%>
-    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
   <% end -%>
 <% end -%>
 
 <% if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
   <% rsp_headers.each do |rsp_header, value| -%>
-    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.gsub(/(?!:\\) /, '\ ') %>
+    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
   <% end -%>
 <% end -%>
 
