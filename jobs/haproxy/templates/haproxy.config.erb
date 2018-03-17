@@ -131,7 +131,7 @@ listen stats_<%= proc %>
     stats realm "Haproxy Statistics"
     stats uri /<%= p("ha_proxy.stats_uri") %>
     stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
-  <%- end %>
+  <%- end -%>
 <% end -%>
 
 <% if p("ha_proxy.enable_health_check_http") %>
@@ -147,7 +147,7 @@ listen health_check_http_url
 resolvers default
     hold valid <%= p("ha_proxy.dns_hold") %>
   <%- resolvers.each do |resolver| -%>
-    nameserver <%= resolver[0] %> <%= resolver[1] %>:53
+    nameserver <%= resolver.keys[0] %> <%= resolver.values[0] %>:53
   <%- end -%>
 <% end -%>
 

@@ -24,18 +24,11 @@ if_p("ha_proxy.crt_list") do |crt_list|
 %>
 ========================== 0600 /var/vcap/jobs/haproxy/config/ssl/crt-list
 <%
-  global_option_client_cert = false
-  if_p("ha_proxy.client_cert") do |value| 
-    global_option_client_cert = value
-  end
   crt_list.each_with_index do |list_entry, i|
     sslbindconf=""
     if list_entry.key?("client_ca_file")
       if_p("ha_proxy.client_ca_file") do
         abort("Conflicting configuration. Please configure 'client_ca_file' either globally OR in 'crt_list' entries, but not both")
-      end
-      if (global_option_client_cert != true)
-        abort("A 'crt_list' entry with a 'client_ca_file' requires the global option 'client_cert' to be 'true'")
       end
       sslbindconf += " ca-file /var/vcap/jobs/haproxy/config/ssl/ca-file-"+i.to_s+".pem"
     end
@@ -43,16 +36,10 @@ if_p("ha_proxy.crt_list") do |crt_list|
       if_p("ha_proxy.client_revocation_list") do
         abort("Conflicting configuration. Please configure 'client_revocation_list' either globally OR in 'crt_list' entries, but not both")
       end
-      if (global_option_client_cert != true)
-        abort("A 'crt_list' entry with a 'client_revocation_list' requires the global option 'client_cert' to be 'true'")
-      end
       sslbindconf += " crl-file /var/vcap/jobs/haproxy/config/ssl/crl-file-"+i.to_s+".pem"
     end
     if list_entry.key?("verify")
       sslbindconf += " verify " + list_entry["verify"]
-      if ((global_option_client_cert != true) && (list_entry["verify"] != "none"))
-        abort("A 'crt_list' entry with 'verify' not 'none' requires the global option 'client_cert' to be 'true'")
-      end
     end
     if list_entry.key?("ssl_ciphers")
       sslbindconf += " ciphers " + list_entry["ssl_ciphers"]
