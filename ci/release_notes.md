@@ -39,3 +39,8 @@
 - The `X-Forwarded-Proto` header behavior in the `:4443` backend now
   matches the behavior in the `:443` backend
 - Spec descriptions + examples were updated for `resolvers`
+
+# Acknowlegements
+
+Many thanks to @jgf and @dueckminor for their work on `crt-list` and assistance testing
+everything else out!
