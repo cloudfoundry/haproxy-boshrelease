@@ -11,6 +11,8 @@
   For more information:
   - https://cbonte.github.io/haproxy-dconv/1.8/configuration.html#5.1-crt-list
   - https://github.com/cloudfoundry-incubator/haproxy-boshrelease/blob/master/jobs/haproxy/spec#L83-L127
+- There is now an `ha_proxy.disable_tcp_accept_proxy` parameter to disable the PROXY protocol
+  for tcp-based backends while still leaving it enabled for http/https based backends
 
 # Fixes
 - `haproxy.config.erb` has been cleaned up considerably, and

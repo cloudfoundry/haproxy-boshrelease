@@ -11,6 +11,10 @@ accept_proxy = ""
 if p("ha_proxy.accept_proxy")
   accept_proxy = "accept-proxy"
 end
+tcp_accept_proxy = accept_proxy
+if p("ha_proxy.disable_tcp_accept_proxy")
+  tcp_accept_proxy = ""
+end
 # }}}
 # Global SSL Flags {{{
 ssl_flags = "no-sslv3"
@@ -74,7 +78,7 @@ if mutual_tls_enabled
   end
 end
 
-tls_bind_options = "#{accept_proxy} ssl #{tls_options}"
+tls_bind_options = "ssl #{tls_options}"
 # }}}
 -%>
 
@@ -155,7 +159,7 @@ resolvers default
 # HTTP Frontend {{{
 frontend http-in
     mode http
-    bind <%= p("ha_proxy.binding_ip") %>:80
+    bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -207,7 +211,7 @@ frontend http-in
 # HTTPS Frontend {{{
 frontend https-in
     mode http
-    bind <%= p("ha_proxy.binding_ip") %>:443 <%= tls_bind_options %>
+    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -258,7 +262,7 @@ frontend https-in
 # HTTPS Websockets Frontend {{{
 frontend wss-in
     mode http
-    bind <%= p("ha_proxy.binding_ip") %>:4443 <%= tls_bind_options %>
+    bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -410,7 +414,7 @@ end -%>
 frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
   <%- if tcp_proxy["ssl"] -%>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tls_bind_options %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tcp_accept_proxy %> <%= tls_bind_options %>
   <%- else -%>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %>
   <%- end -%>
