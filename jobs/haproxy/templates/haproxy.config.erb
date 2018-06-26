@@ -173,6 +173,16 @@ frontend http-in
   <%- end -%>
     capture request header Host len 256
     default_backend http-routers
+  <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
+    <%- conditions.each do |condition| -%>
+      <%- acl_names="" -%>
+      <%- condition["condition"].each do |acl| -%>
+    acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
+      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+      <%- end -%>
+    http-request deny if <%= acl_names %>
+    <%- end -%>
+  <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
@@ -231,6 +241,16 @@ frontend https-in
   <%- end -%>
     capture request header Host len 256
     default_backend http-routers
+  <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
+    <%- conditions.each do |condition| -%>
+      <%- acl_names="" -%>
+      <%- condition["condition"].each do |acl| -%>
+    acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
+      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+      <%- end -%>
+    http-request deny if <%= acl_names %>
+    <%- end -%>
+  <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
@@ -282,6 +302,16 @@ frontend wss-in
   <%- end -%>
     capture request header Host len 256
     default_backend http-routers
+  <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
+    <%- conditions.each do |condition| -%>
+      <%- acl_names="" -%>
+      <%- condition["condition"].each do |acl| -%>
+    acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
+      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+      <%- end -%>
+    http-request deny if <%= acl_names %>
+    <%- end -%>
+  <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
