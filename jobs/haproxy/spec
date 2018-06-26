@@ -343,3 +343,13 @@ properties:
   ha_proxy.tcp_routing.port_range:
     description: "A range of ports for haproxy to listen on to enable CF TCP Routing. Used only if 'tcp_router' link is present."
     default: 1024-1123
+
+  ha_proxy.http_request_deny_conditions:
+      description: "List of conditions to block http requests. Each condition consists of multiple rules combined with the AND operator"
+      example:
+        http_request_deny_conditions:
+        - condition:
+          - acl_name: block_host
+            acl_rule: "hdr_beg(host) -i login"
+          - acl_name: block_reset_password_url
+            acl_rule: "path_beg,url_dec -m beg -i /reset_password"
