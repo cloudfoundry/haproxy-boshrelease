@@ -131,6 +131,9 @@ properties:
   ha_proxy.enable_health_check_http:
     description: "Optionally enable http health-check on `haproxy_ip:8080/health`. It shows `200 OK` if >0 backend servers are up."
     default: false
+  ha_proxy.health_check_port:
+    description: "port for http health-check"
+    default: 8080  
   ha_proxy.disable_http:
     description: "Disable port 80 traffic"
     default: false

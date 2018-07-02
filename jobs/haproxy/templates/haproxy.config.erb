@@ -140,7 +140,7 @@ listen stats_<%= proc %>
 
 <% if p("ha_proxy.enable_health_check_http") %>
 listen health_check_http_url
-    bind :8080
+    bind :<%= p("ha_proxy.health_check_port") %>
     mode http
     monitor-uri /health
     acl http-routers_down nbsrv(http-routers) eq 0
