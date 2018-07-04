@@ -217,6 +217,97 @@ frontend http-in
 # }}}
 <% end -%>
 
+# UserList {{{
+<% users = p("ha_proxy.userlist") -%>
+<% if p("ha_proxy.enable_basic_auth") -%>
+  userlist UsersFor_CustomHttp
+    <% users.each do |user| -%>
+      user <%= user["username"] %> insecure-password <%= user["password"] %>
+    <% end -%>
+<% end -%>
+# }}}
+
+<% if p("ha_proxy.enable_custom_http") -%>
+# HTTP Custom Frontend {{{
+<%
+http = p("ha_proxy.http")
+if_link("http_backend") do |http_backend|
+  http << {
+    "name" => http_backend.instances.first.name || "link",
+    "backend_servers" => http_backend.instances.map(&:address),
+    "port" => http_backend.p("port", p("ha_proxy.http_link_port")),
+    "backend_port" => http_backend.p("backend_port", p("ha_proxy.http_link_port")),
+    "health_check_http" => http_backend.p("health_check_http", p("ha_proxy.http_link_health_check_http", nil))
+  }
+end -%>
+
+<% http.each do |http_proxy| -%>
+frontend http-frontend_<%= http_proxy["name"]%>
+    mode http
+    bind <%= p("ha_proxy.binding_ip") %>:<%= http_proxy["port"] %> <%= accept_proxy %>
+  <%- if_p("ha_proxy.enable_basic_auth") do -%>
+    acl AuthOk http_auth("UsersFor_CustomHttp")
+    http-request auth realm http-frontend_<%= http_proxy["name"]%> unless AuthOk
+  <%- end -%>
+  <%- if_p("ha_proxy.cidr_whitelist") do -%>
+    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
+    tcp-request content accept if whitelist
+  <%- end -%>
+  <%- if_p("ha_proxy.cidr_blacklist") do -%>
+    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
+    tcp-request content reject if blacklist
+  <%- end -%>
+  <%- if p("ha_proxy.block_all") then -%>
+    tcp-request content reject
+  <%- end -%>
+    capture request header Host len 256
+    default_backend http-routers
+  <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
+    <%- conditions.each do |condition| -%>
+      <%- acl_names="" -%>
+      <%- condition["condition"].each do |acl| -%>
+    acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
+      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+      <%- end -%>
+    http-request deny if <%= acl_names %>
+    <%- end -%>
+  <%- end -%>
+  <%- if_p("ha_proxy.headers") do |headers| -%>
+    <%- headers.each do |header, value| -%>
+    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    <%- end -%>
+  <%- end -%>
+  <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
+    <%- rsp_headers.each do |rsp_header, value| -%>
+    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    <%- end -%>
+  <%- end -%>
+  <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
+    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
+    <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
+    acl internal hdr(Host) -m sub <%= domain %>
+    <%- end -%>
+    http-request deny if internal !private
+  <%- end -%>
+  <%- p('ha_proxy.routed_backend_servers').keys.each do |prefix| -%>
+    <%- prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] -%>
+    acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
+    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+  <%- end -%>
+    acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
+    reqadd X-Forwarded-Proto:\ http if ! xfp_exists
+  <%- if p("ha_proxy.https_redirect_all") -%>
+    redirect scheme https code 301 if !{ ssl_fc }
+  <%- end -%>
+  <%- unless p("ha_proxy.https_redirect_all") -%>
+    acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
+    redirect scheme https code 301 if ssl_redirect
+  <%- end -%>
+  <%- end -%>
+# }}}
+<% end -%>
+
+
 <% if ssl_enabled -%>
 # HTTPS Frontend {{{
 frontend https-in

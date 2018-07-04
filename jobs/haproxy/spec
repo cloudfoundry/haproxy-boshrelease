@@ -280,6 +280,19 @@ properties:
   ha_proxy.client_revocation_list:
     description: "provide a list of revocation certs"
 
+  ha_proxy.http:
+    description: "List of mappings to perform http-based proxying on"
+    default: []
+  ha_proxy.userlist:
+    description: "List of mapping username:password"
+    default: []
+  ha_proxy.enable_custom_http:
+    description: "Boolean enables custom http frontennds"
+    default: true
+  ha_proxy.enable_basic_auth:
+    description: "Boolean enables basic auth for custom http frontend"
+    default: false
+
   ha_proxy.tcp:
     description: "List of mappings to perform tcp-based proxying on. See example for mapping datastructure and keys"
     default: []
