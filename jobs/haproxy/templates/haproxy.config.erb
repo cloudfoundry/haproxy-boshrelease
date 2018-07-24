@@ -234,7 +234,7 @@ frontend https-in
     tcp-request content reject
   <%- end -%>
   <%- if mutual_tls_enabled -%>
-    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]
+    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
@@ -295,7 +295,7 @@ frontend wss-in
     tcp-request content reject
   <%- end -%>
   <%- if mutual_tls_enabled -%>
-    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]
+    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
