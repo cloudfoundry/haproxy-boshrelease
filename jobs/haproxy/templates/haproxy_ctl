@@ -5,7 +5,7 @@ set -e
 
 source /var/vcap/jobs/haproxy/helpers/ctl_setup.sh 'haproxy'
 PATH=/var/vcap/packages/haproxy/bin:$PATH
-export PATH=$PATH:/var/vcap/packges/ttar/bin
+export PATH=$PATH:/var/vcap/packages/ttar/bin
 
 NAME=haproxy
 DAEMON=$(which haproxy)
