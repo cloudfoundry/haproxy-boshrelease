@@ -30,6 +30,6 @@ stemcells:
 
 releases:
 - name: haproxy
-  version: 8.8.0
-  url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v8.8.0/haproxy-8.8.0.tgz
-  sha1: 7b262d39568d891ce89f1e48f58ccde5de5e5b58
+  version: 8.9.0
+  url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v8.9.0/haproxy-8.9.0.tgz
+  sha1: 0a135d9f5ce4e32dc9f1afd9a0e93baeff71c62d
