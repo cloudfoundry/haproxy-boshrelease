@@ -234,6 +234,7 @@ frontend https-in
     tcp-request content reject
   <%- end -%>
   <%- if mutual_tls_enabled -%>
+    http-request del-header X-Forwarded-Client-Cert
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
@@ -295,6 +296,7 @@ frontend wss-in
     tcp-request content reject
   <%- end -%>
   <%- if mutual_tls_enabled -%>
+    http-request del-header X-Forwarded-Client-Cert
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
