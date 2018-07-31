@@ -133,7 +133,7 @@ properties:
     default: false
   ha_proxy.health_check_port:
     description: "port for http health-check"
-    default: 8080  
+    default: 8080
   ha_proxy.disable_http:
     description: "Disable port 80 traffic"
     default: false
@@ -265,6 +265,24 @@ properties:
   ha_proxy.client_cert:
     description: "Enable haproxy mutual auth and produce a client cert header (X-Forwarded-Client-Cert) to offload mutual ssl client certificate to backend"
     default: false
+
+  ha_proxy.forwarded_client_cert:
+    description: |
+      This option lets you decide how to handle the X-Forwarded-Client-Cert (XFCC) http header on any https frontend.
+      On http frontends the `always_forward_only` option is active by default and can't be changed.
+      On https frontends your options are (ordered from least to most secure):
+      - always_forward_only:
+          Least secure option. Always forward the XFCC header in the request, regardless of whether the client connection is mTLS.
+          Use this value when your load balancer is forwarding the client certificate and requests are not forwarded to HAProxy over mTLS.
+          In the case where the connection between load balancer and HAProxy is mTLS, the client certificate received by HAProxy in the mTLS handshake will not be forwarded.
+      - forward_only:
+          Secure version of `always_forward_only`. Forward the XFCC header received from the client only when the client connection is mTLS.
+          The client certificate received by HAProxy in the mTLS handshake will not be forwarded.
+      - sanitize_set:
+          Most secure option. Strip any instances of XFCC headers from the client request.
+          When the client connection is mTLS, the client certificate received by HAProxy in the mTLS handshake will be forwarded in this header.
+          Values will be base64 encoded PEM. Use this value when HAProxy is the first component to terminate TLS.
+    default: sanitize_set
 
   ha_proxy.client_ca_file:
     description: "path for CA certs to validate client certificate"

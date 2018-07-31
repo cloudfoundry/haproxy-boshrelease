@@ -80,6 +80,22 @@ end
 
 tls_bind_options = "ssl #{tls_options}"
 # }}}
+# X-Forwarded-Client-Cert (XFCC) Option {{{
+xfcc_forward_only = false
+xfcc_sanitize_set = false
+
+forwarded_client_cert_option = p("ha_proxy.forwarded_client_cert").downcase
+case forwarded_client_cert_option
+when "always_forward_only"
+  # NOP
+when "forward_only"
+  xfcc_forward_only = true
+when "sanitize_set"
+  xfcc_sanitize_set = true
+else
+  abort("Unkown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set'")
+end
+# }}}
 -%>
 
 global
@@ -233,9 +249,13 @@ frontend https-in
   <%- if p("ha_proxy.block_all") then -%>
     tcp-request content reject
   <%- end -%>
-  <%- if mutual_tls_enabled -%>
+  <%- if xfcc_forward_only then -%>
+    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled then %> if ! { ssl_c_used }<% end %>
+  <%- elsif xfcc_sanitize_set then -%>
     http-request del-header X-Forwarded-Client-Cert
+    <%- if mutual_tls_enabled then -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
+    <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
@@ -295,9 +315,13 @@ frontend wss-in
   <%- if p("ha_proxy.block_all") then -%>
     tcp-request content reject
   <%- end -%>
-  <%- if mutual_tls_enabled -%>
+  <%- if xfcc_forward_only then -%>
+    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled then %> if ! { ssl_c_used }<% end %>
+  <%- elsif xfcc_sanitize_set then -%>
     http-request del-header X-Forwarded-Client-Cert
+    <%- if mutual_tls_enabled then -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
+    <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
