@@ -374,3 +374,9 @@ properties:
             acl_rule: "hdr_beg(host) -i login"
           - acl_name: block_reset_password_url
             acl_rule: "path_beg,url_dec -m beg -i /reset_password"
+
+  ha_proxy.raw_config:
+    description: |
+      A multiline text blob of an entire haproxy config. Overrides every other
+      option available, so you can provide your own config, and do whatever
+      you want. Use at your own risk.
