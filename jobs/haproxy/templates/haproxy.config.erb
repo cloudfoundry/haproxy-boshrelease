@@ -1,3 +1,6 @@
+<% if properties.ha_proxy.raw_config -%>
+<%= p("ha_proxy.raw_config") %>
+<% else -%>
 <% require "digest" -%>
 <%# Ruby Variables to make the template more readable -%>
 <%
@@ -517,3 +520,4 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 <% end -%>
 
 # }}}
+<% end -%>
