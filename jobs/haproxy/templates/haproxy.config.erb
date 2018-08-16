@@ -104,6 +104,9 @@ end
 global
     log <%= p('ha_proxy.syslog_server') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
+  <%- if properties.ha_proxy.global_config -%>
+    <%= p("ha_proxy.global_config") %>
+  <%- end -%>
   <%- if p("ha_proxy.threads") > 1 -%>
     nbproc <%= p("ha_proxy.threads") %>
   <%- end -%>
@@ -111,6 +114,9 @@ global
     group vcap
     maxconn 64000
     spread-checks 4
+  <%- p("ha_proxy.lua_scripts").each do |script| -%>
+    lua-load <%= script %>
+  <%- end -%>
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
     tune.bufsize <%= p("ha_proxy.buffer_size_bytes") %>
   <%- if p("ha_proxy.threads") > 1 -%>
@@ -179,6 +185,9 @@ resolvers default
 frontend http-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %>
+  <%- if properties.ha_proxy.frontend_config -%>
+    <%= p("ha_proxy.frontend_config") %>
+  <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -241,6 +250,9 @@ frontend http-in
 frontend https-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %>
+  <%- if properties.ha_proxy.frontend_config -%>
+    <%= p("ha_proxy.frontend_config") %>
+  <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -307,6 +319,9 @@ frontend https-in
 frontend wss-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %>
+  <%- if properties.ha_proxy.frontend_config -%>
+    <%= p("ha_proxy.frontend_config") %>
+  <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist

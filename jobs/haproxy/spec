@@ -375,6 +375,21 @@ properties:
           - acl_name: block_reset_password_url
             acl_rule: "path_beg,url_dec -m beg -i /reset_password"
 
+  ha_proxy.lua_scripts:
+    description: |
+      A list of LUA scripts that HA Proxy should load. These will need to be provided
+      by other boshreleases, as none are supplied in `haproxy_boshrelease`. Specify
+      each script with the full path to the script (likely `/var/vcap/packages/something/something/darkside.lua`)
+    default: []
+
+  ha_proxy.global_config:
+    description: |
+      A block of raw HAProxy config that will be added to the HA proxy global section
+
+  ha_proxy.frontend_config:
+    description: |
+      A block of raw HAProxy config that will be added to each HA proxy frontend definition
+
   ha_proxy.raw_config:
     description: |
       A multiline text blob of an entire haproxy config. Overrides every other
