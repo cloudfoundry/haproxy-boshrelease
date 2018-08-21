@@ -134,6 +134,8 @@ global
 
 defaults
     log global
+    option log-health-checks
+    option log-separate-errors
     maxconn 64000
     option http-server-close
     option httplog
@@ -391,6 +393,9 @@ backend http-routers
     compression algo gzip
     compression type <%= p("ha_proxy.compress_types") %>
   <%- end -%>
+  <%- if properties.ha_proxy.backend_config -%>
+    <%= p("ha_proxy.backend_config") %>
+  <%- end -%>
 <%
   backend_servers = []
   backend_port = nil
@@ -419,8 +424,12 @@ backend http-routers
     backend_ssl = "ssl verify none "
   end
 -%>
+  <%- if p("ha_proxy.backend_use_http_health") == true then -%>
+    option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
+    <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
+  <%- end -%>
   <%- backend_servers.each_with_index do |ip, index| -%>
-    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= backend_ssl %>
+    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %>
   <%- end -%>
 # }}}
 
@@ -433,6 +442,9 @@ backend http-routed-backend-<%= prefix_hash %>
   <%- if p("ha_proxy.compress_types") != "" -%>
     compression algo gzip
     compression type <%= p("ha_proxy.compress_types") %>
+  <%- end -%>
+  <%- if properties.ha_proxy.backend_config -%>
+    <%= p("ha_proxy.backend_config") %>
   <%- end -%>
 <%
   resolvers = ""
@@ -451,8 +463,14 @@ backend http-routed-backend-<%= prefix_hash %>
     end
   end
 -%>
+  <%- if data["backend_use_http_health"] == true then -%>
+    <%- data["backend_http_health_port"] ||= data["port"] -%>
+    <%- data["backend_http_health_uri"] ||= "/health" -%>
+    option httpchk GET <%= data["backend_http_health_uri"] %>
+    <%- routed_health_check_options = "port " + data["backend_http_health_port"].to_s -%>
+  <%- end -%>
   <%- data["servers"].each_with_index do |ip, index| -%>
-    server node<%= index %> <%= ip %>:<%= data["port"] %> <%= resolvers -%>check inter 1000 <%= backend_ssl %>
+    server node<%= index %> <%= ip %>:<%= data["port"] %> <%= resolvers -%>check inter 1000 <%= routed_health_check_options %> <%= backend_ssl %>
   <%- end -%>
 <% end -%>
 # }}}
@@ -467,6 +485,10 @@ frontend cf_tcp_routing
 
 backend cf_tcp_routers
     mode tcp
+  <%- if properties.ha_proxy.tcp_backend_config -%>
+    <%= p("ha_proxy.tcp_backend_config") %>
+  <%- end -%>
+    option httpcheck GET /health
   <%- tcp_router.instances.each_with_index do |instance, index| -%>
     server node<%= index %> <%= instance.address %> check port 80 inter 1000
   <%- end -%>
@@ -496,6 +518,9 @@ frontend tcp-frontend_<%= tcp_proxy["name"]%>
 
 backend tcp-<%= tcp_proxy["name"] %>
     mode tcp
+  <%- if properties.ha_proxy.tcp_backend_config -%>
+    <%= p("ha_proxy.tcp_backend_config") %>
+  <%- end -%>
   <%- if tcp_proxy["balance"] -%>
     balance <%= tcp_proxy["balance"] %>
   <%- end -%>

@@ -42,7 +42,7 @@ properties:
     default: 1
   ha_proxy.syslog_server:
     description: "An IPv4 address optionally followed by a colon and a UDP port. It can also be an IPv6 address or filesystem path to a UNIX domain socket."
-    default: "127.0.0.1"
+    default: "/dev/log"
   ha_proxy.log_level:
     description: "Log level"
     default: "info"
@@ -239,6 +239,10 @@ properties:
                                  # Setting `verify` requires `ha_proxy.backend_ca_file` key to be set.
           backend_verifyhost: example.com # optional - hostname to verify in the x509 certificate subject for SSL-enabled backend servers
                                           # only used if backend_ssl: `verify` is set
+          backend_use_http_health:  true    # optional, defaults to false. enables http based health checks for the backend
+          backend_http_health_port: 80      # optional, defaults to the port of the backend server. sets the port for the http backend health check
+          backend_http_health_uri:  /health # optional, defaults to /health. sets the URI for backend http health checks
+
   ha_proxy.headers:
     description: "Hash of custom headers you wish you have set on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
     example: |
@@ -382,6 +386,17 @@ properties:
       each script with the full path to the script (likely `/var/vcap/packages/something/something/darkside.lua`)
     default: []
 
+  ha_proxy.backend_use_http_health:
+    description: |
+      Enables HTTP based health checks for the default backend
+    default: false
+  ha_proxy.backend_http_health_uri:
+    description: URI to request when checking the health of a backend
+    default: /health
+  ha_proxy.backend_http_health_port:
+    description: Port to check the backend health on
+    default: 8080
+
   ha_proxy.global_config:
     description: |
       A block of raw HAProxy config that will be added to the HA proxy global section
@@ -389,6 +404,14 @@ properties:
   ha_proxy.frontend_config:
     description: |
       A block of raw HAProxy config that will be added to each HA proxy frontend definition
+
+  ha_proxy.backend_config:
+    description: |
+      A block of raw HAProxy config that will be added to the default HTTP + routed HTTP backend definitions
+
+  ha_proxy.tcp_backend_config:
+    description: |
+      A block of raw HAProxy config that will be added to the CF TCP Router + Generic TCP backend definitions
 
   ha_proxy.raw_config:
     description: |
