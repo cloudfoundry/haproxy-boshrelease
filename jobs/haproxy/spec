@@ -221,6 +221,8 @@ properties:
     default: "off"
   ha_proxy.backend_ssl_verifyhost:
     description: "Optional hostname to verify in the x509 certificate subject for SSL-enabled backend servers.  Requires `ha_proxy.backend_ssl` is set to `verify` when using this."
+  ha_proxy.backend_config:
+    description: "A block of raw HAProxy config that will be added to each HA proxy backend definition"
   ha_proxy.backend_port:
     description: "Listening port for Router"
     default: 80
