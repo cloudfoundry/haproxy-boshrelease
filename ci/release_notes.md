@@ -34,4 +34,5 @@
 
 # Acknowledgements
 
-Thanks @teancom for helping out with the features for this release!
+Thanks @teancom for helping out with the features for this release! Many thanks to @macox for the `backend_config`
+support!
