@@ -488,7 +488,7 @@ backend cf_tcp_routers
   <%- if properties.ha_proxy.tcp_backend_config -%>
     <%= p("ha_proxy.tcp_backend_config") %>
   <%- end -%>
-    option httpcheck GET /health
+    option httpchk GET /health
   <%- tcp_router.instances.each_with_index do |instance, index| -%>
     server node<%= index %> <%= instance.address %> check port 80 inter 1000
   <%- end -%>
