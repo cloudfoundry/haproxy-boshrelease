@@ -1,0 +1,33 @@
+name: haproxy
+version: 9.3.0
+commit_hash: 66eda42
+uncommitted_changes: false
+jobs:
+- name: haproxy
+  version: 3b8dfaebdfc0521ef9aef5a651288c79134324b9
+  fingerprint: 3b8dfaebdfc0521ef9aef5a651288c79134324b9
+  sha1: 78ffe5134f9ec7921fe0c5510bd14586d9863085
+- name: keepalived
+  version: 84406eddb7ecf0fc572728ed8935f6c144df737c
+  fingerprint: 84406eddb7ecf0fc572728ed8935f6c144df737c
+  sha1: 568d617856ecec4502d94e6fb1f48e15926e8287
+packages:
+- name: haproxy
+  version: 28d8cff22ea14a2fa07e1e8d597a44190359dd57
+  fingerprint: 28d8cff22ea14a2fa07e1e8d597a44190359dd57
+  sha1: 61f21d01672038fe29b76194a72e6ab004070ab9
+  dependencies: []
+- name: keepalived
+  version: a8e18e8e2a5159e933377c8d8af36978a1f4cbf0
+  fingerprint: a8e18e8e2a5159e933377c8d8af36978a1f4cbf0
+  sha1: 62f552cce5efe2184b43be117fcb47cce41d4a4a
+  dependencies: []
+- name: ttar
+  version: d48223c69c8c097c64caad1055e0ff024b8f1133
+  fingerprint: d48223c69c8c097c64caad1055e0ff024b8f1133
+  sha1: a2ec3b66ca8fdcb2c71b690b8cfd156fd94c8de3
+  dependencies: []
+license:
+  version: ab1231b48830d561c18cade29dcad86c2925fb8c
+  fingerprint: ab1231b48830d561c18cade29dcad86c2925fb8c
+  sha1: 2a7ca21fe822bec0406bddc4ae0fcebee6cad6e5
