@@ -38,7 +38,13 @@ consumes:
 
 properties:
   ha_proxy.threads:
-    description: "Optional number of threads per VM"
+    description: "Optional number of processes per VM (DEPRECATED, PLEASE USE nbproc)"
+    default: 1
+  ha_proxy.nbproc:
+    description: "Optional number of processes per VM"
+    default: 1
+  ha_proxy.nbthread:
+    description: "Optional number of threads per VM (EXPERIMENTAL)"
     default: 1
   ha_proxy.syslog_server:
     description: "An IPv4 address optionally followed by a colon and a UDP port. It can also be an IPv6 address or filesystem path to a UNIX domain socket."
