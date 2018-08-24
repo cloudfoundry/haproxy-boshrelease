@@ -107,8 +107,21 @@ global
   <%- if properties.ha_proxy.global_config -%>
     <%= p("ha_proxy.global_config") %>
   <%- end -%>
-  <%- if p("ha_proxy.threads") > 1 -%>
-    nbproc <%= p("ha_proxy.threads") %>
+  <%# Check for threads or nbproc, preferring nbproc if it exists. -%>
+  <%# This will be deprecated after the next major version, allowing only nbproc -%>
+  <%- nbproc = 1
+      if p("ha_proxy.threads") > 1
+        nbproc = p("ha_proxy.threads")
+        warn("ha_proxy.threads is deprecated. Please use ha_proxy.nbproc.")
+      end
+      if p("ha_proxy.nbproc") > 1 then
+        nbproc = p("ha_proxy.nbproc")
+      end -%>
+  <%- if nbproc > 1 then -%>
+    nbproc <%= nbproc %>
+  <%- end -%>
+  <%- if p("ha_proxy.nbthread") > 1 -%>
+    nbthread <%= p("ha_proxy.nbthread") %>
   <%- end -%>
     user vcap
     group vcap
@@ -119,8 +132,8 @@ global
   <%- end -%>
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
     tune.bufsize <%= p("ha_proxy.buffer_size_bytes") %>
-  <%- if p("ha_proxy.threads") > 1 -%>
-    <%- 1.upto(p("ha_proxy.threads")) do |proc| -%>
+  <%- if nbproc > 1 -%>
+    <%- 1.upto(nbproc) do |proc| -%>
     stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 level admin process <%= proc%>
     <%- end -%>
   <%- else -%>
@@ -150,10 +163,12 @@ defaults
     timeout queue           <%= (p("ha_proxy.queue_timeout").to_f      * 1000).to_i %>ms
 
 <% if p("ha_proxy.stats_enable") -%>
-  <%- 1.upto(p("ha_proxy.threads")) do |proc| %>
+  <%- 1.upto(nbproc) do |proc| %>
 listen stats_<%= proc %>
     bind <%= stat_prefix %><%= stat_port + (proc - 1) %>
+    <%- if nbproc > 1 -%>
     bind-process <%= proc %>
+    <%- end -%>
     acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
     http-request deny unless private
     mode http
