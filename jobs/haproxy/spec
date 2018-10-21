@@ -191,7 +191,7 @@ properties:
     default:     3600
   ha_proxy.keepalive_timeout:
     description: "Timeout (in floating point seconds) applied to any connection that is in an http-keepalive state, waiting for the next request to occur"
-    default:     0.5
+    default:     6
   ha_proxy.request_timeout:
     description: "Timeout (in floating point seconds) applied to any connection to limit the maximum time for a complete HTTP request (headers only). Used to limit DoS attacks that send data slowly to not trigger the client/server timeouts"
     default:     5
