@@ -421,3 +421,9 @@ properties:
       A multiline text blob of an entire haproxy config. Overrides every other
       option available, so you can provide your own config, and do whatever
       you want. Use at your own risk.
+  ha_proxy.max_open_files:
+    description: The number of file descriptors HAProxy can have open at one time
+    default: 256000
+  ha_proxy.max_connections:
+    description: Number of simultanous connections HAProxy supports handling
+    default: 64000
