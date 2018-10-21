@@ -8,18 +8,15 @@ packages:
 - ttar
 
 templates:
+  haproxy_wrapper:            bin/haproxy_wrapper
+  bpm.yml:                    config/bpm.yml
   haproxy.config.erb:         config/haproxy.config
-  haproxy_ctl:                bin/haproxy_ctl
-  monit_debugger:             bin/monit_debugger
   certs.ttar.erb:             config/certs.ttar
   ssl_redirect.map.erb:       config/ssl_redirect.map
   backend-ca-certs.erb:       config/backend-ca-certs.pem
   client-ca-certs.erb:        config/client-ca-certs.pem
   backend-crt.erb:            config/backend-crt.pem
   client-revocation-list.erb: config/client-revocation-list.pem
-  helpers/ctl_setup.sh:       helpers/ctl_setup.sh
-  helpers/ctl_utils.sh:       helpers/ctl_utils.sh
-  properties.sh.erb:          data/properties.sh
   blacklist_cidrs.txt.erb:    config/blacklist_cidrs.txt
   whitelist_cidrs.txt.erb:    config/whitelist_cidrs.txt
 

@@ -1,0 +1,15 @@
+processes:
+  - name: haproxy
+    executable: /var/vcap/jobs/haproxy/bin/haproxy_wrapper
+    additional_volumes:
+      - path: /var/vcap/jobs/haproxy/config/ssl
+        writable: true
+      - path: /var/vcap/sys/run/haproxy
+        writable: true
+    unsafe:
+      unrestricted_volumes:
+        - path: /dev/log
+    limits:
+      open_files: 256000
+    capabilities:
+      - NET_BIND_SERVICE
