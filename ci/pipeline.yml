@@ -74,6 +74,7 @@ jobs:
       - aggregate:
         - { get: git, trigger: true }
         - { get: stemcell }
+        - { get: bpm }
       - task: testflight
         privileged: true
         config:
@@ -86,6 +87,7 @@ jobs:
           inputs:
             - { name: git }
             - { name: stemcell }
+            - { name: bpm }
           run:
             path: ./git/ci/scripts/testflight
             args: []
@@ -99,6 +101,7 @@ jobs:
             MANIFEST_VARS:        (( grab meta.manifest.vars ))
             MANIFEST_OP_PATHS:    (( grab meta.manifest.operator_file_paths ))
             stemcell:             ../stemcell/*.tgz
+            bpm_release:          ../bpm/*.tgz
       on_failure:
         put: notify
         params:
@@ -334,6 +337,11 @@ resources:
     type: bosh-io-stemcell
     source:
       name: bosh-warden-boshlite-ubuntu-xenial-go_agent
+
+  - name: bpm
+    type: bosh-io-release
+    source:
+      repository: cloudfoundry-incubator/bpm-release
 
   - name: version
     type: semver

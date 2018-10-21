@@ -139,6 +139,9 @@ bosh int ${MANIFEST_PATH} \
 header "Uploading stemcell"
 bosh -n upload-stemcell $stemcell
 
+header "Uploading BPM"
+bosh -n upload-release $bpm_release
+
 bosh -n deploy tmp/manifest.yml
 
 TEST_ERRAND=${TEST_ERRAND:-} # backwards compatibility
