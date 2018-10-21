@@ -125,7 +125,7 @@ global
   <%- end -%>
     user vcap
     group vcap
-    maxconn 64000
+    maxconn <%= p("ha_proxy.max_connections") %>
     spread-checks 4
   <%- p("ha_proxy.lua_scripts").each do |script| -%>
     lua-load <%= script %>
@@ -149,7 +149,7 @@ defaults
     log global
     option log-health-checks
     option log-separate-errors
-    maxconn 64000
+    maxconn <%= p("ha_proxy.max_connections") %>
     option http-server-close
     option httplog
     option forwardfor
