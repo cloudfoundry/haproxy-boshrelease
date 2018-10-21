@@ -52,7 +52,7 @@ if_p("ha_proxy.crt_list") do
   ssl_enabled=true
   crt_config="crt-list /var/vcap/jobs/haproxy/config/ssl/crt-list"
   p("ha_proxy.crt_list").each do |crt_entry|
-    if crt_entry.key?("client_ca_file") || crt_entry.key?(" client_revocation_list") || crt_entry["verify"] != "none"
+    if crt_entry.key?("client_ca_file") || crt_entry.key?(" client_revocation_list") || crt_entry["verify"] == "optional" || crt_entry["verify"] == "required"
       mutual_tls_enabled = true
     end
   end
