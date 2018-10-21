@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+
+set -e
+
+PATH=/var/vcap/packages/haproxy/bin:${PATH}
+DAEMON=/var/vcap/packages/haproxy/bin/haproxy
+CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
+PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
+export PATH=$PATH:/var/vcap/packages/ttar/bin
+
+cleanup_daemon() {
+  if -f ${PID_FILE}; then
+    pkill -F ${PID_FILE}
+  fi
+  rm -f /var/vcap/sys/run/haproxy/*
+}
+
+# reconstitute certs based on ttar file
+mkdir -p /var/vcap/jobs/haproxy/config/ssl
+ttar < /var/vcap/jobs/haproxy/config/certs.ttar
+
+#clean up leftovers from previous run
+cleanup_daemon
+
+# ensure we shut down the daemonized process correctly on exit
+trap shutdown QUIT INT TERM EXIT
+
+# Start up
+echo "$(date): Starting HAProxy"
+"${DAEMON}" -f "${CONFIG}" -D -p ${PID_FILE} 0<&-
+
+# Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
+# to work properly, and BPM requires the process to stay running, sleep infinitely here
+sleep infinity

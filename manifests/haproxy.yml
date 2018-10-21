@@ -1,6 +1,12 @@
 ---
 name: haproxy
 
+addons:
+- name: bpm
+  jobs:
+  - name: bpm
+    release: bpm
+
 instance_groups:
 - name: haproxy
   azs: [z1]
@@ -25,7 +31,7 @@ update:
 
 stemcells:
   - alias: default
-    os: ubuntu-trusty
+    os: ubuntu-xenial
     version: latest
 
 releases:
@@ -33,3 +39,5 @@ releases:
   version: 9.3.0
   url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v9.3.0/haproxy-9.3.0.tgz
   sha1: 384de4ad378b940641a34cda1c63fdc02c901b8f
+- name: bpm
+  version: latest
