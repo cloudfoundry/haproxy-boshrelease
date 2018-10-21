@@ -10,6 +10,12 @@ templates:
   keepalived_ctl: 		bin/keepalived_ctl
   keepalived.config.erb: 	config/keepalived.config.template
 
+provides:
+- name: keepalived
+  type: keepalived
+  properties:
+  - keepalived.vip
+
 properties:
   keepalived.vip:
     description: Virtual IP V4 address that will be given to master 
