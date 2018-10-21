@@ -117,6 +117,7 @@ jobs:
     - do:
       - { get: git-pull-requests, trigger: true, version: every }
       - { get: stemcell }
+      - { get: bpm }
       - put: git-pull-requests
         params:
           path: git-pull-requests
@@ -133,6 +134,7 @@ jobs:
           inputs:
             - { name: git-pull-requests }
             - { name: stemcell }
+            - { name: bpm }
           run:
             path: ./git-pull-requests/ci/scripts/testflight
             args: []
