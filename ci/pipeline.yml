@@ -146,6 +146,7 @@ jobs:
             MANIFEST_VARS:        (( grab meta.manifest.vars-pr ))
             MANIFEST_OP_PATHS:    (( grab meta.manifest.operator_file_paths ))
             stemcell:             ../stemcell/*.tgz
+            bpm_release:          ../bpm/*.tgz
         on_success:
           put: git-pull-requests
           params:
