@@ -442,8 +442,8 @@ backend http-routers
   <%- if p("ha_proxy.backend_use_http_health") == true then -%>
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
   <%- end -%>
-  <%- if p("ha_proxy.backend_http_health_port") do -%>
-    <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
+  <%- if_p("ha_proxy.backend_http_health_port") do |port| -%>
+    <%- health_check_options = "port " + port.to_s -%>
   <%- end -%>
   <%- backend_servers.each_with_index do |ip, index| -%>
     server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %>
@@ -481,10 +481,11 @@ backend http-routed-backend-<%= prefix_hash %>
   end
 -%>
   <%- if data["backend_use_http_health"] == true then -%>
-    <%- data["backend_http_health_port"] ||= data["port"] -%>
     <%- data["backend_http_health_uri"] ||= "/health" -%>
     option httpchk GET <%= data["backend_http_health_uri"] %>
-    <%- routed_health_check_options = "port " + data["backend_http_health_port"].to_s -%>
+    <%- if_p(data["backend_http_health_port"]) do |port| -%>
+      <%- routed_health_check_options = "port " + port.to_s -%>
+    <%- end -%>
   <%- end -%>
   <%- data["servers"].each_with_index do |ip, index| -%>
     server node<%= index %> <%= ip %>:<%= data["port"] %> <%= resolvers -%>check inter 1000 <%= routed_health_check_options %> <%= backend_ssl %>
