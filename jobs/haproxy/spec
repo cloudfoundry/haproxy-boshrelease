@@ -398,7 +398,6 @@ properties:
     default: /health
   ha_proxy.backend_http_health_port:
     description: Port to check the backend health on
-    default: 8080
 
   ha_proxy.global_config:
     description: |

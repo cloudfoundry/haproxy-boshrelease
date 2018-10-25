@@ -441,6 +441,8 @@ backend http-routers
 -%>
   <%- if p("ha_proxy.backend_use_http_health") == true then -%>
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
+  <%- end -%>
+  <%- if p("ha_proxy.backend_http_health_port") do -%>
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
   <%- end -%>
   <%- backend_servers.each_with_index do |ip, index| -%>
