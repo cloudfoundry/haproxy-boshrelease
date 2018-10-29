@@ -442,11 +442,9 @@ backend http-routers
   <%- if p("ha_proxy.backend_use_http_health") == true then -%>
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
   <%- end -%>
+  health_check_options = ""
   <%- if_p("ha_proxy.backend_http_health_port") do |port| -%>
     <%- health_check_options = "port " + port.to_s -%>
-  <%- end -%>
-  <%- else -%>
-    health_check_options = ""
   <%- end -%>
   <%- backend_servers.each_with_index do |ip, index| -%>
     server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %>
