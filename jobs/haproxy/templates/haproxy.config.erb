@@ -444,6 +444,7 @@ backend http-routers
   <%- end -%>
   <%- if_p("ha_proxy.backend_http_health_port") do |port| -%>
     <%- health_check_options = "port " + port.to_s -%>
+  <%- end -%>
   <%- else -%>
     health_check_options = ""
   <%- end -%>
