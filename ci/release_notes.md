@@ -10,6 +10,9 @@
 - Fixed an issue with the `ha_proxy.crt_list` property not properly detecting mutual tls settings unless
   the `verify` key was present on every certificate.
 
+# Fixes
+
+- Bumps HAProxy to v1.8.16
 
 # Acknowledgments
 

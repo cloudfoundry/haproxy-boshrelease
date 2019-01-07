@@ -2,6 +2,9 @@ haproxy/haproxy-1.8.13.tar.gz:
   size: 2063046
   object_id: bdaac0cd-4b13-4650-5237-d715b11dd3d9
   sha: 1c8588d63c7592404d0a3ea59aa41c2dccaaa909
+haproxy/haproxy-1.8.16.tar.gz:
+  size: 2086310
+  sha: 8b0c7c85db2972d1c321a4584414babd10cbf9e8
 haproxy/lua-5.3.5.tar.gz:
   size: 303543
   object_id: 5acd4a28-51a4-45ed-536b-766fec394fa5
