@@ -12,7 +12,7 @@
 
 # Fixes
 
-- Bumps HAProxy to v1.8.16
+- Bumps HAProxy to v1.8.17
 
 # Acknowledgments
 
