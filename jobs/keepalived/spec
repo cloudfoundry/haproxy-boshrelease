@@ -29,5 +29,8 @@ properties:
     description: interface keepalived will use to mount the VIP. If set to 'auto', uses the default interface on the VM
     default: auto
   keepalived.virtual_router_id:                
-    description : Specifies the VRRP virtual router identifier (VRID)(numerical from 1 to 255). A unique VRID value is needed for each VRRP cluster
+    description: Specifies the VRRP virtual router identifier (VRID)(numerical from 1 to 255). A unique VRID value is needed for each VRRP cluster
     default: 1
+  keepalived.dont_track_primary:
+    description: Ignore VRRP interface faults
+    default: false
