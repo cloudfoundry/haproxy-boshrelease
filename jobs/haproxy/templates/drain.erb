@@ -1,0 +1,32 @@
+#!/bin/bash
+# vim: set ft=sh
+
+set -e -x
+
+pidfile=/var/vcap/sys/run/bpm/haproxy/haproxy.pid
+logfile=/var/vcap/sys/log/haproxy/drain.log
+
+<% if not p("ha_proxy.drain_enable") -%>
+echo "drain is disabled" >> ${logfile}
+echo 0
+exit 0
+<% else -%>
+mkdir -p "$(dirname ${logfile})"
+
+if [[ ! -f ${pidfile} ]]; then
+  echo "$(date): pidfile does not exist" >> ${logfile}
+  echo 0
+  exit 0
+fi
+
+pid="$(cat ${pidfile})"
+
+haproxy_pids=$(pgrep -P $pid -l | grep haproxy | awk '{print $1}')
+
+for haproxy_pid in $haproxy_pids; do
+  kill -USR1 "${haproxy_pid}"
+  echo "$(date): triggering drain for process ${haproxy_pid}" >> ${logfile}
+done
+
+echo <%= p("ha_proxy.drain_timeout") -%>
+<% end -%>
