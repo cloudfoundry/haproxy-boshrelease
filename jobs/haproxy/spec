@@ -9,6 +9,7 @@ packages:
 
 templates:
   haproxy_wrapper:            bin/haproxy_wrapper
+  drain.erb:                  bin/drain
   bpm.yml:                    config/bpm.yml
   haproxy.config.erb:         config/haproxy.config
   certs.ttar.erb:             config/certs.ttar
@@ -427,3 +428,9 @@ properties:
   ha_proxy.max_connections:
     description: Number of simultanous connections HAProxy supports handling
     default: 64000
+  ha_proxy.drain_enable:
+    description: Send SIGUSR1 signal to all haproxy processes in a drain script in order to gracefully shutdown
+    default: false
+  ha_proxy.drain_timeout:
+    description: Time in seconds after SIGUSR1 signal is sent in the drain script until monit stops the processes
+    default: 30
