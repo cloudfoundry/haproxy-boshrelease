@@ -201,6 +201,9 @@ resolvers default
 # HTTP Frontend {{{
 frontend http-in
     mode http
+  <% if p("ha_proxy.drain_enable") -%>
+    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
+  <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
@@ -266,6 +269,9 @@ frontend http-in
 # HTTPS Frontend {{{
 frontend https-in
     mode http
+  <% if p("ha_proxy.drain_enable") -%>
+    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
+  <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
@@ -335,6 +341,9 @@ frontend https-in
 # HTTPS Websockets Frontend {{{
 frontend wss-in
     mode http
+  <% if p("ha_proxy.drain_enable") -%>
+    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
+  <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
@@ -497,6 +506,9 @@ frontend cf_tcp_routing
     mode tcp
     bind <%= p("ha_proxy.binding_ip") %>:<%= p("ha_proxy.tcp_routing.port_range") %>
     default_backend cf_tcp_routers
+  <% if p("ha_proxy.drain_enable") -%>
+    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
+  <%- end -%>
 
 backend cf_tcp_routers
     mode tcp
@@ -530,6 +542,9 @@ frontend tcp-frontend_<%= tcp_proxy["name"]%>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %>
   <%- end -%>
     default_backend tcp-<%= tcp_proxy["name"] %>
+  <% if p("ha_proxy.drain_enable") -%>
+    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
+  <%- end -%>
 
 backend tcp-<%= tcp_proxy["name"] %>
     mode tcp

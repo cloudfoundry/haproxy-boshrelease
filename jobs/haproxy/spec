@@ -434,3 +434,6 @@ properties:
   ha_proxy.drain_timeout:
     description: Time in seconds after SIGUSR1 signal is sent in the drain script until monit stops the processes
     default: 30
+  ha_proxy.drain_frontend_grace_time:
+    description: Time in seconds after SIGUSR1 signal is sent in the drain script until the frontends stop accepting connections
+    default: 0
