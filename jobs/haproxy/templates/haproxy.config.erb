@@ -242,7 +242,7 @@ frontend http-in
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
-    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
+    acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
     acl internal hdr(Host) -m sub <%= domain %>
     <%- end -%>
@@ -321,7 +321,7 @@ frontend https-in
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
-    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
+    acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
     acl internal hdr(Host) -m sub <%= domain %>
     <%- end -%>
@@ -393,7 +393,7 @@ frontend wss-in
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
-    acl private src <%= p("ha_proxy.trusted_domain_cidrs") %>
+    acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
     acl internal hdr(Host) -m sub <%= domain %>
     <%- end -%>
