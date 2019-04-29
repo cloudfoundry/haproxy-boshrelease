@@ -1,0 +1,28 @@
+# generated from trusted_domain_cidrs.txt.erb
+<%
+require "base64"
+require 'zlib'
+require 'stringio'
+
+def contains_ip_address?(str)
+  !!(str =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)
+end
+
+if_p("ha_proxy.trusted_domain_cidrs") do |cidrs|
+  uncompressed = ''
+  if contains_ip_address?(cidrs) then
+    cidrs.split(' ').each do |cidr|
+      uncompressed << cidr << "\n"
+    end
+  else
+    gzplain = Base64.decode64(cidrs)
+    gz = Zlib::GzipReader.new(StringIO.new(gzplain))
+    uncompressed = gz.read
+  end
+%>
+# BEGIN trusted_domain cidrs
+<%= uncompressed %>
+# END trusted_domain cidrs
+<%
+end
+%>

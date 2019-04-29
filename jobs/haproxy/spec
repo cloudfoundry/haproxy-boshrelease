@@ -20,6 +20,7 @@ templates:
   client-revocation-list.erb: config/client-revocation-list.pem
   blacklist_cidrs.txt.erb:    config/blacklist_cidrs.txt
   whitelist_cidrs.txt.erb:    config/whitelist_cidrs.txt
+  trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
 
 consumes:
   - name: http_backend
