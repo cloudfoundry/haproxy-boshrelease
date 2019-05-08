@@ -8,19 +8,20 @@ packages:
 - ttar
 
 templates:
-  haproxy_wrapper:            bin/haproxy_wrapper
-  drain.erb:                  bin/drain
-  bpm.yml:                    config/bpm.yml
-  haproxy.config.erb:         config/haproxy.config
-  certs.ttar.erb:             config/certs.ttar
-  ssl_redirect.map.erb:       config/ssl_redirect.map
-  backend-ca-certs.erb:       config/backend-ca-certs.pem
-  client-ca-certs.erb:        config/client-ca-certs.pem
-  backend-crt.erb:            config/backend-crt.pem
-  client-revocation-list.erb: config/client-revocation-list.pem
-  blacklist_cidrs.txt.erb:    config/blacklist_cidrs.txt
-  whitelist_cidrs.txt.erb:    config/whitelist_cidrs.txt
+  haproxy_wrapper:              bin/haproxy_wrapper
+  drain.erb:                    bin/drain
+  bpm.yml:                      config/bpm.yml
+  haproxy.config.erb:           config/haproxy.config
+  certs.ttar.erb:               config/certs.ttar
+  ssl_redirect.map.erb:         config/ssl_redirect.map
+  backend-ca-certs.erb:         config/backend-ca-certs.pem
+  client-ca-certs.erb:          config/client-ca-certs.pem
+  backend-crt.erb:              config/backend-crt.pem
+  client-revocation-list.erb:   config/client-revocation-list.pem
+  blacklist_cidrs.txt.erb:      config/blacklist_cidrs.txt
+  whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
+  error503.http.erb:            errorfiles/error503.http
 
 consumes:
   - name: http_backend
