@@ -85,6 +85,8 @@ builds:
     version: 9.4.1
   f04e3d70-6e79-4511-4724-c3c77c8ef7fc:
     version: 9.2.0
+  f0b063d7-de76-4eba-4542-c66e86ccc026:
+    version: 9.5.1
   fa4778ed-7e7a-4ea1-819c-94ca28a9b867:
     version: "2"
 format-version: "2"
