@@ -51,3 +51,14 @@ KEEPALIVED_VIP=10.244.50.2 templates/make_manifest warden 10.244.0.22
 
 Feel free to contribute back to this via a pull request on a feature branch! Once merged, we'll
 cut a new final release for you.
+
+### Config Tests
+
+If you add a spec value, please add a corresponding test to `spec/haproxy_templates_spec.rb`.
+
+To run these tests:
+```
+cd haproxy_boshrelease
+bundle install
+bundle exec rspec spec/haproxy_templates_spec.rb
+```
