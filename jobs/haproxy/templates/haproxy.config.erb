@@ -420,9 +420,10 @@ backend http-routers
   <%- if properties.ha_proxy.backend_config -%>
     <%= p("ha_proxy.backend_config") %>
   <%- end -%>
-    errorfile 503 /var/vcap/jobs/haproxy/errorfiles/error503.http
-
-<%
+    <%- p('ha_proxy.custom_http_error_files', {}).keys.each do |status_code| -%>
+        errorfile <%= status_code %> /var/vcap/jobs/haproxy/errorfiles/custom<%=status_code%>.http
+    <%- end -%>
+    <%
   backend_servers = []
   backend_port = nil
   if_link("http_backend") do |backend|
