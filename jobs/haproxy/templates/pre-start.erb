@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+if ! [ -e "/var/vcap/jobs/haproxy/errorfiles" ]; then
+  mkdir /var/vcap/jobs/haproxy/errorfiles
+fi
+
+<% p('ha_proxy.custom_http_error_files', {}).each do |status_code, http_content| -%>
+
+cat > <%= "/var/vcap/jobs/haproxy/errorfiles/custom#{status_code}.http" %> << EOF
+<%= http_content %>
+EOF
+<% end -%>

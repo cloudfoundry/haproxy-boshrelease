@@ -10,6 +10,7 @@ packages:
 templates:
   haproxy_wrapper:              bin/haproxy_wrapper
   drain.erb:                    bin/drain
+  pre-start.erb:                bin/pre-start
   bpm.yml:                      config/bpm.yml
   haproxy.config.erb:           config/haproxy.config
   certs.ttar.erb:               config/certs.ttar
@@ -21,7 +22,6 @@ templates:
   blacklist_cidrs.txt.erb:      config/blacklist_cidrs.txt
   whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
-  error503.http.erb:            errorfiles/error503.http
 
 consumes:
   - name: http_backend
@@ -415,6 +415,19 @@ properties:
     description: |
       A block of raw HAProxy config that will be added to the default HTTP + routed HTTP backend definitions
 
+  ha_proxy.custom_http_error_files:
+    description: |
+      A map of status codes to errorfile contents
+    default:
+      "503": |
+               HTTP/1.1 503 Service Unavailable
+               Cache-Control: no-cache
+               Connection: close
+               Content-Type: text/html
+
+               <html><body><h1>503 Service Unavailable</h1>
+               No server is available to handle this request.
+               </body></html>
   ha_proxy.tcp_backend_config:
     description: |
       A block of raw HAProxy config that will be added to the CF TCP Router + Generic TCP backend definitions
