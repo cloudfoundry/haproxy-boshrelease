@@ -1,8 +1,6 @@
 #!/bin/bash -e
 
-if ! [ -e "/var/vcap/jobs/haproxy/errorfiles" ]; then
-  mkdir /var/vcap/jobs/haproxy/errorfiles
-fi
+mkdir -p /var/vcap/jobs/haproxy/errorfiles
 
 <% p('ha_proxy.custom_http_error_files', {}).each do |status_code, http_content| -%>
 
