@@ -376,7 +376,10 @@ properties:
     default: 1024-1123
 
   ha_proxy.http_request_deny_conditions:
-      description: "List of conditions to block http requests. Each condition consists of multiple rules combined with the AND operator"
+      description: |
+        List of conditions to block http requests. Each condition consists of multiple rules combined with the AND operator. Setting
+        the negate flag to true will negate the acl condition. 
+
       example:
         http_request_deny_conditions:
         - condition:
@@ -384,6 +387,10 @@ properties:
             acl_rule: "hdr_beg(host) -i login"
           - acl_name: block_reset_password_url
             acl_rule: "path_beg,url_dec -m beg -i /reset_password"
+          - acl_name: whitelist_ips
+            acl_rule: "src 5.22.5.11 5.22.5.12"
+            negate: true
+         
 
   ha_proxy.lua_scripts:
     description: |
