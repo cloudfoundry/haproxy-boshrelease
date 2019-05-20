@@ -226,7 +226,11 @@ frontend http-in
       <%- acl_names="" -%>
       <%- condition["condition"].each do |acl| -%>
     acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
-      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+        <%- if acl.key?("negate") && acl["negate"] -%>
+          <%- acl_names=acl_names+"!"+acl["acl_name"]+" " -%>
+        <%- else %>
+          <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+        <%- end -%>
       <%- end -%>
     http-request deny if <%= acl_names %>
     <%- end -%>
@@ -305,7 +309,11 @@ frontend https-in
       <%- acl_names="" -%>
       <%- condition["condition"].each do |acl| -%>
     acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
-      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+        <%- if acl.key?("negate") && acl["negate"] -%>
+          <%- acl_names=acl_names+"!"+acl["acl_name"]+" " -%>
+        <%- else %>
+          <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+        <%- end -%>
       <%- end -%>
     http-request deny if <%= acl_names %>
     <%- end -%>
@@ -377,7 +385,11 @@ frontend wss-in
       <%- acl_names="" -%>
       <%- condition["condition"].each do |acl| -%>
     acl <%= acl["acl_name"] %> <%= acl["acl_rule"] %>
-      <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+        <%- if acl.key?("negate") && acl["negate"] -%>
+          <%- acl_names=acl_names+"!"+acl["acl_name"]+" " -%>
+        <%- else %>
+          <%- acl_names=acl_names+acl["acl_name"]+" " -%>
+        <%- end -%>
       <%- end -%>
     http-request deny if <%= acl_names %>
     <%- end -%>

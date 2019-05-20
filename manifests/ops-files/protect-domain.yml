@@ -1,0 +1,48 @@
+---
+#
+# This ops file demonstrates how domains can be protected 
+# through whitelisting or blacklisting of ip's using haproxy acl's.
+#
+# Set your own values for acl_name, and acl_rule ip's.
+#
+
+# whitelist *apps.foobar.com for 127.0.0.1, 127.0.0.2
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties?/ha_proxy?/http_request_deny_conditions?/-
+  value:
+    condition:
+      - acl_name: apps.foobar.com_domain
+        acl_rule: "hdr_sub(host) -i apps.foobar.com"
+      - acl_name: apps.foobar.com_whitelist
+        acl_rule: >-
+          src
+          127.0.0.1
+          127.0.0.2
+        negate: true
+
+# blacklist *apps.foobar.com for 127.0.0.1, 127.0.0.2
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties?/ha_proxy?/http_request_deny_conditions?/-
+  value:
+    condition:
+      - acl_name: apps.foobar.com_domain
+        acl_rule: "hdr_sub(host) -i apps.foobar.com"
+      - acl_name: apps.foobar.com_blacklist
+        acl_rule: >-
+          src
+          127.0.0.1
+          127.0.0.2
+
+# whitelist foobar.com for 127.0.0.1, 127.0.0.2
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties?/ha_proxy?/http_request_deny_conditions?/-
+  value:
+    condition:
+      - acl_name: foobar.com_domain
+        acl_rule: "hdr(host) -i apps.foobar.com"
+      - acl_name: foobar.com_whitelist
+        acl_rule: >-
+          src
+          127.0.0.1
+          127.0.0.2
+        negate: true
