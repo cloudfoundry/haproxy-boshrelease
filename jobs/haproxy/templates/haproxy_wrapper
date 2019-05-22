@@ -10,8 +10,8 @@ PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 export PATH=$PATH:/var/vcap/packages/ttar/bin
 
 cleanup_daemon() {
-  if -f ${PID_FILE}; then
-    pkill -F ${PID_FILE}
+  if [ -f ${PID_FILE} ]; then
+    pkill -F ${PID_FILE} || true
   fi
   rm -f /var/vcap/sys/run/haproxy/*
 }
