@@ -14,6 +14,7 @@ templates:
   bpm.yml:                      config/bpm.yml
   haproxy.config.erb:           config/haproxy.config
   certs.ttar.erb:               config/certs.ttar
+  cidrs.ttar.erb:               config/cidrs.ttar
   ssl_redirect.map.erb:         config/ssl_redirect.map
   backend-ca-certs.erb:         config/backend-ca-certs.pem
   client-ca-certs.erb:          config/client-ca-certs.pem
@@ -384,6 +385,18 @@ properties:
             acl_rule: "hdr_beg(host) -i login"
           - acl_name: block_reset_password_url
             acl_rule: "path_beg,url_dec -m beg -i /reset_password"
+
+  ha_proxy.cidrs_in_file:
+    description: |
+      List of cidrs that will be placed in /var/vcap/jobs/haproxy/config/cidrs/<name>. Useful for acl's that reference 
+      a long list of cidrs (invoke the file with -f /var/vcap/jobs/haproxy/config/cidrs/<name>).
+    
+    example:
+      cidrs_in_file:
+      - name: sample_cidrs
+        cidrs:
+        - 5.22.1.3
+        - 5.22.12.3
 
   ha_proxy.lua_scripts:
     description: |

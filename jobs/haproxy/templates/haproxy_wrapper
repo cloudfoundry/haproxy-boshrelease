@@ -20,6 +20,10 @@ cleanup_daemon() {
 mkdir -p /var/vcap/jobs/haproxy/config/ssl
 ttar < /var/vcap/jobs/haproxy/config/certs.ttar
 
+# reconstitute cidrs based on ttar file
+mkdir -p /var/vcap/jobs/haproxy/config/cidrs
+ttar < /var/vcap/jobs/haproxy/config/cidrs.ttar
+
 #clean up leftovers from previous run
 cleanup_daemon
 

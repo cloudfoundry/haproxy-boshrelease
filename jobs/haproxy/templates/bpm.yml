@@ -2,6 +2,8 @@ processes:
   - name: haproxy
     executable: /var/vcap/jobs/haproxy/bin/haproxy_wrapper
     additional_volumes:
+      - path: /var/vcap/jobs/haproxy/config/cidrs
+        writable: true
       - path: /var/vcap/jobs/haproxy/config/ssl
         writable: true
       - path: /var/vcap/sys/run/haproxy
