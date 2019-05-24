@@ -38,6 +38,6 @@ releases:
 - name: bpm
   version: latest
 - name: haproxy
-  version: 9.5.2
-  url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v9.5.2/haproxy-9.5.2.tgz
-  sha1: 34e1120cd321dcdb0a359b3c8873b75a7b60575b
+  version: 9.6.0
+  url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v9.6.0/haproxy-9.6.0.tgz
+  sha1: 2e4715251b9446d4e45818f315ef021c35a7564f
