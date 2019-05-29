@@ -36,7 +36,9 @@ stemcells:
 
 releases:
 - name: bpm
-  version: latest
+  version: 1.1.0
+  url: https://github.com/cloudfoundry/bpm-release/releases/download/v1.1.0/bpm-release-1.1.0.tgz
+  sha1: sha1:12142ca9437e48694374876fe0236938e252d1e2
 - name: haproxy
   version: 9.6.0
   url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v9.6.0/haproxy-9.6.0.tgz
