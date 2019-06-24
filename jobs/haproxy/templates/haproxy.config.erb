@@ -187,7 +187,9 @@ listen stats_<%= proc %>
     stats hide-version
     stats realm "Haproxy Statistics"
     stats uri /<%= p("ha_proxy.stats_uri") %>
-    stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+    <% if properties.ha_proxy.stats_user and properties.ha_proxy.stats_password -%>
+     stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+       <%- end -%>
   <%- end -%>
 <% end -%>
 
