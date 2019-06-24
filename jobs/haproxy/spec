@@ -210,9 +210,9 @@ properties:
     description: "Define listening address and port for the stats frontend. If multithreading is enabled (`ha_proxy.threads > 1`) multiple stat pages are available - one for each thread. You can see the stat page for each thread on a separate port - starting at the defined port number."
     default: "*:9000"
   ha_proxy.stats_user:
-    description: "User name to authenticate haproxy stats"
+    description: "Optional user name to authenticate haproxy stats"
   ha_proxy.stats_password:
-    description: "Password to authenticate haproxy stats"
+    description: "Optional password to authenticate haproxy stats"
   ha_proxy.stats_uri:
     description: "URI used to access the stats UI."
     default: "haproxy_stats"
@@ -379,7 +379,7 @@ properties:
   ha_proxy.http_request_deny_conditions:
       description: |
         List of conditions to block http requests. Each condition consists of multiple rules combined with the AND operator. Setting
-        the negate flag to true will negate the acl condition. 
+        the negate flag to true will negate the acl condition.
 
       example:
         http_request_deny_conditions:
@@ -391,13 +391,13 @@ properties:
           - acl_name: whitelist_ips
             acl_rule: "src 5.22.5.11 5.22.5.12"
             negate: true
-         
+
 
   ha_proxy.cidrs_in_file:
     description: |
-      List of cidrs that will be placed in /var/vcap/jobs/haproxy/config/cidrs/<name>. Useful for acl's that reference 
+      List of cidrs that will be placed in /var/vcap/jobs/haproxy/config/cidrs/<name>. Useful for acl's that reference
       a long list of cidrs (invoke the file with -f /var/vcap/jobs/haproxy/config/cidrs/<name>).
-    
+
     example:
       cidrs_in_file:
       - name: sample_cidrs
