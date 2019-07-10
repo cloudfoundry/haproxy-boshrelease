@@ -21,7 +21,7 @@ fi
 
 pid="$(cat ${pidfile})"
 
-haproxy_pids=$(pgrep -P $pid -l | grep haproxy | awk '{print $1}')
+haproxy_pids=$(pgrep -P $pid -l | grep 'haproxy$' | awk '{print $1}')
 
 for haproxy_pid in $haproxy_pids; do
   kill -USR1 "${haproxy_pid}"
