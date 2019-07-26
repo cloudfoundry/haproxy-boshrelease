@@ -477,6 +477,7 @@ backend http-routers
   <%- end -%>
   <%- backend_servers.each_with_index do |ip, index| -%>
     server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip) then -%> backup<%- end -%>
+
   <%- end -%>
 # }}}
 
