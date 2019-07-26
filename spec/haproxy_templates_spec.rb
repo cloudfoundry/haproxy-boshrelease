@@ -79,7 +79,8 @@ describe 'haproxy' do
         'max_connections' => '64000',
         'drain_enable' => false,
         'drain_timeout' => 30,
-        'drain_frontend_grace_time' => 0
+        'drain_frontend_grace_time' => 0,
+        'backend_prefer_local_az' => true
       }
     }
   end
