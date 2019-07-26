@@ -600,7 +600,7 @@ backend tcp-<%= tcp_proxy["name"] %>
   end
 -%>
   <%- tcp_proxy["backend_servers"].each_with_index do |ip, index| -%>
-    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check inter 1000 <%= backend_ssl %><%- if !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
+    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
   <%- end -%>
 
   <%- if tcp_proxy["health_check_http"] then -%>
