@@ -472,3 +472,7 @@ properties:
   ha_proxy.drain_frontend_grace_time:
     description: Time in seconds after SIGUSR1 signal is sent in the drain script until the frontends stop accepting connections
     default: 0
+  ha_proxy.backend_prefer_local_az:
+    description: |
+      Prefer backend servers which are located on the same availability zone
+    default: true
