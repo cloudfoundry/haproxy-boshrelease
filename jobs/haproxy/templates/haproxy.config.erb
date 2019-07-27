@@ -447,7 +447,7 @@ backend http-routers
     backend_port = backend.p("port", p("ha_proxy.backend_port"))
 
     if p("ha_proxy.backend_prefer_local_az") then
-      backend_servers_local = backend.address(azs: [spec.az])
+      backend_servers_local = backend.instances.select{ |n| n.az == spec.az }.map(&:address)
     end
   end.else_if_p("ha_proxy.backend_servers") do |servers|
     backend_servers = servers
@@ -552,7 +552,7 @@ if_link("tcp_backend") do |tcp_backend|
   tcp << {
     "name" => tcp_backend.instances.first.name || "link",
     "backend_servers" => tcp_backend.instances.map(&:address),
-    "backend_servers_local" => tcp_backend.address(azs: [spec.az]),
+    "backend_servers_local" => tcp_backend.instances.select{ |n| n.az == spec.az }.map(&:address),
     "port" => tcp_backend.p("port", p("ha_proxy.tcp_link_port")),
     "backend_port" => tcp_backend.p("backend_port", p("ha_proxy.tcp_link_port")),
     "health_check_http" => tcp_backend.p("health_check_http", p("ha_proxy.tcp_link_health_check_http", nil))
