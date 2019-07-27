@@ -476,8 +476,7 @@ backend http-routers
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
   <%- end -%>
   <%- backend_servers.each_with_index do |ip, index| -%>
-    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip) then -%> backup<%- end -%>
-
+    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip) then -%> backup<%- end -%> 
   <%- end -%>
 # }}}
 
@@ -601,8 +600,7 @@ backend tcp-<%= tcp_proxy["name"] %>
   end
 -%>
   <%- tcp_proxy["backend_servers"].each_with_index do |ip, index| -%>
-    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
-
+    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%> 
   <%- end -%>
 
   <%- if tcp_proxy["health_check_http"] then -%>
