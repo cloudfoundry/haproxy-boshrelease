@@ -475,4 +475,4 @@ properties:
   ha_proxy.backend_prefer_local_az:
     description: |
       Prefer backend servers which are located on the same availability zone
-    default: true
+    default: false
