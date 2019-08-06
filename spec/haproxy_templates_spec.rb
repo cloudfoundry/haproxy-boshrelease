@@ -65,6 +65,7 @@ describe 'haproxy' do
         'accept_proxy' => false,
         'disable_tcp_accept_proxy' => false,
         'binding_ip' => '',
+        'v4v6' => false,
         'cidr_blacklist' => '~',
         'cidr_whitelist' => '~',
         'block_all' => false,

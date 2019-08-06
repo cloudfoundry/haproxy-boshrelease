@@ -99,6 +99,14 @@ else
   abort("Unkown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set'")
 end
 # }}}
+# IPv4 and IPv6 binding (v4v6) Option {{{
+v4v6 = ""
+if_p("ha_proxy.v4v6") do
+  if p("ha_proxy.binding_ip") == "::" then
+    v4v6 = "v4v6"
+  end
+end
+# }}}
 -%>
 
 global
@@ -207,7 +215,7 @@ frontend http-in
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
-    bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %>
+    bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %> <%= v4v6 %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
@@ -279,7 +287,7 @@ frontend https-in
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
-    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %>
+    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
@@ -355,7 +363,7 @@ frontend wss-in
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
-    bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %>
+    bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
@@ -527,7 +535,7 @@ backend http-routed-backend-<%= prefix_hash %>
 
 frontend cf_tcp_routing
     mode tcp
-    bind <%= p("ha_proxy.binding_ip") %>:<%= p("ha_proxy.tcp_routing.port_range") %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= p("ha_proxy.tcp_routing.port_range") %> <%= v4v6 %>
     default_backend cf_tcp_routers
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
@@ -561,9 +569,9 @@ end -%>
 frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
   <%- if tcp_proxy["ssl"] -%>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tcp_accept_proxy %> <%= tls_bind_options %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tcp_accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
   <%- else -%>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= v4v6 %>
   <%- end -%>
     default_backend tcp-<%= tcp_proxy["name"] %>
   <% if p("ha_proxy.drain_enable") -%>
