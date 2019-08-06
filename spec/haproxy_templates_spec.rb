@@ -80,7 +80,7 @@ describe 'haproxy' do
         'drain_enable' => false,
         'drain_timeout' => 30,
         'drain_frontend_grace_time' => 0,
-        'backend_prefer_local_az' => true
+        'backend_prefer_local_az' => false
       }
     }
   end
