@@ -50,6 +50,12 @@ properties:
   ha_proxy.syslog_server:
     description: "An IPv4 address optionally followed by a colon and a UDP port. It can also be an IPv6 address or filesystem path to a UNIX domain socket."
     default: "/dev/log"
+  ha_proxy.log_max_length:
+    description: "Optional maximum line length. Log lines larger than this value will be truncated before being sent."
+    default: 1024
+  ha_proxy.log_format:
+    description: "The log format used when generating syslog messages."
+    default: "rfc3164"
   ha_proxy.log_level:
     description: "Log level"
     default: "info"
@@ -382,7 +388,7 @@ properties:
   ha_proxy.http_request_deny_conditions:
       description: |
         List of conditions to block http requests. Each condition consists of multiple rules combined with the AND operator. Setting
-        the negate flag to true will negate the acl condition. 
+        the negate flag to true will negate the acl condition.
 
       example:
         http_request_deny_conditions:
@@ -394,13 +400,13 @@ properties:
           - acl_name: whitelist_ips
             acl_rule: "src 5.22.5.11 5.22.5.12"
             negate: true
-         
+
 
   ha_proxy.cidrs_in_file:
     description: |
-      List of cidrs that will be placed in /var/vcap/jobs/haproxy/config/cidrs/<name>. Useful for acl's that reference 
+      List of cidrs that will be placed in /var/vcap/jobs/haproxy/config/cidrs/<name>. Useful for acl's that reference
       a long list of cidrs (invoke the file with -f /var/vcap/jobs/haproxy/config/cidrs/<name>).
-    
+
     example:
       cidrs_in_file:
       - name: sample_cidrs

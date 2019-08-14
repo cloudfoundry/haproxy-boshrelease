@@ -110,7 +110,7 @@ end
 -%>
 
 global
-    log <%= p('ha_proxy.syslog_server') %> syslog <%= p('ha_proxy.log_level') %>
+    log <%= p('ha_proxy.syslog_server') %> len <%= p('ha_proxy.log_max_length') %> format <%= p('ha_proxy.log_format') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
   <%- if properties.ha_proxy.global_config -%>
     <%= p("ha_proxy.global_config") %>
