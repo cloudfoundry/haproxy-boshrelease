@@ -1,0 +1,9 @@
+#!/bin/bash
+if [[ -z "${1:-}" ]]; then
+  if [[ -e /var/vcap/sys/run/haproxy/stats.sock ]]; then
+    exec /var/vcap/packages/haproxy/bin/hatop -s /var/vcap/sys/run/haproxy/stats.sock
+  elif [[ -e /var/vcap/sys/run/haproxy/stats1.sock ]]; then
+    exec /var/vcap/packages/haproxy/bin/hatop -s /var/vcap/sys/run/haproxy/stats1.sock
+  fi
+fi
+exec /var/vcap/packages/haproxy/bin/hatop "$@"
