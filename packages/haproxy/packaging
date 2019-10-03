@@ -37,3 +37,8 @@ pushd haproxy-${HAPROXY_VERSION}
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd
+
+cp haproxy/hatop ${BOSH_INSTALL_TARGET}/bin/hatop
+chmod 755 ${BOSH_INSTALL_TARGET}/bin/hatop
+cp hatop-wrapper ${BOSH_INSTALL_TARGET}/
+chmod 755 ${BOSH_INSTALL_TARGET}/hatop-wrapper
