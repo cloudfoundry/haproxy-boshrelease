@@ -11,7 +11,7 @@ processes:
 
 <%- 
    additional_volumes = []
-   if_p("ha_proxy.syslog_server") && p("ha_proxy.syslog_server").chars.first == "/" 
+   if p("ha_proxy.syslog_server") && p("ha_proxy.syslog_server").chars.first == "/" 
       additional_volumes.push({"path" =>p("ha_proxy.syslog_server")})
    end 
    if_p("ha_proxy.additional_unrestricted_volumes") do 
