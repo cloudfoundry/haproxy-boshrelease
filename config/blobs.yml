@@ -1,15 +1,7 @@
-haproxy/haproxy-1.8.13.tar.gz:
-  size: 2063046
-  object_id: bdaac0cd-4b13-4650-5237-d715b11dd3d9
-  sha: 1c8588d63c7592404d0a3ea59aa41c2dccaaa909
-haproxy/haproxy-1.8.17.tar.gz:
-  size: 2077525
-  object_id: 8fa8c082-2cb0-429a-5959-4a1d0d8c1759
-  sha: 066878e2e443473d0cb9f8e74c28be822ec1e4be
-haproxy/haproxy-1.8.20.tar.gz:
-  size: 2083917
-  object_id: 4a94da26-7a25-4117-5e48-057d6a31fa03
-  sha: 7aa627e4ae0b2ee603d5525436c7f4d13b8e2f5e
+haproxy/haproxy-1.9.11.tar.gz:
+  size: 2389403
+  object_id: 4bda3907-6582-4557-7306-9593e7d08725
+  sha: 664ee6fc3d88f76dfa59b23ebf1481cc642cf1b8
 haproxy/hatop:
   size: 72429
   object_id: d86cd983-5ca3-4293-6620-56a9273be80f
@@ -18,14 +10,14 @@ haproxy/lua-5.3.5.tar.gz:
   size: 303543
   object_id: 5acd4a28-51a4-45ed-536b-766fec394fa5
   sha: 112eb10ff04d1b4c9898e121d6bdf54a81482447
-haproxy/pcre2-10.31.tar.gz:
-  size: 2130574
-  object_id: 7ae6656a-67f7-4376-4175-39d3b2400f4c
-  sha: 7a77476a908c16cb26ad8a26363b67f00c8303bd
-haproxy/socat-1.7.3.2.tar.gz:
-  size: 615818
-  object_id: 246271e3-bd49-4d1f-9410-c7002f44325c
-  sha: a2446f65fb9fe9703b85ac5664c8920089fe32d8
+haproxy/pcre2-10.33.tar.gz:
+  size: 2234905
+  object_id: 06b7a60f-7073-48db-7880-33a9c1eb60e4
+  sha: dddf258fde6d73afec63e1cc2e38cca0286c2701
+haproxy/socat-1.7.3.3.tar.gz:
+  size: 614101
+  object_id: dd443826-d381-44dc-43e4-9134a9bb8948
+  sha: acbb6c4c303a9bd8428c7846545849f25d92bd76
 keepalived/keepalived-1.2.24.tar.gz:
   size: 601873
   object_id: aa936bbe-fe82-49cc-82c8-99d867e5b4bb
