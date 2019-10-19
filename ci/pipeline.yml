@@ -60,6 +60,7 @@ groups:
     jobs:
       - testflight
       - testflight-pr
+      - pre
       - rc
       - shipit
       - major
@@ -71,7 +72,7 @@ jobs:
     serial: true
     plan:
     - do:
-      - aggregate:
+      - in_parallel:
         - { get: git, trigger: true }
         - { get: stemcell }
         - { get: bpm }
@@ -188,13 +189,62 @@ jobs:
           icon_url: (( grab meta.slack.icon ))
           text_file: message/body
 
+  - name: pre
+    public: true
+    serial: true
+    plan:
+    - do:
+      - get: git
+        passed:
+        - testflight
+        trigger: true
+      - get: version
+        trigger: true
+      - task: release-notes
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: (( grab meta.image.name ))
+              tag: (( grab meta.image.tag ))
+          run:
+            path: sh
+            args:
+            - -ce
+            - |
+              cd git
+              if [ -f ci/release_notes.md ]; then
+                echo "######   RELEASE NOTES   ###############"
+                echo
+                cat ci/release_notes.md
+                echo
+                echo "########################################"
+                echo
+              else
+                echo "NO RELEASE NOTES HAVE BEEN WRITTEN"
+                echo "You *might* want to do that before"
+                echo "hitting (+) on that shipit job..."
+                echo
+              fi
+          inputs:
+          - name: git
+      on_failure:
+        put: notify
+        params:
+          channel:  (( grab meta.slack.channel ))
+          username: (( grab meta.slack.username ))
+          icon_url: (( grab meta.slack.icon ))
+          text: release candidate job 'pre' failed (which is unusual).
+          ok: false
+
   - name: rc
     public: true
     plan:
     - do:
-      - aggregate:
+      - in_parallel:
           - { get: git,     trigger: true,  passed: [testflight] }
-          - { get: version, trigger: true, params: {pre: rc} }
+          - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
       on_failure:
@@ -239,7 +289,7 @@ jobs:
     plan:
     - do:
       - name: inputs
-        aggregate:
+        in_parallel:
           - { get: version, passed: [rc], params: {bump: final} }
           - { get: git,     passed: [rc] }
       - name: release
@@ -294,7 +344,7 @@ jobs:
         params:
           bump: patch
       - name: notify
-        aggregate:
+        in_parallel:
         - put: notify
           params:
             channel:  (( grab meta.slack.channel ))
