@@ -243,7 +243,7 @@ jobs:
     plan:
     - do:
       - in_parallel:
-          - { get: git,     trigger: true,  passed: [testflight] }
+          - { get: git,     trigger: true,  passed: [pre] }
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
