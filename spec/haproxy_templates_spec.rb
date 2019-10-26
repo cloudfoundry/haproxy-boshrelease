@@ -19,7 +19,7 @@ describe 'haproxy' do
         'threads' => 1,
         'nbproc' => 1,
         'nbthread' => 1,
-        'syslog_server' => '/dev/log',
+        'syslog_server' => 'stdout',
         'log_level' => 'info',
         'buffer_size_bytes' => '16384',
         'internal_only_domains' => [],

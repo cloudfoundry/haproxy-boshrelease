@@ -39,9 +39,6 @@ consumes:
     optional: true
 
 properties:
-  ha_proxy.threads:
-    description: "Optional number of processes per VM (DEPRECATED, PLEASE USE nbproc)"
-    default: 1
   ha_proxy.nbproc:
     description: "Optional number of processes per VM"
     default: 1
@@ -50,13 +47,13 @@ properties:
     default: 1
   ha_proxy.syslog_server:
     description: "An IPv4 address optionally followed by a colon and a UDP port. It can also be an IPv6 address or filesystem path to a UNIX domain socket."
-    default: "/dev/log"
+    default: "stdout"
   ha_proxy.log_max_length:
     description: "Optional maximum line length. Log lines larger than this value will be truncated before being sent."
     default: 1024
   ha_proxy.log_format:
     description: "The log format used when generating syslog messages."
-    default: "rfc3164"
+    default: "raw"
   ha_proxy.log_level:
     description: "Log level"
     default: "info"

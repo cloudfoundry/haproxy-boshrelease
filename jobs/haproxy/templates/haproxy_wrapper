@@ -42,8 +42,12 @@ trap reload_daemon USR2
 
 # Start up
 echo "$(date): Starting HAProxy"
+<%- if p("ha_proxy.nbproc") == 1 -%>
+"${DAEMON}" -f "${CONFIG}" -p ${PID_FILE} -V -db
+<%- else -%>
 "${DAEMON}" -f "${CONFIG}" -D -p ${PID_FILE} 0<&-
 
 # Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
 # to work properly, and BPM requires the process to stay running, sleep infinitely here
 sleep infinity
+<%- end -%>
