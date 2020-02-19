@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+bpm=/var/vcap/packages/bpm/bin/bpm
+
+if $bpm pid haproxy > /dev/null; then
+  haproxy_pid=$($bpm pid haproxy)
+  echo "Reloading HAProxy (pid: ${haproxy_pid})"
+  kill -USR2 -"${haproxy_pid}"
+else
+  echo "Could not find HAproxy pid. Exiting."
+  exit 1
+fi

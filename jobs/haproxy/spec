@@ -9,6 +9,7 @@ packages:
 
 templates:
   haproxy_wrapper:              bin/haproxy_wrapper
+  reload:                       bin/reload
   drain.erb:                    bin/drain
   pre-start.erb:                bin/pre-start
   bpm.yml:                      config/bpm.yml

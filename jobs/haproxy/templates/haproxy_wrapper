@@ -7,6 +7,7 @@ PATH=/var/vcap/packages/haproxy/bin:${PATH}
 DAEMON=/var/vcap/packages/haproxy/bin/haproxy
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
+SOCK_FILE=/var/vcap/sys/run/haproxy/stats.sock
 export PATH=$PATH:/var/vcap/packages/ttar/bin
 
 cleanup_daemon() {
@@ -14,6 +15,12 @@ cleanup_daemon() {
     pkill -F ${PID_FILE} || true
   fi
   rm -f /var/vcap/sys/run/haproxy/*
+}
+
+reload_daemon() {
+    echo "$(date): Reloading HAProxy"
+    "${DAEMON}" -f "${CONFIG}" -D -p ${PID_FILE} -sf "$(cat ${PID_FILE})" -x ${SOCK_FILE} 0<&-
+    sleep infinity
 }
 
 # reconstitute certs based on ttar file
@@ -29,6 +36,9 @@ cleanup_daemon
 
 # ensure we shut down the daemonized process correctly on exit
 trap shutdown QUIT INT TERM EXIT
+
+# enable hitless reloads
+trap reload_daemon USR2
 
 # Start up
 echo "$(date): Starting HAProxy"
