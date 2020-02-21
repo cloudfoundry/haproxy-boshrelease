@@ -160,8 +160,8 @@ properties:
     description: "If this is set to 'true', a https redirect rule for all http calls will be put in the config file"
     default: false
   ha_proxy.ssl_ciphers:
-    default: ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS
-    description: "List of SSL Ciphers that are passed to HAProxy"
+    default: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA25:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+    description: "List of SSL Ciphers that are passed to HAProxy. Security/Server Side TLS Recommended configurations: https://wiki.mozilla.org/Security/Server_Side_TLS"
   ha_proxy.hsts_enable:
     default: false
     description: "Enables HSTS(Strict-Transport-Security Header) for all the SSL/TLS listeners"
@@ -181,10 +181,10 @@ properties:
     default: true
     description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets"
   ha_proxy.disable_tls_10:
-    default: false
+    default: true
     description: "Disable TLS 1.0 in HA Proxy"
   ha_proxy.disable_tls_11:
-    default: false
+    default: true
     description: "Disable TLS 1.1 in HA Proxy"
 
   ha_proxy.connect_timeout:
@@ -225,6 +225,22 @@ properties:
   ha_proxy.trusted_stats_cidrs:
     description: "Trusted ip range that can access the stats UI"
     default: 0.0.0.0/32
+
+  ha_proxy.prometheus_exporter.enable:
+    description: "If true, haproxy will enable native prometheus exporter. You can see the metrics on `haproxy_ip:9101/metrics`."
+    default: false
+  ha_proxy.prometheus_exporter.bind:
+    description: "Define listening address and port for the prometheus exporter frontend. https://github.com/prometheus/prometheus/wiki/Default-port-allocations "
+    default: "*:9101"
+  ha_proxy.prometheus_exporter.path:
+    description: "Define prometheus exporter path."
+    default: "/metrics"
+  ha_proxy.prometheus_exporter.stats.enable:
+    description: "If true, haproxy will serve stats too. If you need more options please use `ha_proxy.stats_enable`"
+    default: false
+  ha_proxy.prometheus_exporter.stats.path:
+    description: "Define haproxy stats path."
+    default: "/stats"
 
   ha_proxy.backend_servers:
     description: "Array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used)"

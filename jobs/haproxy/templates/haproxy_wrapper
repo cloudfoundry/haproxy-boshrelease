@@ -9,6 +9,9 @@ CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 export PATH=$PATH:/var/vcap/packages/ttar/bin
 
+# provided openssl
+export LD_LIBRARY_PATH=/var/vcap/packages/haproxy/lib/
+
 cleanup_daemon() {
   if [ -f ${PID_FILE} ]; then
     pkill -F ${PID_FILE} || true

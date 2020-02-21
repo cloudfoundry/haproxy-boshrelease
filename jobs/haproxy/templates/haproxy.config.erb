@@ -191,6 +191,7 @@ listen stats_<%= proc %>
   <%- end -%>
 <% end -%>
 
+
 <% if p("ha_proxy.enable_health_check_http") %>
 listen health_check_http_url
     bind :<%= p("ha_proxy.health_check_port") %>
@@ -207,6 +208,20 @@ resolvers default
     nameserver <%= resolver.keys[0] %> <%= resolver.values[0] %>:53
   <%- end -%>
 <% end -%>
+
+
+<% if p("ha_proxy.prometheus_exporter.enable") %>
+frontend prometheus_exporter
+    mode http
+    bind <%= p("ha_proxy.prometheus_exporter.bind") %>
+    option http-use-htx
+    http-request use-service prometheus-exporter if { path <%= p("ha_proxy.prometheus_exporter.path") %> }
+    <% if p("ha_proxy.prometheus_exporter.stats.enable") %>
+    stats enable
+    stats uri <%= p("ha_proxy.prometheus_exporter.stats.path") %>
+    stats refresh 10s
+    <% end %>
+<% end %>
 
 <% unless p("ha_proxy.disable_http") -%>
 # HTTP Frontend {{{
@@ -248,12 +263,12 @@ frontend http-in
   <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
-    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
-    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    http-request add-header <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %> <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -269,7 +284,7 @@ frontend http-in
     use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
-    reqadd X-Forwarded-Proto:\ http if ! xfp_exists
+    http-request add-header X-Forwarded-Proto http if ! xfp_exists
   <%- if p("ha_proxy.https_redirect_all") -%>
     redirect scheme https code 301 if !{ ssl_fc }
   <%- end -%>
@@ -331,12 +346,12 @@ frontend https-in
   <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
-    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
-    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    http-request add-header <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %> <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -352,7 +367,7 @@ frontend https-in
     use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
-    reqadd X-Forwarded-Proto:\ https if ! xfp_exists
+    http-request add-header X-Forwarded-Proto https if ! xfp_exists
 # }}}
 <% end -%>
 
@@ -407,12 +422,12 @@ frontend wss-in
   <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
-    reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
-    rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
+    http-request add-header <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %> <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -428,7 +443,7 @@ frontend wss-in
     use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
-    reqadd X-Forwarded-Proto:\ https if ! xfp_exists
+    http-request add-header X-Forwarded-Proto https if ! xfp_exists
 # }}}
 <% end -%>
 

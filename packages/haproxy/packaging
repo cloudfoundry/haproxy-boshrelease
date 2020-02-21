@@ -4,7 +4,8 @@ set -e
 LUA_VERSION=5.3.5
 PCRE_VERSION=10.33
 SOCAT_VERSION=1.7.3.3
-HAPROXY_VERSION=1.9.11
+OPENSSL_VERSION=1.1.1d
+HAPROXY_VERSION=2.1.3
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
@@ -31,9 +32,24 @@ pushd socat-${SOCAT_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
+# https://github.com/openssl/openssl/blob/master/INSTALL
+# https://dnsprivacy.org/wiki/display/DP/Building+HAProxy+so+that+it+can+use+TLSv1.3
+tar xf haproxy/openssl-${OPENSSL_VERSION}.tar.gz
+pushd openssl-${OPENSSL_VERSION}
+  ./config --prefix=${BOSH_INSTALL_TARGET} shared
+  make
+  make install
+  chmod 755 ${BOSH_INSTALL_TARGET}/bin/openssl
+popd
+
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
-  make TARGET=linux2628 USE_OPENSSL=1 USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
+  make TARGET=linux-glibc \
+     USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include \
+     USE_PCRE2=1 USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 PCRE2DIR=${BOSH_INSTALL_TARGET} \
+     USE_OPENSSL=1 SSL_LIB=${BOSH_INSTALL_TARGET}/lib SSL_INC=${BOSH_INSTALL_TARGET}/include \
+     USE_ZLIB=1 \
+     EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o"
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd
