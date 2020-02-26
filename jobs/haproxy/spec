@@ -139,6 +139,11 @@ properties:
         - "*.domain.tld"
         - "!secure.domain.tld"
     default: ~
+  ha_proxy.ext_crt_list:
+    description: |
+      A flag denoting the use of additional certificates from external sources.
+      If set to true the contents of an external crt-list file located in /var/vcap/jobs/haproxy/config/ssl/ext/crt-list are added to the crt-list described by the "crt_list" property.
+    default: false
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
   ha_proxy.enable_health_check_http:

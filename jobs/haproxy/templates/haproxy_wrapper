@@ -18,14 +18,25 @@ cleanup_daemon() {
 }
 
 reload_daemon() {
+    update_certs
     echo "$(date): Reloading HAProxy"
     "${DAEMON}" -f "${CONFIG}" -D -p ${PID_FILE} -sf "$(cat ${PID_FILE})" -x ${SOCK_FILE} 0<&-
     sleep infinity
 }
 
-# reconstitute certs based on ttar file
-mkdir -p /var/vcap/jobs/haproxy/config/ssl
-ttar < /var/vcap/jobs/haproxy/config/certs.ttar
+update_certs() {
+  # reconstitute certs based on ttar file
+  mkdir -p /var/vcap/jobs/haproxy/config/ssl
+  ttar < /var/vcap/jobs/haproxy/config/certs.ttar
+
+  # merge optional external certs
+  if grep -q OPTIONAL_EXT_CERTS /var/vcap/jobs/haproxy/config/ssl/crt-list; then
+    sed -i -e '/OPTIONAL_EXT_CERTS/r /var/vcap/jobs/haproxy/config/ssl/ext/crt-list' /var/vcap/jobs/haproxy/config/ssl/crt-list
+  fi
+}
+
+# unpack base certs and add optional external certs
+update_certs
 
 # reconstitute cidrs based on ttar file
 mkdir -p /var/vcap/jobs/haproxy/config/cidrs
