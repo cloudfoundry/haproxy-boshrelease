@@ -8,3 +8,26 @@ cat > <%= "/var/vcap/jobs/haproxy/errorfiles/custom#{status_code}.http" %> << EO
 <%= http_content %>
 EOF
 <% end -%>
+
+<%
+if_p("ha_proxy.ext_crt_list") do |ext_crt_list|
+  if ext_crt_list
+    %>
+    mkdir -p /var/vcap/jobs/haproxy/config/ssl/ext
+    chmod o+rwx /var/vcap/jobs/haproxy/config/ssl/ext
+    max_retries=300
+    retries=0
+    while [ ! -f /var/vcap/jobs/haproxy/config/ssl/ext/crt-list ]; do
+      echo "/var/vcap/jobs/haproxy/config/ssl/ext/crt-list missing ($retries/$max_retries). waiting..."
+      sleep 1
+      retries=$((retries + 1))
+      if [ $retries -eq $max_retries ]; then
+        echo "ERROR: /var/vcap/jobs/haproxy/config/ssl/ext/crt-list still missing after $max_retries seconds. Exiting."
+        exit 1
+      fi
+    done
+    echo "/var/vcap/jobs/haproxy/config/ssl/ext/crt-list found."
+    <%
+  end
+end
+%>
