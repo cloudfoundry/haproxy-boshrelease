@@ -8,7 +8,7 @@ packages:
 - ttar
 
 templates:
-  haproxy_wrapper:              bin/haproxy_wrapper
+  haproxy_wrapper.erb:          bin/haproxy_wrapper
   reload:                       bin/reload
   drain.erb:                    bin/drain
   pre-start.erb:                bin/pre-start
@@ -152,7 +152,7 @@ properties:
   ha_proxy.ext_crt_list_timeout:
     description: |
       Timeout (in seconds) to wait for the external certificates list located at `ha_proxy.ext_crt_list_file` to appear during HAproxy startup
-    default: 300
+    default: 60
   ha_proxy.ext_crt_list_policy:
     description: |
       What to do if the external certificates list located at `ha_proxy.ext_crt_list_file` does not appear within the time
