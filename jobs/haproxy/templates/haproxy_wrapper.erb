@@ -29,10 +29,43 @@ update_certs() {
   mkdir -p /var/vcap/jobs/haproxy/config/ssl
   ttar < /var/vcap/jobs/haproxy/config/certs.ttar
 
+  <%- if p("ha_proxy.ext_crt_list") == true -%>
+  # wait for optional external certs
+  local ext_crt_list_file=<%= p("ha_proxy.ext_crt_list_file") %>
+  local timeout=<%= p("ha_proxy.ext_crt_list_timeout") %>
+  local policy=<%= p("ha_proxy.ext_crt_list_policy") %>
+  <%- if not ["fail", "continue"].include?(p("ha_proxy.ext_crt_list_policy"))
+       abort("ha_proxy.ext_crt_list_policy must be either 'fail' or 'continue'")
+      end -%>
+  mkdir -p $(dirname $ext_crt_list_file)
+  chmod o+rwx $(dirname $ext_crt_list_file)
+  local max_retries=$timeout
+  local retries=1
+  while [ ! -f $ext_crt_list_file ]; do
+    echo "$(date): $ext_crt_list_file missing ($retries/$max_retries). waiting..."
+    sleep 1
+    retries=$((retries + 1))
+    if [ $retries -gt $max_retries ]; then
+      if [ $policy == "fail" ]; then
+        echo "$(date): ERROR: $ext_crt_list_file still missing after $max_retries seconds. Exiting."
+        cleanup_daemon
+        exit 1
+      fi
+      if [ $policy == "continue" ]; then
+        echo "$(date): WARNING: $ext_crt_list_file still missing after $max_retries seconds. Continuing without external certificates."
+        break
+      fi
+    fi
+  done
+  if [ -f $ext_crt_list_file ]; then
+    echo "$(date): $ext_crt_list_file found."
+  fi
+
   # merge optional external certs
   if grep -q OPTIONAL_EXT_CERTS /var/vcap/jobs/haproxy/config/ssl/crt-list; then
-    sed -i -e '/OPTIONAL_EXT_CERTS/r /var/vcap/jobs/haproxy/config/ssl/ext/crt-list' /var/vcap/jobs/haproxy/config/ssl/crt-list
+    sed -i -e '/OPTIONAL_EXT_CERTS/r <%= p("ha_proxy.ext_crt_list_file") %>' /var/vcap/jobs/haproxy/config/ssl/crt-list
   fi
+  <%- end -%>
 }
 
 # unpack base certs and add optional external certs

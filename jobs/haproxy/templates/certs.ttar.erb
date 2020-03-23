@@ -69,13 +69,9 @@ if_p("ha_proxy.crt_list") do |crt_list|
       pem_block = pem_block['cert_chain'].strip + "\n" + pem_block['private_key'].strip
     end
 %>
-<%
-if_p("ha_proxy.ext_crt_list") do |ext_crt_list|
-  if ext_crt_list
-    %>#OPTIONAL_EXT_CERTS<%
-  end
-end
-%>
+<% if p("ha_proxy.ext_crt_list") == true %>
+  #OPTIONAL_EXT_CERTS
+<% end %>
 ========================== 0600 /var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem
 <%= pem_block %>
 <%
