@@ -142,8 +142,22 @@ properties:
   ha_proxy.ext_crt_list:
     description: |
       A flag denoting the use of additional certificates from external sources.
-      If set to true the contents of an external crt-list file located in /var/vcap/jobs/haproxy/config/ssl/ext/crt-list are added to the crt-list described by the "crt_list" property.
+      If set to true the contents of an external crt-list file located at `ha_proxy.ext_crt_list_file` are
+      added to the crt-list described by the `ha_proxy.crt_list` property.
     default: false
+  ha_proxy.ext_crt_list_file:
+    description: |
+      The location from which to load additional external certificates list
+    default: "/var/vcap/jobs/haproxy/config/ssl/ext/crt-list"
+  ha_proxy.ext_crt_list_timeout:
+    description: |
+      Timeout (in seconds) to wait for the external certificates list located at `ha_proxy.ext_crt_list_file` to appear during HAproxy startup
+    default: 300
+  ha_proxy.ext_crt_list_policy:
+    description: |
+      What to do if the external certificates list located at `ha_proxy.ext_crt_list_file` does not appear within the time
+      denoted by `ha_proxy.ext_crt_list_timeout`. Set to either 'fail' (HAproxy will not start) or 'continue' (HAproxy will start without external certificates)
+    default: "fail"
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
   ha_proxy.enable_health_check_http:
