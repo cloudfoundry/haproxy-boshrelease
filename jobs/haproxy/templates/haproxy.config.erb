@@ -140,6 +140,9 @@ global
   <%- end -%>
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
     tune.bufsize <%= p("ha_proxy.buffer_size_bytes") %>
+  <%- if_p("ha_proxy.max_rewrite") do -%>
+    tune.maxrewrite <%= p("ha_proxy.max_rewrite") %>
+  <%- end -%>
   <%- if nbproc > 1 -%>
     <%- 1.upto(nbproc) do |proc| -%>
     stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 expose-fd listeners level admin process <%= proc%>
