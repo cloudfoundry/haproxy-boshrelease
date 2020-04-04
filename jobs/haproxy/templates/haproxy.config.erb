@@ -138,7 +138,6 @@ global
   <%- end -%>
   <%- if p("ha_proxy.nbproc") > 1 -%>
     <%- 1.upto(p("ha_proxy.nbproc")) do |proc| -%>
-    stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 level admin process <%= proc%>
     stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 expose-fd listeners level admin process <%= proc%>
     <%- end -%>
   <%- else -%>
