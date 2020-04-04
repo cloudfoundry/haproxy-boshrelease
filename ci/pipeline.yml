@@ -394,7 +394,7 @@ resources:
   - name: bpm
     type: bosh-io-release
     source:
-      repository: cloudfoundry-incubator/bpm-release
+      repository: cloudfoundry/bpm-release
 
   - name: version
     type: semver
