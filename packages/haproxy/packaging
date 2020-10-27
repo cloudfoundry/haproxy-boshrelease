@@ -1,7 +1,7 @@
 # abort script on any command that exit with a non zero value
 set -e
 
-LUA_VERSION=5.3.5
+LUA_VERSION=5.4.1
 PCRE_VERSION=10.34
 SOCAT_VERSION=1.7.3.4
 HAPROXY_VERSION=1.9.15
