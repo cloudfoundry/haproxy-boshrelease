@@ -245,13 +245,11 @@ frontend http-in
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
-    # reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
     http-response add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
-    #rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -268,7 +266,6 @@ frontend http-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "http" if ! xfp_exists
-    # reqadd X-Forwarded-Proto:\ http if ! xfp_exists
   <%- if p("ha_proxy.https_redirect_all") -%>
     redirect scheme https code 301 if !{ ssl_fc }
   <%- end -%>
@@ -331,13 +328,11 @@ frontend https-in
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
-    # reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
     http-response add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
-    #rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -354,7 +349,6 @@ frontend https-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
-    # reqadd X-Forwarded-Proto:\ https if ! xfp_exists
 # }}}
 <% end -%>
 
@@ -410,13 +404,11 @@ frontend wss-in
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
-    # reqadd <%= header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
     http-response add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
-    #rspadd <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %>:\ <%= value.to_s.gsub(/(?!:\\) /, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -433,7 +425,6 @@ frontend wss-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
-    # reqadd X-Forwarded-Proto:\ https if ! xfp_exists
 # }}}
 <% end -%>
 
@@ -488,9 +479,9 @@ backend http-routers
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
   <%- end -%>
-  <%- backend_servers.each_with_index do |ip, index| -%>
+  <% backend_servers.each_with_index do |ip, index| %>
     server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip) then -%> backup<%- end -%>
-  <%- end -%>
+  <% end %>
 # }}}
 
 # Routed Backends {{{
@@ -529,9 +520,9 @@ backend http-routed-backend-<%= prefix_hash %>
     option httpchk GET <%= data["backend_http_health_uri"] %>
     <%- routed_health_check_options = "port " + data["backend_http_health_port"].to_s -%>
   <%- end -%>
-  <%- data["servers"].each_with_index do |ip, index| -%>
+  <% data["servers"].each_with_index do |ip, index| %>
     server node<%= index %> <%= ip %>:<%= data["port"] %> <%= resolvers -%>check inter 1000 <%= routed_health_check_options %> <%= backend_ssl %>
-  <%- end -%>
+  <% end %>
 <% end -%>
 # }}}
 
@@ -552,9 +543,9 @@ backend cf_tcp_routers
     <%= p("ha_proxy.tcp_backend_config") %>
   <%- end -%>
     option httpchk GET /health
-  <%- tcp_router.instances.each_with_index do |instance, index| -%>
+  <% tcp_router.instances.each_with_index do |instance, index| %>
     server node<%= index %> <%= instance.address %> check port 80 inter 1000
-  <%- end -%>
+  <% end %>
 <% end -%>
 
 # TCP Backends
@@ -612,9 +603,9 @@ backend tcp-<%= tcp_proxy["name"] %>
     end
   end
 -%>
-  <%- tcp_proxy["backend_servers"].each_with_index do |ip, index| -%>
+  <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
     server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
-  <%- end -%>
+  <% end %>
 
   <%- if tcp_proxy["health_check_http"] then -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>
