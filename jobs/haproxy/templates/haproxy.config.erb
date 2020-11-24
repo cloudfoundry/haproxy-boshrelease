@@ -332,7 +332,7 @@ frontend https-in
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
-    http-response add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
+    http-response add-header <%= rsp_headers.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
@@ -408,7 +408,7 @@ frontend wss-in
   <%- end -%>
   <%- if_p("ha_proxy.rsp_headers") do |rsp_headers| -%>
     <%- rsp_headers.each do |rsp_header, value| -%>
-    http-response add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
+    http-response add-header <%= rsp_headers.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
