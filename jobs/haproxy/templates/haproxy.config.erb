@@ -199,6 +199,8 @@ listen health_check_http_url
 <% if_p("ha_proxy.resolvers") do |resolvers| -%>
 resolvers default
     hold valid <%= p("ha_proxy.dns_hold") %>
+    timeout retry <%= p("ha_proxy.timeout_retry") %>
+    resolve_retries <%= p("ha_proxy.resolve_retries") %>
   <%- resolvers.each do |resolver| -%>
     nameserver <%= resolver.keys[0] %> <%= resolver.values[0] %>:53
   <%- end -%>
