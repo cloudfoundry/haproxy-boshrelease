@@ -369,6 +369,12 @@ properties:
   ha_proxy.dns_hold:
     description: "DNS Hold time"
     default: 10s
+  ha_proxy.timeout_retry:
+    description: "Timeouts related to name resolution"
+    default: 1s
+  ha_proxy.resolve_retries:
+    description: "Number of dns queries to send to resolve a server name before giving up"
+    default: 3
   ha_proxy.accept_proxy:
     description: "Turned off by default. Enforces the use of the PROXY protocol for all incoming connections to all frontends. When enabled standard tcp connections to these port no longer work."
     default: false
