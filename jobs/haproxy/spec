@@ -369,8 +369,8 @@ properties:
   ha_proxy.dns_hold:
     description: "DNS Hold time"
     default: 10s
-  ha_proxy.timeout_retry:
-    description: "Timeouts related to name resolution"
+  ha_proxy.resolve_retry_timeout:
+    description: "Timeouts related to resolver name resolution"
     default: 1s
   ha_proxy.resolve_retries:
     description: "Number of dns queries to send to resolve a server name before giving up"
