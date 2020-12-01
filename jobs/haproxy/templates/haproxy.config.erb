@@ -168,6 +168,9 @@ defaults
     timeout http-keep-alive <%= (p("ha_proxy.keepalive_timeout").to_f  * 1000).to_i %>ms
     timeout http-request    <%= (p("ha_proxy.request_timeout").to_f    * 1000).to_i %>ms
     timeout queue           <%= (p("ha_proxy.queue_timeout").to_f      * 1000).to_i %>ms
+    <%- if properties.ha_proxy.default_config -%>
+    <%= p("ha_proxy.default_config") %>
+    <%- end -%>
 
 <% if p("ha_proxy.stats_enable") -%>
   <%- 1.upto(p("ha_proxy.nbproc")) do |proc| %>

@@ -462,6 +462,10 @@ properties:
     description: |
       A block of raw HAProxy config that will be added to the HA proxy global section
 
+  ha_proxy.default_config:
+    description: |
+      A block of raw HAProxy config that will be added to the HA proxy default section
+
   ha_proxy.frontend_config:
     description: |
       A block of raw HAProxy config that will be added to each HA proxy frontend definition
