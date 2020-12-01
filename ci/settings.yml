@@ -6,6 +6,8 @@ meta:
 
   image:
     bosh: gfranks/haproxy-boshrelease-testflight
+    username: (( vault "secret/dockerhub/cisprucecf:username" ))
+    password: (( vault "secret/dockerhub/cisprucecf:password" ))
 
   manifest:
     vars: |-

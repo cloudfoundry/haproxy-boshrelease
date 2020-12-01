@@ -26,6 +26,8 @@ meta:
   image:
     name: starkandwayne/concourse
     tag: latest
+    username: (( param "DockerHub creds are now required to prevent 429s" ))
+    password: (( param "DockerHub creds are now required to prevent 429s" ))
 
   aws:
     bucket:     (( concat meta.pipeline "-pipeline" ))
@@ -85,6 +87,8 @@ jobs:
             source:
               repository: (( grab meta.image.bosh ))
               tag:        (( grab meta.image.tag ))
+              username:   (( grab meta.image.username ))
+              password:   (( grab meta.image.password ))
           inputs:
             - { name: git }
             - { name: stemcell }
@@ -132,6 +136,8 @@ jobs:
             source:
               repository: (( grab meta.image.bosh ))
               tag:        (( grab meta.image.tag ))
+              username:   (( grab meta.image.username ))
+              password:   (( grab meta.image.password ))
           inputs:
             - { name: git-pull-requests }
             - { name: stemcell }
@@ -168,6 +174,8 @@ jobs:
             source:
               repository: (( grab meta.image.name ))
               tag:        (( grab meta.image.tag ))
+              username:   (( grab meta.image.username ))
+              password:   (( grab meta.image.password ))
           inputs:
             - { name: git-pull-requests }
           outputs:
@@ -208,6 +216,8 @@ jobs:
             source:
               repository: (( grab meta.image.name ))
               tag: (( grab meta.image.tag ))
+              username:   (( grab meta.image.username ))
+              password:   (( grab meta.image.password ))
           run:
             path: sh
             args:
@@ -301,6 +311,8 @@ jobs:
             source:
               repository: (( grab meta.image.name ))
               tag:        (( grab meta.image.tag ))
+              username:   (( grab meta.image.username ))
+              password:   (( grab meta.image.password ))
           inputs:
             - name: version
             - name: git
@@ -364,11 +376,15 @@ resource_types:
     type: docker-image
     source:
       repository: cfcommunity/slack-notification-resource
+      username:   (( grab meta.image.username ))
+      password:   (( grab meta.image.password ))
 
   - name: pull-request
     type: docker-image
     source:
       repository: jtarchie/pr
+      username:   (( grab meta.image.username ))
+      password:   (( grab meta.image.password ))
 
 resources:
   - name: git
