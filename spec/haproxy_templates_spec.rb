@@ -62,6 +62,8 @@ describe 'haproxy' do
         'forwarded_client_cert' => 'sanitize_set',
         'tcp' => [],
         'dns_hold' => '10s',
+        'resolve_retry_timeout' => '1s',
+        'resolve_retries' => 3,
         'accept_proxy' => false,
         'disable_tcp_accept_proxy' => false,
         'binding_ip' => '',
