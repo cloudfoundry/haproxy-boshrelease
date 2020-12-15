@@ -99,6 +99,8 @@ builds:
     version: 9.6.0
   e88bf54e-7cad-4494-5cd2-1ca1c6467237:
     version: 8.6.1
+  ec7f20fc-a16a-4278-6f8e-93c7cc11d5bf:
+    version: 10.2.0
   ef02dfc2-96a0-4c20-77b3-ec684714193a:
     version: 9.4.1
   ef126bc5-38c4-40a5-7d98-1847f13353bf:
