@@ -2,12 +2,19 @@
 
 set -e
 
-bpm=/var/vcap/packages/bpm/bin/bpm
+pidfile=/var/vcap/sys/run/bpm/haproxy/haproxy.pid
 
-if $bpm pid haproxy > /dev/null; then
-  haproxy_pid=$($bpm pid haproxy)
-  echo "Reloading HAProxy (pid: ${haproxy_pid})"
-  kill -USR2 -"${haproxy_pid}"
+if [[ ! -f ${pidfile} ]]; then
+  echo "$(date): pidfile $pidfile does not exist"
+  exit 1
+fi
+
+pid="$(cat ${pidfile})"
+haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
+
+if [[ -n $haproxy_wrapper_pid ]]; then
+  echo "Reloading HAProxy (pid: ${haproxy_wrapper_pid})"
+  kill -USR2 -"${haproxy_wrapper_pid}"
 else
   echo "Could not find HAproxy pid. Exiting."
   exit 1
