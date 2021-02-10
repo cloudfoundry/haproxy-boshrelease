@@ -17,7 +17,11 @@ fi
 
 pid="$(cat ${pidfile})"
 haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
+<%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr" -%>
+haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
+<%- else -%>
 haproxy_master_pid=$(pgrep -P "$pid" -x haproxy)
+<%- end -%>
 haproxy_instances=$(pgrep -P "$haproxy_master_pid" -x haproxy | wc -l)
 
 if [[ -n $haproxy_wrapper_pid ]]; then
