@@ -143,7 +143,8 @@ properties:
     description: |
       A flag denoting the use of additional certificates from external sources.
       If set to true the contents of an external crt-list file located at `ha_proxy.ext_crt_list_file` are
-      added to the crt-list described by the `ha_proxy.crt_list` property.
+      added to the crt-list described by the `ha_proxy.crt_list` property. Please be aware that reloading external certificates does only work if haproxy is
+      started in daemon mode. So this feature does not work if "haproxy.syslog_server" is set to "stdout".
     default: false
   ha_proxy.ext_crt_list_file:
     description: |
