@@ -7,7 +7,6 @@ PATH=/var/vcap/packages/haproxy/bin:${PATH}
 DAEMON=/var/vcap/packages/haproxy/bin/haproxy
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
-SOCK_FILE=/var/vcap/sys/run/haproxy/stats.sock
 export PATH=$PATH:/var/vcap/packages/ttar/bin
 
 cleanup_daemon() {
@@ -20,7 +19,8 @@ cleanup_daemon() {
 reload_daemon() {
     update_certs
     echo "$(date): Reloading HAProxy"
-    "${DAEMON}" -f "${CONFIG}" -D -p ${PID_FILE} -sf "$(cat ${PID_FILE})" -x ${SOCK_FILE} 0<&-
+    # Relay the reload signal to the master process
+    kill -USR2 "$(cat ${PID_FILE})"
     sleep infinity
 }
 
@@ -87,9 +87,9 @@ trap reload_daemon USR2
 # Start up
 echo "$(date): Starting HAProxy"
 <%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr" -%>
-"${DAEMON}" -f "${CONFIG}" -p ${PID_FILE} -V -db
+"${DAEMON}" -f "${CONFIG}" -W -p ${PID_FILE} -V -db
 <%- else -%>
-"${DAEMON}" -f "${CONFIG}" -D -p ${PID_FILE} 0<&-
+"${DAEMON}" -f "${CONFIG}" -W -D -p ${PID_FILE}
 
 # Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
 # to work properly, and BPM requires the process to stay running, sleep infinitely here
