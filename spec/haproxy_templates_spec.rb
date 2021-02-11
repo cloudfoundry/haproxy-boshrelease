@@ -27,6 +27,8 @@ describe 'haproxy' do
         'strict_sni' => false,
         'ssl_pem' => nil,
         'crt_list' => nil,
+        'reload_hard_stop_after' => '5m',
+        'reload_max_instances' => 4,
         'enable_health_check_http' => false,
         'health_check_port' => '8080',
         'disable_http' => false,
