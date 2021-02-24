@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -e
+
+<%- if p("ha_proxy.reload_max_instances") then -%>
+max_instances=<%= p("ha_proxy.reload_max_instances") %>
+<%- else -%>
+max_instances=0
+<%- end -%>
+
+pidfile=/var/vcap/sys/run/bpm/haproxy/haproxy.pid
+
+if [[ ! -f ${pidfile} ]]; then
+  echo "$(date): pidfile $pidfile does not exist"
+  exit 1
+fi
+
+pid="$(cat ${pidfile})"
+haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
+<%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr" -%>
+haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
+<%- else -%>
+haproxy_master_pid=$(pgrep -P "$pid" -x haproxy)
+<%- end -%>
+haproxy_instances=$(pgrep -P "$haproxy_master_pid" -x haproxy | wc -l)
+
+if [[ -n $haproxy_wrapper_pid ]]; then
+  if [[ $max_instances -eq 0 ]] || [[ $haproxy_instances -lt $max_instances ]]; then
+    echo "Reloading HAProxy (pid: ${haproxy_wrapper_pid}). Instances: ${haproxy_instances}/${max_instances}"
+    kill -USR2 -"${haproxy_wrapper_pid}"
+  else
+    echo "Could not reload HAproxy. Maximum instances reached (${haproxy_instances}/${max_instances}). Exiting."
+    exit 1
+  fi
+else
+  echo "Could not find HAproxy pid. Exiting."
+  exit 1
+fi

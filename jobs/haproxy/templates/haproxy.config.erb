@@ -128,6 +128,9 @@ global
     group vcap
     maxconn <%= p("ha_proxy.max_connections") %>
     spread-checks 4
+  <%- if_p("ha_proxy.reload_hard_stop_after") do -%>
+    hard-stop-after <%= p("ha_proxy.reload_hard_stop_after") %>
+  <%- end -%>
   <%- p("ha_proxy.lua_scripts").each do |script| -%>
     lua-load <%= script %>
   <%- end -%>

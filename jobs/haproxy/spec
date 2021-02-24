@@ -9,7 +9,7 @@ packages:
 
 templates:
   haproxy_wrapper.erb:          bin/haproxy_wrapper
-  reload:                       bin/reload
+  reload.erb:                   bin/reload
   drain.erb:                    bin/drain
   pre-start.erb:                bin/pre-start
   bpm.yml:                      config/bpm.yml
@@ -143,7 +143,8 @@ properties:
     description: |
       A flag denoting the use of additional certificates from external sources.
       If set to true the contents of an external crt-list file located at `ha_proxy.ext_crt_list_file` are
-      added to the crt-list described by the `ha_proxy.crt_list` property.
+      added to the crt-list described by the `ha_proxy.crt_list` property. Please be aware that reloading external certificates does only work if haproxy is
+      started in daemon mode. So this feature does not work if "haproxy.syslog_server" is set to "stdout".
     default: false
   ha_proxy.ext_crt_list_file:
     description: |
@@ -158,6 +159,16 @@ properties:
       What to do if the external certificates list located at `ha_proxy.ext_crt_list_file` does not appear within the time
       denoted by `ha_proxy.ext_crt_list_timeout`. Set to either 'fail' (HAproxy will not start) or 'continue' (HAproxy will start without external certificates)
     default: "fail"
+  ha_proxy.reload_hard_stop_after:
+    description: |
+      Defines the maximum time allowed to perform a clean soft-stop. This is used when issuing a reload via the "bin/reload" script. It limits the time for the
+      old instance to finish existing connections before the instance is stopped.
+    default: "5m"
+  ha_proxy.reload_max_instances:
+    description: |
+      Sets the maximum number of instances to exist at the same time. In conjunction with "reload_hard_stop_after" this limits the number of reloads that can occur
+      during a given period of time. Set this to the number of instances your machine can fit into memory at a time, minus a safety buffer. Set to 0 for no limit.
+    default: 4
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
   ha_proxy.enable_health_check_http:
