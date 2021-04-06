@@ -8,3 +8,11 @@ cat > <%= "/var/vcap/jobs/haproxy/errorfiles/custom#{status_code}.http" %> << EO
 <%= http_content %>
 EOF
 <% end -%>
+
+if [ ! -e /usr/bin/python ] && [ -e /usr/bin/python3 ]; then
+  sudo ln -s /usr/bin/python3 /usr/bin/python
+fi
+
+if [ ! -e /usr/local/bin/hatop ]; then
+  sudo ln -s /var/vcap/packages/haproxy/hatop-wrapper /usr/local/bin/hatop
+fi

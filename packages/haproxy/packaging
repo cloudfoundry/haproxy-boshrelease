@@ -31,6 +31,7 @@ pushd socat-${SOCAT_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
+echo "Installing HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
   make TARGET=linux-glibc USE_OPENSSL=1 USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
@@ -38,6 +39,7 @@ pushd haproxy-${HAPROXY_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd
 
+echo "Installing hatop..."
 cp haproxy/hatop ${BOSH_INSTALL_TARGET}/bin/hatop
 chmod 755 ${BOSH_INSTALL_TARGET}/bin/hatop
 cp hatop-wrapper ${BOSH_INSTALL_TARGET}/
