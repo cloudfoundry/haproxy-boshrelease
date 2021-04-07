@@ -40,6 +40,6 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.1.8
   sha1: c956394fce7e74f741e4ae8c256b480904ad5942
 - name: haproxy
-  version: 10.4.0
-  url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v10.4.0/haproxy-10.4.0.tgz
-  sha1: dea37553f96593a3fab8e232e9c119ceaa5404ba
+  version: 10.5.0
+  url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v10.5.0/haproxy-10.5.0.tgz
+  sha1: 52f5b1f1de27a6133293e0a6e025dc122a286042
