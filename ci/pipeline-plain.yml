@@ -52,13 +52,13 @@ jobs:
             MANIFEST_OP_PATHS:    ""
             stemcell:             ../stemcell/*.tgz
             bpm_release:          ../bpm/*.tgz
-      # on_failure:
-      #   put: notify
-      #   params:
-      #     channel:  (( grab meta.slack.channel ))
-      #     username: (( grab meta.slack.username ))
-      #     icon_url: (( grab meta.slack.icon ))
-      #     text:    '(( concat meta.slack.fail_url " " meta.pipeline ": testflight job failed" ))'
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : testflight job failed"
 
   - name: testflight-pr
     public: true
@@ -139,13 +139,13 @@ jobs:
               pr_url=$(git config --get pullrequest.url)
               cd -
               echo "<${pr_url}|Pull request passed testflight> Merge when ready: ${pr_url}" > message/body
-  #     on_success:
-  #       put: notify
-  #       params:
-  #         channel:  (( grab meta.slack.channel ))
-  #         username: (( grab meta.slack.username ))
-  #         icon_url: (( grab meta.slack.icon ))
-  #         text_file: message/body
+      on_success:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text_file: message/body
 
   - name: pre
     public: true
@@ -189,14 +189,14 @@ jobs:
               fi
           inputs:
           - name: git
-      # on_failure:
-      #   put: notify
-      #   params:
-      #     channel:  (( grab meta.slack.channel ))
-      #     username: (( grab meta.slack.username ))
-      #     icon_url: (( grab meta.slack.icon ))
-      #     text: release candidate job 'pre' failed (which is unusual).
-      #     ok: false
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text: release candidate job 'pre' failed (which is unusual).
+          ok: false
 
   - name: rc
     public: true
@@ -207,13 +207,13 @@ jobs:
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
-      # on_failure:
-      #   put: notify
-      #   params:
-      #     channel:  (( grab meta.slack.channel ))
-      #     username: (( grab meta.slack.username ))
-      #     icon_url: (( grab meta.slack.icon ))
-      #     text:    '(( concat meta.slack.fail_url " " meta.pipeline ": rc job failed" ))'
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : rc job failed"
 
   - name: minor
     public: true
@@ -221,13 +221,13 @@ jobs:
     - do:
       - { get: version, trigger: false, params: {bump: minor} }
       - { put: version,                 params: {file: version/number} }
-      # on_failure:
-      #   put: notify
-      #   params:
-      #     channel:  (( grab meta.slack.channel ))
-      #     username: (( grab meta.slack.username ))
-      #     icon_url: (( grab meta.slack.icon ))
-      #     text:    '(( concat meta.slack.fail_url " " meta.pipeline ": minor job failed" ))'
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : minor job failed"
 
   - name: major
     public: true
@@ -235,13 +235,13 @@ jobs:
     - do:
       - { get: version, trigger: false, params: {bump: major} }
       - { put: version,                 params: {file: version/number} }
-      # on_failure:
-      #   put: notify
-      #   params:
-      #     channel:  (( grab meta.slack.channel ))
-      #     username: (( grab meta.slack.username ))
-      #     icon_url: (( grab meta.slack.icon ))
-      #     text:    '(( concat meta.slack.fail_url " " meta.pipeline ": major job failed" ))'
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : major job failed"
 
   - name: shipit
     public: true
@@ -299,29 +299,26 @@ jobs:
       - put: version
         params:
           bump: patch
-      # - name: notify
-      #   in_parallel:
-      #   - put: notify
-      #     params:
-      #       channel:  (( grab meta.slack.channel ))
-      #       username: (( grab meta.slack.username ))
-      #       icon_url: (( grab meta.slack.icon ))
-      #       text_file: notifications/message
-      # on_failure:
-      #   put: notify
-      #   params:
-      #     channel:  (( grab meta.slack.channel ))
-      #     username: (( grab meta.slack.username ))
-      #     icon_url: (( grab meta.slack.icon ))
-      #     text:    '(( concat meta.slack.fail_url " " meta.pipeline ": shipit job failed" ))'
+      - in_parallel:
+        - put: notify
+          params:
+            channel:  "#haproxy-boshrelease"
+            username: ci-bot
+            icon_url: "((slack.icon))"
+            text_file: notifications/message
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
 
 resource_types:
-  # - name: slack-notification
-  #   type: docker-image
-  #   source:
-  #     repository: cfcommunity/slack-notification-resource
-  #     username:   (( grab meta.image.username ))
-  #     password:   (( grab meta.image.password ))
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
 
   - name: pull-request
     type: docker-image
@@ -365,10 +362,10 @@ resources:
       secret_access_key: ((aws.secret_key))
       initial_version:   "0.0.1"
 
-  # - name: notify
-  #   type: slack-notification
-  #   source:
-  #     url: (( grab meta.slack.webhook ))
+  - name: notify
+    type: slack-notification
+    source:
+      url: ((slack.webhook))
 
   - name: github
     type: github-release
