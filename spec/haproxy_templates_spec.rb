@@ -90,6 +90,13 @@ describe 'haproxy' do
     }
   end
 
+def dumpConfig(src, dst)
+  file = File.open(src)
+  file_content = file.read
+  File.open(dst, "w") { |f| f.write file_content }
+  file.close()
+end
+
   describe 'config/haproxy.config' do
     let(:template) { job.template('config/haproxy.config') }
     let(:config_file) { Tempfile.new(['config', '.cfg']) }
@@ -125,6 +132,45 @@ describe 'haproxy' do
         rendered_hash = HAProxy::Config.parse_file(config_file.path)
         expect(rendered_hash.backend('http-routers').config['errorfile 503']).to eq("/var/vcap/jobs/haproxy/errorfiles/custom503.http")
         expect(rendered_hash.backend('http-routers').config['errorfile 403']).to eq("/var/vcap/jobs/haproxy/errorfiles/custom403.http")
+      end
+    end
+
+    describe 'when a tcp backend is provided' do
+      tcp_backend = {
+        "name" => "wss",
+        "port" => 4443,
+        "backend_servers" => ["10.20.10.10", "10.20.10.11"],
+        "balance" => "roundrobin",
+        "backend_port" => 80,
+        "ssl" => true,
+        "backend_ssl" => "verify",
+        "backend_verifyhost" => "example.com",
+        "health_check_http" => 4444
+      }
+
+      describe 'when not using tcp_link_check_port' do
+        let(:manifest_properties) do
+          default_manifest_properties['ha_proxy']['tcp'] = [ tcp_backend ]
+          default_manifest_properties
+        end
+
+        it 'uses the backend port for health checks' do
+          rendered_hash = HAProxy::Config.parse_file(config_file.path)
+          expect(rendered_hash.backend('tcp-wss').servers['node0'].attributes['port']).to eq("80")
+        end
+      end
+
+      describe 'when using tcp_link_check_port' do
+        let(:manifest_properties) do
+          default_manifest_properties['ha_proxy']['tcp'] = [ tcp_backend ]
+          default_manifest_properties['ha_proxy']['tcp_link_check_port'] = 1234
+
+          default_manifest_properties
+        end
+        it 'uses the tcp_link_check_port port for health checks instead' do
+          rendered_hash = HAProxy::Config.parse_file(config_file.path)
+          expect(rendered_hash.backend('tcp-wss').servers['node0'].attributes['port']).to eq("1234")
+        end
       end
     end
   end

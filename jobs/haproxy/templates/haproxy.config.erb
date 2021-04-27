@@ -595,6 +595,10 @@ backend tcp-<%= tcp_proxy["name"] %>
   if tcp_proxy["backend_port"]
     backend_port = tcp_proxy["backend_port"]
   end
+  backend_check_port = tcp_proxy["backend_port"]
+  if_p("ha_proxy.tcp_link_check_port") do
+    backend_check_port = p("ha_proxy.tcp_link_check_port")
+  end
   resolvers = ""
   if_p("ha_proxy.resolvers") do
     resolvers = "resolvers default "
@@ -612,7 +616,7 @@ backend tcp-<%= tcp_proxy["name"] %>
   end
 -%>
   <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
+    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check port <%= backend_check_port -%> inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
   <% end %>
 
   <%- if tcp_proxy["health_check_http"] then -%>

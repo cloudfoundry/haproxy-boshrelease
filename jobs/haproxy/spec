@@ -369,6 +369,8 @@ properties:
                                   # It shows `200 OK` if >0 backend servers are up.
   ha_proxy.tcp_link_port:
     description: "Port haproxy should listen on when using the tcp_backend link"
+  ha_proxy.tcp_link_check_port:
+    description: "Optional port for tcp_backend health checks. Will use ha_proxy.tcp_link_port if not set."  
   ha_proxy.tcp_link_health_check_http:
     description: "Optional port for http health check when using the tcp_backend link."
   ha_proxy.resolvers:
