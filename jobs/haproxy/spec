@@ -317,7 +317,7 @@ properties:
     description: |
       This option lets you decide how to handle the X-Forwarded-Client-Cert (XFCC) http header on any https frontend.
       On http frontends the `always_forward_only` option is active by default and can't be changed.
-      On https frontends your options are (ordered from least to most secure):
+      On https frontends your options are:
       - always_forward_only:
           Least secure option. Always forward the XFCC header in the request, regardless of whether the client connection is mTLS.
           Use this value when your load balancer is forwarding the client certificate and requests are not forwarded to HAProxy over mTLS.
@@ -329,6 +329,11 @@ properties:
           Most secure option. Strip any instances of XFCC headers from the client request.
           When the client connection is mTLS, the client certificate received by HAProxy in the mTLS handshake will be forwarded in this header.
           Values will be base64 encoded PEM. Use this value when HAProxy is the first component to terminate TLS.
+      - forward_only_if_route_service:
+          This option is useful to support Mutual TLS with CF Route Services.
+          When the client connection is mTLS, the client certificate received by HAProxy in the mTLS handshake will be forwarded in the XFCC header.
+          When the client connection is not mTLS, the XFCC header will be removed UNLESS there is an X-Cf-Proxy-Signature header.
+          This option is only secure if Gorouter is deployed behind Haproxy to validate that X-Cf-Proxy-Signature is coming from a route service.
     default: sanitize_set
 
   ha_proxy.client_ca_file:

@@ -86,6 +86,7 @@ tls_bind_options = "ssl #{tls_options}"
 # X-Forwarded-Client-Cert (XFCC) Option {{{
 xfcc_forward_only = false
 xfcc_sanitize_set = false
+xfcc_forward_only_if_route_service = false
 
 forwarded_client_cert_option = p("ha_proxy.forwarded_client_cert").downcase
 case forwarded_client_cert_option
@@ -95,6 +96,8 @@ when "forward_only"
   xfcc_forward_only = true
 when "sanitize_set"
   xfcc_sanitize_set = true
+when "forward_only_if_route_service"
+  xfcc_forward_only_if_route_service = true
 else
   abort("Unkown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set'")
 end
@@ -313,6 +316,10 @@ frontend https-in
     <%- if mutual_tls_enabled then -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
     <%- end -%>
+  <%- elsif xfcc_forward_only_if_route_service then -%>
+    acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
+    http-request del-header X-Forwarded-Client-Cert if !route_service_request
+    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
