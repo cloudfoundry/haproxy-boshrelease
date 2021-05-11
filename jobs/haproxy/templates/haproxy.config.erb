@@ -99,7 +99,7 @@ when "sanitize_set"
 when "forward_only_if_route_service"
   xfcc_forward_only_if_route_service = true
 else
-  abort("Unkown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set'")
+  abort("Unknown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set', 'forward_only_if_route_service'")
 end
 # }}}
 # IPv4 and IPv6 binding (v4v6) Option {{{
