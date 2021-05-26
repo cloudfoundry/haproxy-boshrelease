@@ -76,3 +76,5 @@ cd haproxy_boshrelease
 bundle install
 bundle exec guard
 ```
+
+PRs will be automatically tested by https://concourse.cfi.sapcloud.io/teams/main/pipelines/haproxy-boshrelease once a maintainer has labelled the PR with the `approved` label
