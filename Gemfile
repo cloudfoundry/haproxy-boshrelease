@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
-group :test do
-  gem 'bosh-template'
-  gem 'rspec', '~> 3.0'
-  gem 'haproxy-tools'
-  gem 'pry'
-end
-gem 'rubocop', '~> 0.49.0'
-gem 'semi_semantic', '~> 1.2'
+gem 'bosh-template'
+gem 'deep_merge'
+gem 'guard-rspec'
+gem 'haproxy-tools'
+gem 'rake'
+gem 'rspec'
+gem 'rubocop'
+gem 'rubocop-rake'
+gem 'rubocop-rspec'
