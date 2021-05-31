@@ -44,6 +44,12 @@ if_p("ha_proxy.crt_list") do |crt_list|
     if list_entry.key?("ssl_ciphers")
       sslbindconf += " ciphers " + list_entry["ssl_ciphers"]
     end
+    if list_entry.key?("ssl_min_version")
+      sslbindconf += " ssl-min-ver " + list_entry["ssl_min_version"]
+    end
+    if list_entry.key?("ssl_max_version")
+      sslbindconf += " ssl-max-ver " + list_entry["ssl_max_version"]
+    end
 
     if sslbindconf != ""
       sslbindconf = " ["+sslbindconf.strip+"]"
