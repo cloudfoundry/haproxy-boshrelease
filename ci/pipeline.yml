@@ -150,17 +150,8 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git
-            BOSH_DEPLOYMENT:      haproxy-boshrelease-testflight
-            TEST_ERRANDS:
             AWS_ACCESS_KEY:       ((aws.access_key))
             AWS_SECRET_KEY:       ((aws.secret_key))
-            MANIFEST_PATH:        manifests/haproxy.yml
-            MANIFEST_VARS:        |-
-              haproxy-backend-port=8888
-              haproxy-backend-servers=[10.10.10.10]
-            MANIFEST_OP_PATHS:    ""
-            stemcell:             ../stemcell/*.tgz
-            bpm_release:          ../bpm/*.tgz
       on_failure:
         put: notify
         params:
@@ -202,17 +193,8 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git-pull-requests
-            BOSH_DEPLOYMENT:      haproxy-boshrelease-testflight-pr
-            TEST_ERRANDS:
             AWS_ACCESS_KEY:       ((aws.access_key))
             AWS_SECRET_KEY:       ((aws.secret_key))
-            MANIFEST_PATH:        manifests/haproxy.yml
-            MANIFEST_VARS:        |-
-              haproxy-backend-port=8888
-              haproxy-backend-servers=[10.10.10.10]
-            MANIFEST_OP_PATHS:    ""
-            stemcell:             ../stemcell/*.tgz
-            bpm_release:          ../bpm/*.tgz
         on_success:
           put: git-pull-requests
           params:
