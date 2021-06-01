@@ -23,12 +23,23 @@ set -e
 : ${AWS_ACCESS_KEY:?required}
 : ${AWS_SECRET_KEY:?required}
 
-/usr/local/bin/start-bosh
-source /tmp/local-bosh/director/env
 
 cd ${REPO_ROOT:?required}
 header "Pulling in any git submodules..."
 git submodule update --init --recursive --force
+
+header "Starting BOSH"
+
+./ci/scripts/start-bosh.sh
+
+function stop_docker() {
+  echo "ERROR: stopping docker"
+  service docker stop
+}
+
+trap stop_docker EXIT
+
+source /tmp/local-bosh/director/env
 
 header "Confirming testflight inputs"
 
@@ -62,7 +73,6 @@ done
 if [[ ! -z ${op_patch_file_errors} ]]; then
 	exit 1
 fi
-
 
 header "Cleaning up from any previous deployments..."
 bosh -n delete-deployment
