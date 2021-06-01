@@ -7,4 +7,4 @@ RUN apt-get install wget
 RUN wget -q -O - https://raw.githubusercontent.com/starkandwayne/homebrew-cf/master/public.key | apt-key add -
 RUN echo "deb http://apt.starkandwayne.com stable main" | tee /etc/apt/sources.list.d/starkandwayne.list
 RUN apt-get update
-RUN apt-get install jq spruce git
+RUN apt-get -y install jq spruce git vim

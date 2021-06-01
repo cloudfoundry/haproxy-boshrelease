@@ -8,13 +8,12 @@ processes:
         writable: true
       - path: /var/vcap/sys/run/haproxy
         writable: true
-
-<%- 
+<%-
    additional_volumes = []
-   if p("ha_proxy.syslog_server") && p("ha_proxy.syslog_server").chars.first == "/" 
+   if p("ha_proxy.syslog_server") && p("ha_proxy.syslog_server").chars.first == "/"
       additional_volumes.push({"path" =>p("ha_proxy.syslog_server")})
-   end 
-   if_p("ha_proxy.additional_unrestricted_volumes") do 
+   end
+   if_p("ha_proxy.additional_unrestricted_volumes") do
       additional_volumes.concat(p("ha_proxy.additional_unrestricted_volumes"))
    end
 %>
@@ -22,7 +21,6 @@ processes:
     unsafe:
       unrestricted_volumes: <%= additional_volumes.to_json %>
 <% end %>
-        
     limits:
       open_files: <%= p("ha_proxy.max_open_files") %>
     capabilities:
