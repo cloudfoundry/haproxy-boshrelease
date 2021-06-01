@@ -441,6 +441,7 @@ resources:
       private_key:  ((github.private_key))
       repo:         cloudfoundry-incubator/haproxy-boshrelease
       base:         master
+      label:        approved
 
   - name: stemcell
     type: bosh-io-stemcell
