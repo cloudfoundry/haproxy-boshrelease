@@ -22,7 +22,7 @@ var _ = Describe("HTTP Frontend", func() {
 
 		dumpHAProxyConfig(haproxyInfo)
 
-		By("Starting a local http server")
+		By("Starting a local http server to act as a backend")
 		closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "Hello cloud foundry")
 		})
