@@ -125,10 +125,10 @@ var _ = Describe("External Certificate Lists", func() {
 		err := varsStoreReader(&creds)
 		Expect(err).NotTo(HaveOccurred())
 
-		By("Waiting for HAProxy to start accepting connections")
+		// Wait for HAProxy to accept TCP connections
 		waitForHAProxyListening(haproxyInfo)
 
-		By("Starting a local http server")
+		By("Starting a local http server to act as a backend")
 		closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "Hello cloud foundry")
 		})
@@ -185,7 +185,7 @@ var _ = Describe("External Certificate Lists", func() {
 		By("Reloading HAProxy")
 		reloadHAProxy(haproxyInfo)
 
-		By("Waiting for HAProxy to start accepting connections")
+		By("Waiting for HAProxy to start listening (up to two minutes)")
 		waitForHAProxyListening(haproxyInfo)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")
@@ -215,7 +215,7 @@ var _ = Describe("External Certificate Lists", func() {
 		By("Reloading HAProxy")
 		reloadHAProxy(haproxyInfo)
 
-		By("Waiting for HAProxy to start accepting connections")
+		By("Waiting for HAProxy to start listening (up to two minutes)")
 		waitForHAProxyListening(haproxyInfo)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")

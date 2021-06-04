@@ -62,7 +62,7 @@ var _ = Describe("HTTPS Frontend", func() {
 		err := varsStoreReader(&creds)
 		Expect(err).NotTo(HaveOccurred())
 
-		By("Starting a local http server")
+		By("Starting a local http server to act as a backend")
 		closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "Hello cloud foundry")
 		})

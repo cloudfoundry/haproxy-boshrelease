@@ -78,6 +78,7 @@ func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars m
 
 	opsfiles := append([]string{opsfileChangeVersion, opsfileAddSSHUser}, customOpsfiles...)
 	session, varsStoreReader := deployBaseManifest(opsfiles, vars)
+
 	Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
 
 	var creds struct {
