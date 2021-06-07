@@ -2,6 +2,7 @@ package acceptance_tests
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"time"
@@ -82,6 +83,7 @@ var _ = Describe("HTTPS Frontend", func() {
 		client := buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
+			[]tls.Certificate{},
 		)
 
 		By("Sending a request to HAProxy")
