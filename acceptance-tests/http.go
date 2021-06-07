@@ -31,7 +31,7 @@ func startLocalHTTPServer(handler func(http.ResponseWriter, *http.Request)) (fun
 
 // Build an HTTP client with custom CAcertificate pool
 // which resolves hosts based on provided map
-func buildHTTPClient(caCerts []string, addressMap map[string]string) *http.Client {
+func buildHTTPClient(caCerts []string, addressMap map[string]string, clientCerts []tls.Certificate) *http.Client {
 	// Create HTTP Client with custom CAs
 	caCertPool := x509.NewCertPool()
 
@@ -40,8 +40,10 @@ func buildHTTPClient(caCerts []string, addressMap map[string]string) *http.Clien
 	}
 
 	tlsConfig := &tls.Config{
-		RootCAs: caCertPool,
+		RootCAs:      caCertPool,
+		Certificates: clientCerts,
 	}
+
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
 
 	// Override HTTP transport to force resolve with alternative addresses

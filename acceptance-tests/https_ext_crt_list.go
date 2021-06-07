@@ -3,6 +3,7 @@ package acceptance_tests
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -152,6 +153,7 @@ var _ = Describe("External Certificate Lists", func() {
 				"cert_b.haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
 				"cert_c.haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
 			},
+			[]tls.Certificate{},
 		)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")
