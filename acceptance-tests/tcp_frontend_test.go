@@ -1,10 +1,8 @@
 package acceptance_tests
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -35,24 +33,11 @@ var _ = Describe("TCP Frontend", func() {
 			"tcp_backend_port":  tcpBackendPort,
 		})
 
-		dumpHAProxyConfig(haproxyInfo)
-
-		By("Starting a local http server to act as a backend")
-		closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, "Hello cloud foundry")
-		})
+		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
-		Expect(err).NotTo(HaveOccurred())
 
-		By(fmt.Sprintf("Creating a reverse SSH tunnel from HAProxy TCP backend (port %d) to local HTTP server (port %d)", tcpBackendPort, localPort))
-		ctx, cancelFunc := context.WithCancel(context.Background())
-		defer cancelFunc()
-		err = startReverseSSHPortForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, tcpBackendPort, localPort, ctx)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Waiting a few seconds so that HAProxy can detect the backend server is listening")
-		// HAProxy backend health check interval is 1 second so this should be plenty
-		time.Sleep(5 * time.Second)
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, tcpBackendPort, localPort)
+		defer closeTunnel()
 
 		By("Sending a request to the HAProxy TCP endpoint")
 		resp, err := http.Get(fmt.Sprintf("http://%s:%d", haproxyInfo.PublicIP, tcpFrontendPort))

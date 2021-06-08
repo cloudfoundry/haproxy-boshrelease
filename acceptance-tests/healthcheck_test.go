@@ -1,7 +1,6 @@
 package acceptance_tests
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -26,8 +25,6 @@ var _ = Describe("HTTP Health Check", func() {
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(haproxyBackendPort, []string{opsfileHTTPHealthcheck}, map[string]interface{}{})
 
-		dumpHAProxyConfig(haproxyInfo)
-
 		// FIXME: this behaviour will change once https://github.com/cloudfoundry-incubator/haproxy-boshrelease/issues/195
 		// is fixed
 		By("Waiting monit to report HAProxy is now unhealthy (due to no healthy backend instances)")
@@ -38,18 +35,11 @@ var _ = Describe("HTTP Health Check", func() {
 			return boshInstances()[0].ProcessState
 		}, time.Minute, time.Second).Should(Equal("failing"))
 
-		By("Starting a local http server to act as a backend")
-		closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, "Hello cloud foundry")
-		})
+		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
-		Expect(err).NotTo(HaveOccurred())
 
-		By(fmt.Sprintf("Creating a reverse SSH tunnel from HAProxy backend (port %d) to local HTTP server (port %d)", haproxyBackendPort, localPort))
-		ctx, cancelFunc := context.WithCancel(context.Background())
-		defer cancelFunc()
-		err = startReverseSSHPortForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, haproxyBackendPort, localPort, ctx)
-		Expect(err).NotTo(HaveOccurred())
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
 
 		By("Waiting monit to report HAProxy is now healthy (due to having a healthy backend instance)")
 		// Since the backend is listening, HAProxy healthcheck should start returning healthy

@@ -98,11 +98,16 @@ func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars m
 	haproxyPublicIP := instances[0].ParseIPs()[0]
 	Expect(haproxyPublicIP).ToNot(BeEmpty())
 
-	return haproxyInfo{
+	haproxyInfo := haproxyInfo{
 		PublicIP:      haproxyPublicIP,
 		SSHPrivateKey: creds.SSHKey.PrivateKey,
 		SSHUser:       sshUser,
-	}, varsStoreReader
+	}
+
+	// Dump HAProxy config to help debugging
+	dumpHAProxyConfig(haproxyInfo)
+
+	return haproxyInfo, varsStoreReader
 }
 
 func dumpHAProxyConfig(haproxyInfo haproxyInfo) {

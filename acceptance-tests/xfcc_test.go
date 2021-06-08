@@ -9,7 +9,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -127,8 +126,6 @@ var _ = Describe("forwarded_client_cert", func() {
 		var varsStoreReader varsStoreReader
 		haproxyInfo, varsStoreReader = deployHAProxy(haproxyBackendPort, []string{opsfileForwardedClientCert}, deployVars)
 
-		dumpHAProxyConfig(haproxyInfo)
-
 		err := varsStoreReader(&creds)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -142,15 +139,8 @@ var _ = Describe("forwarded_client_cert", func() {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		By(fmt.Sprintf("Creating a reverse SSH tunnel from HAProxy backend (port %d) to local HTTP server (port %d)", haproxyBackendPort, localPort))
-		var ctx context.Context
-		ctx, closeSSHTunnel = context.WithCancel(context.Background())
-		err = startReverseSSHPortForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, haproxyBackendPort, localPort, ctx)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Waiting a few seconds so that HAProxy can detect the backend server is listening")
-		// HAProxy backend health check interval is 1 second so this should be plenty
-		time.Sleep(5 * time.Second)
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
 
 		clientCert, err = tls.X509KeyPair([]byte(creds.ClientCert.Certificate), []byte(creds.ClientCert.PrivateKey))
 		Expect(err).NotTo(HaveOccurred())
