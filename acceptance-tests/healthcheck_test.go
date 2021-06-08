@@ -24,19 +24,13 @@ var _ = Describe("HTTP Health Check", func() {
   value: true
 `
 		haproxyBackendPort := 12000
-		haproxyInfo, _ := deployHAProxy(haproxyBackendPort, []string{opsfileHTTPHealthcheck}, map[string]interface{}{})
+		// Expect initial deployment to be failing due to lack of healthy backends
+		haproxyInfo, _ := deployHAProxy(haproxyBackendPort, []string{opsfileHTTPHealthcheck}, map[string]interface{}{}, false)
+
+		// Verify that is in a failing state
+		Expect(boshInstances()[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
 
 		dumpHAProxyConfig(haproxyInfo)
-
-		// FIXME: this behaviour will change once https://github.com/cloudfoundry-incubator/haproxy-boshrelease/issues/195
-		// is fixed
-		By("Waiting monit to report HAProxy is now unhealthy (due to no healthy backend instances)")
-		// BOSH initially thinks that the process is healthy, but later switches to 'failing' when
-		// monit reports the failing health check due to no healthy backend instances.
-		// We will up to wait one minute for the status to stabilise
-		Eventually(func() string {
-			return boshInstances()[0].ProcessState
-		}, time.Minute, time.Second).Should(Equal("failing"))
 
 		By("Starting a local http server to act as a backend")
 		closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +46,7 @@ var _ = Describe("HTTP Health Check", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting monit to report HAProxy is now healthy (due to having a healthy backend instance)")
-		// Since the backend is listening, HAProxy healthcheck should start returning healthy
+		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
 		// and monit should in turn start reporting a healthy process
 		// We will up to wait one minute for the status to stabilise
 		Eventually(func() string {

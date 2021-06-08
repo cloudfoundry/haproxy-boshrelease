@@ -48,7 +48,7 @@ var _ = Describe("HTTPS Frontend", func() {
 `
 
 		haproxyBackendPort := 12000
-		haproxyInfo, varsStoreReader := deployHAProxy(haproxyBackendPort, []string{opsfileSSLCertificate}, map[string]interface{}{})
+		haproxyInfo, varsStoreReader := deployHAProxy(haproxyBackendPort, []string{opsfileSSLCertificate}, map[string]interface{}{}, true)
 
 		dumpHAProxyConfig(haproxyInfo)
 

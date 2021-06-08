@@ -102,7 +102,7 @@ var _ = Describe("External Certificate Lists", func() {
 		extCrtListPath := "/var/vcap/jobs/haproxy/config/ssl/ext-crt-list"
 		haproxyInfo, varsStoreReader := deployHAProxy(haproxyBackendPort, []string{opsfileSSLCertificate}, map[string]interface{}{
 			"ext_crt_list_path": extCrtListPath,
-		})
+		}, true)
 
 		dumpHAProxyConfig(haproxyInfo)
 

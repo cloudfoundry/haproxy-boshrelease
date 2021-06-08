@@ -33,7 +33,7 @@ var _ = Describe("TCP Frontend", func() {
 		haproxyInfo, _ := deployHAProxy(12000, []string{opsfileTCP}, map[string]interface{}{
 			"tcp_frontend_port": tcpFrontendPort,
 			"tcp_backend_port":  tcpBackendPort,
-		})
+		}, true)
 
 		dumpHAProxyConfig(haproxyInfo)
 

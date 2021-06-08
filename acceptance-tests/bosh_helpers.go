@@ -24,7 +24,7 @@ type varsStoreReader func(interface{}) error
 // Helper method for deploying HAProxy
 // Takes the HAProxy backend port, an array of custom opsfiles, a map of custom vars
 // Returns 'info' struct containing public IP and ssh creds, and a callback to deserialise properties from the vars store
-func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars map[string]interface{}) (haproxyInfo, varsStoreReader) {
+func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars map[string]interface{}, expectSuccess bool) (haproxyInfo, varsStoreReader) {
 	sshUser := "ginkgo"
 
 	opsfileChangeVersion := `---
@@ -79,7 +79,12 @@ func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars m
 	opsfiles := append([]string{opsfileChangeVersion, opsfileAddSSHUser}, customOpsfiles...)
 	session, varsStoreReader := deployBaseManifest(opsfiles, vars)
 
-	Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+	if expectSuccess {
+		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+	} else {
+		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit())
+		Expect(session.ExitCode()).NotTo(BeZero())
+	}
 
 	var creds struct {
 		SSHKey struct {

@@ -18,7 +18,7 @@ var _ = Describe("HTTP Frontend", func() {
 
 	It("Correctly proxies HTTP requests", func() {
 		haproxyBackendPort := 12000
-		haproxyInfo, _ := deployHAProxy(haproxyBackendPort, []string{}, map[string]interface{}{})
+		haproxyInfo, _ := deployHAProxy(haproxyBackendPort, []string{}, map[string]interface{}{}, true)
 
 		dumpHAProxyConfig(haproxyInfo)
 

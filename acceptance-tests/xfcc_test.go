@@ -125,7 +125,7 @@ var _ = Describe("forwarded_client_cert", func() {
 	JustBeforeEach(func() {
 		haproxyBackendPort := 12000
 		var varsStoreReader varsStoreReader
-		haproxyInfo, varsStoreReader = deployHAProxy(haproxyBackendPort, []string{opsfileForwardedClientCert}, deployVars)
+		haproxyInfo, varsStoreReader = deployHAProxy(haproxyBackendPort, []string{opsfileForwardedClientCert}, deployVars, true)
 
 		dumpHAProxyConfig(haproxyInfo)
 
