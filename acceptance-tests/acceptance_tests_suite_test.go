@@ -50,3 +50,13 @@ func setupTunnelFromHaproxyToTestServer(haproxyInfo haproxyInfo, haproxyBackendP
 
 	return cancelFunc
 }
+
+// Sets up SSH tunnel from local machine to HAProxy
+func setupTunnelFromLocalMachineToHAProxy(haproxyInfo haproxyInfo, localPort, haproxyPort int) func() {
+	By(fmt.Sprintf("Creating a SSH tunnel from localmachine (port %d) to HAProxy (port %d)", localPort, haproxyPort))
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	err := startSSHPortForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, localPort, haproxyPort, ctx)
+	Expect(err).NotTo(HaveOccurred())
+
+	return cancelFunc
+}

@@ -418,7 +418,7 @@ properties:
       - 10.0.0.0/8
       - 192.168.2.0/24
   ha_proxy.cidr_whitelist:
-    description: "List of CIDRs to allow for http(s). Format is string array of CIDRs or single string of base64 encoded gzip."
+    description: "List of CIDRs to allow for http(s). Format is string array of CIDRs or single string of base64 encoded gzip. Note that unless ha_proxy.block_all is true, non-whitelisted traffic will still be allowed, provided that traffic is not also blacklisted"
     default: ~
     example:
       cidr_whitelist:

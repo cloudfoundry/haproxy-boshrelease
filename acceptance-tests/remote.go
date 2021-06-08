@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 
 	scp "github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
@@ -45,6 +46,48 @@ func copyFileToRemote(user string, addr string, privateKey string, remotePath st
 	}
 
 	return scpClient.CopyFile(fileReader, remotePath, permissions)
+}
+
+// Forwards a TCP connection from a given port on the local machine to a given port on the remote machine
+// Starts in backgound, cancel via context
+func startSSHPortForwarder(user string, addr string, privateKey string, localPort, remotePort int, ctx context.Context) error {
+	remoteConn, err := buildSSHClient(user, addr, privateKey)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Listening on 127.0.0.1:%d on local machine\n", remotePort)
+	localListener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			localClient, err := localListener.Accept()
+			if err != nil {
+				fmt.Printf("Error accepting connection on local listener: %s (may have been closed)\n", err.Error())
+				return
+			}
+
+			remoteConn, err := remoteConn.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", remotePort))
+			if err != nil {
+				fmt.Printf("Error dialing local port %d: %s\n", remotePort, err.Error())
+				return
+			}
+
+			// From https://sosedoff.com/2015/05/25/ssh-port-forwarding-with-go.html
+			copyConnections(localClient, remoteConn)
+		}
+	}()
+
+	go func() {
+		<-ctx.Done()
+		fmt.Println("Closing local listener")
+		localListener.Close()
+	}()
+
+	return nil
 }
 
 // Forwards a TCP connection from a given port on the remote machine to a given port on the local machine
@@ -121,6 +164,7 @@ func buildSSHClientConfig(user string, addr string, privateKey string) (*ssh.Cli
 
 	return &ssh.ClientConfig{
 		User:            user,
+		Timeout:         10 * time.Second,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(key),
