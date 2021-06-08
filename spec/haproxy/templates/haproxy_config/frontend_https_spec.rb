@@ -348,6 +348,16 @@ describe 'config/haproxy.config HTTPS frontend' do
     expect(frontend_https).to include('http-request add-header X-Forwarded-Proto "https" if ! xfp_exists')
   end
 
+  context 'when ha_proxy.enable_http2 is true' do
+    let(:properties) do
+      default_properties.merge({ 'enable_http2' => true })
+    end
+
+    it 'enables alpn h2 negotiation' do
+      expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl   alpn h2,http/1.1')
+    end
+  end
+
   context 'when no ssl options are provided' do
     let(:properties) { {} }
 

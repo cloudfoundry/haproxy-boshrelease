@@ -171,6 +171,21 @@ describe 'config/haproxy.config backend http-routers' do
         expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
       end
     end
+
+    context 'when ha_proxy.enable_http2 is true' do
+      let(:properties) do
+        {
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'backend_ssl' => 'verify',
+          'enable_http2' => true
+        }
+      end
+
+      it 'enables h2 ALPN negotiation with backends' do
+        expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+        expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+      end
+    end
   end
 
   context 'when ha_proxy.backend_ssl is noverify' do
@@ -182,8 +197,52 @@ describe 'config/haproxy.config backend http-routers' do
     end
 
     it 'configures the server to use ssl: verify none' do
+      expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000  ssl verify none')
       expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify none')
-      expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify none')
+    end
+
+    context 'when ha_proxy.enable_http2 is true' do
+      let(:properties) do
+        {
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'backend_ssl' => 'noverify',
+          'enable_http2' => true
+        }
+      end
+
+      it 'enables h2 ALPN negotiation with backends' do
+        expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000  ssl verify none alpn h2,http/1.1')
+        expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify none alpn h2,http/1.1')
+      end
+    end
+  end
+
+  context 'when ha_proxy.backend_ssl is off' do
+    let(:properties) do
+      {
+        'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+        'backend_ssl' => 'off'
+      }
+    end
+
+    it 'configures the server to not use ssl' do
+      expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000')
+      expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000')
+    end
+
+    context 'when ha_proxy.enable_http2 is true' do
+      let(:properties) do
+        {
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'backend_ssl' => 'off',
+          'enable_http2' => true
+        }
+      end
+
+      it 'does not include ALPN configuration' do
+        expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000')
+        expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000')
+      end
     end
   end
 
