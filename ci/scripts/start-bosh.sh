@@ -220,4 +220,6 @@ EOF
   popd > /dev/null
 }
 
+export BOSH_DEPLOYMENT="director"
+
 main $@
