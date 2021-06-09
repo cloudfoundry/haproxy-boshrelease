@@ -543,3 +543,6 @@ properties:
     description: |
       Prefer backend servers which are located on the same availability zone
     default: false
+  ha_proxy.enable_http2:
+    description: Enables ingress and egress HTTP/2 ALPN negotiation
+    default: false

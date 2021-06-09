@@ -110,6 +110,13 @@ if_p("ha_proxy.v4v6") do
   end
 end
 # }}}
+
+# ALPN Option {{{
+alpn_config = ""
+if p("ha_proxy.enable_http2") then
+  alpn_config = "alpn h2,http/1.1 "
+end
+# }}}
 -%>
 
 global
@@ -294,7 +301,7 @@ frontend https-in
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
-    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
+    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= alpn_config %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
@@ -486,8 +493,10 @@ backend http-routers
     if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname |
       backend_ssl += "verifyhost #{verify_hostname} "
     end
+    backend_ssl += alpn_config
   elsif p("ha_proxy.backend_ssl").downcase == "noverify" then
     backend_ssl = "ssl verify none "
+    backend_ssl += alpn_config
   end
 -%>
   <%- if p("ha_proxy.backend_use_http_health") == true then -%>
@@ -524,8 +533,10 @@ backend http-routed-backend-<%= prefix_hash %>
       if data["backend_verifyhost"] then
         backend_ssl += "verifyhost #{data["backend_verifyhost"]} "
       end
+      backend_ssl += alpn_config
     elsif data["backend_ssl"].downcase == "noverify" then
       backend_ssl = "ssl verify none "
+      backend_ssl += alpn_config
     end
   end
 -%>
