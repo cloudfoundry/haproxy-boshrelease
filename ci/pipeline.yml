@@ -80,6 +80,7 @@ jobs:
         params:
           path: git-pull-requests
           status: pending
+          context: unit-tests
       - task: lint
         config:
           platform: linux
@@ -120,6 +121,19 @@ jobs:
             args: []
           params:
             REPO_ROOT: git-pull-requests
+    on_success:
+      put: git-pull-requests
+      params:
+        path: git-pull-requests
+        status: success
+        context: unit-tests
+    on_failure:
+      put: git-pull-requests
+      params:
+        path: git-pull-requests
+        status: failure
+        context: unit-tests
+
 
   - name: testflight
     public: true
@@ -172,7 +186,7 @@ jobs:
         params:
           path: git-pull-requests
           status: pending
-          context: validate
+          context: acceptance-tests
       - task: testflight
         privileged: true
         config:
@@ -195,18 +209,6 @@ jobs:
             REPO_ROOT:            git-pull-requests
             AWS_ACCESS_KEY:       ((aws.access_key))
             AWS_SECRET_KEY:       ((aws.secret_key))
-        on_success:
-          put: git-pull-requests
-          params:
-            path: git-pull-requests
-            status: success
-            context: validate
-        on_failure:
-          put: git-pull-requests
-          params:
-            path: git-pull-requests
-            status: failure
-            context: validate
       - task: pr-success-message
         config:
           platform: linux
@@ -230,6 +232,18 @@ jobs:
               pr_url=$(git config --get pullrequest.url)
               cd -
               echo "<${pr_url}|Pull request passed testflight> Merge when ready: ${pr_url}" > message/body
+    on_success:
+      put: git-pull-requests
+      params:
+        path: git-pull-requests
+        status: success
+        context: acceptance-tests
+    on_failure:
+      put: git-pull-requests
+      params:
+        path: git-pull-requests
+        status: failure
+        context: acceptance-tests
 
   - name: pre
     public: true
