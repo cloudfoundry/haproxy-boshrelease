@@ -1,0 +1,70 @@
+#!/bin/bash
+
+set -eu
+
+stemcell_path=$PWD/stemcell/*.tgz
+bpm_release_path=$PWD/bpm/*.tgz
+
+cd ${REPO_ROOT:?required}
+echo "----- Pulling in any git submodules..."
+git submodule update --init --recursive --force
+
+echo "----- Starting BOSH"
+
+./ci/scripts/start-bosh.sh
+
+function stop_docker() {
+  echo "----- stopping docker"
+  service docker stop
+}
+
+trap stop_docker EXIT
+
+source /tmp/local-bosh/director/env
+
+echo "----- Creating candidate BOSH release..."
+bosh -n reset-release # in case dev_releases/ is in repo accidentally
+
+mkdir -p config
+
+cat > config/private.yml <<YAML
+---
+blobstore:
+  provider: s3
+  options:
+    access_key_id: ${AWS_ACCESS_KEY}
+    secret_access_key: ${AWS_SECRET_KEY}
+YAML
+bosh create-release
+bosh upload-release --rebase
+
+echo "----- Deploying to ${BOSH_ENVIRONMENT}..."
+release_name=$(bosh int config/final.yml --path /final_name)
+
+echo "----- Choosing cloud-config options"
+vm_type=$(bosh int <(bosh cloud-config) --path /vm_types/0/name)
+disk_type=$(bosh int <(bosh cloud-config) --path /disk_types/0/name)
+network=$(bosh int <(bosh cloud-config) --path /networks/0/name)
+
+release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
+export RELEASE_VERSION="${release_final_version}.latest"
+echo "----- Created ${RELEASE_VERSION}"
+
+echo "----- Uploading stemcell"
+bosh -n upload-stemcell $stemcell_path
+
+echo "----- Uploading BPM"
+bosh -n upload-release $bpm_release_path
+
+export BOSH_PATH=$(which bosh)
+export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
+
+cd "acceptance-tests"
+
+echo "----- Installing dependencies"
+go mod download
+
+echo "----- Running tests"
+
+export PATH=$PATH:$GOPATH/bin
+ginkgo -v -r -debug -trace -progress
