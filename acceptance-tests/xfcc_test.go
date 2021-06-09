@@ -139,8 +139,7 @@ var _ = Describe("forwarded_client_cert", func() {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
-		defer closeTunnel()
+		closeSSHTunnel = setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 
 		clientCert, err = tls.X509KeyPair([]byte(creds.ClientCert.Certificate), []byte(creds.ClientCert.PrivateKey))
 		Expect(err).NotTo(HaveOccurred())
