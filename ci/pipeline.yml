@@ -5,8 +5,8 @@ groups:
     jobs:
       - unit-tests
       - unit-tests-pr
-      - testflight
-      - testflight-pr
+      - acceptance-tests
+      - acceptance-tests-pr
       - pre
       - rc
       - shipit
@@ -135,7 +135,7 @@ jobs:
         context: unit-tests
 
 
-  - name: testflight
+  - name: acceptance-tests
     public: true
     serial: true
     plan:
@@ -144,7 +144,7 @@ jobs:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
         - { get: bpm }
-      - task: testflight
+      - task: acceptance-tests
         privileged: true
         config:
           platform: linux
@@ -160,7 +160,7 @@ jobs:
             - { name: stemcell }
             - { name: bpm }
           run:
-            path: ./git/ci/scripts/testflight
+            path: ./git/ci/scripts/acceptance-tests
             args: []
           params:
             REPO_ROOT:            git
@@ -172,9 +172,9 @@ jobs:
           channel:  "#haproxy-boshrelease"
           username: ci-bot
           icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : testflight job failed"
+          text:    "((slack.fail_url)) haproxy-boshrelease : acceptance tests failed"
 
-  - name: testflight-pr
+  - name: acceptance-tests-pr
     public: true
     serial: true
     plan:
@@ -187,7 +187,7 @@ jobs:
           path: git-pull-requests
           status: pending
           context: acceptance-tests
-      - task: testflight
+      - task: acceptance-tests
         privileged: true
         config:
           platform: linux
@@ -203,7 +203,7 @@ jobs:
             - { name: stemcell }
             - { name: bpm }
           run:
-            path: ./git-pull-requests/ci/scripts/testflight
+            path: ./git-pull-requests/ci/scripts/acceptance-tests
             args: []
           params:
             REPO_ROOT:            git-pull-requests
@@ -231,7 +231,7 @@ jobs:
               cd git-pull-requests
               pr_url=$(git config --get pullrequest.url)
               cd -
-              echo "<${pr_url}|Pull request passed testflight> Merge when ready: ${pr_url}" > message/body
+              echo "<${pr_url}|Pull request passed acceptance tests> Merge when ready: ${pr_url}" > message/body
     on_success:
       put: git-pull-requests
       params:
@@ -252,7 +252,7 @@ jobs:
     - do:
       - get: git
         passed:
-        - testflight
+        - acceptance-tests
         trigger: true
       - get: version
         trigger: true
