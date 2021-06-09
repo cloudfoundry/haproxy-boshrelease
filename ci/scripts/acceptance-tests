@@ -22,9 +22,6 @@ trap stop_docker EXIT
 
 source /tmp/local-bosh/director/env
 
-echo "----- Cleaning up from any previous deployments..."
-bosh -n delete-deployment
-
 echo "----- Creating candidate BOSH release..."
 bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
