@@ -1,39 +1,20 @@
 #!/bin/bash
-#
-# ci/scripts/testflight
-#
-# Script for testing a BOSH release using bosh
-#
-# author:  James Hunt <james@niftylogic.com>
 
-header() {
-	echo
-	echo "###############################################"
-	echo
-	echo $*
-	echo
-}
+set -eu
 
-#!/bin/bash
-
-set -e
-
-: ${BOSH_DEPLOYMENT:?required}
-: ${MANIFEST_PATH:?required}
-: ${AWS_ACCESS_KEY:?required}
-: ${AWS_SECRET_KEY:?required}
-
+stemcell_path=$PWD/stemcell/*.tgz
+bpm_release_path=$PWD/bpm/*.tgz
 
 cd ${REPO_ROOT:?required}
-header "Pulling in any git submodules..."
+echo "----- Pulling in any git submodules..."
 git submodule update --init --recursive --force
 
-header "Starting BOSH"
+echo "----- Starting BOSH"
 
 ./ci/scripts/start-bosh.sh
 
 function stop_docker() {
-  echo "ERROR: stopping docker"
+  echo "----- stopping docker"
   service docker stop
 }
 
@@ -41,44 +22,13 @@ trap stop_docker EXIT
 
 source /tmp/local-bosh/director/env
 
-header "Confirming testflight inputs"
-
-echo "Confirming deployment manifest ${MANIFEST_PATH} exists"
-if [[ ! -f ${MANIFEST_PATH} ]]; then
-	echo "Deployment manifest ${MANIFEST_PATH} does not exist"
-	exit 1
-fi
-
-echo "Confirming that \$MANIFEST_VARS is valid"
-mkdir -p tmp
-
-# $MANIFEST_VARS can either be "key: value" or "key=value"
-# and will be converted to "key: value" YAML
-echo "${MANIFEST_VARS:-"{} ---"}" | sed -e "s/ *= */: /g" > tmp/vars.yml
-if [[ ! -z $DEBUG ]]; then
-	echo "Variables passed to deployment manifest:"
-	cat tmp/vars.yml
-fi
-# convert YAML to JSON to check YAML validity
-spruce json tmp/vars.yml > /dev/null
-
-echo "Confirming each operator file exists: ${MANIFEST_OP_PATHS:-ok, none specified.}"
-op_patch_file_errors=
-for op_patch_file in ${MANIFEST_OP_PATHS//,/ } ; do
-	if [[ ! -f $op_patch_file ]]; then
-		op_patch_file_errors=1
-		echo "Operator file missing: ${op_patch_file}"
-	fi
-done
-if [[ ! -z ${op_patch_file_errors} ]]; then
-	exit 1
-fi
-
-header "Cleaning up from any previous deployments..."
+echo "----- Cleaning up from any previous deployments..."
 bosh -n delete-deployment
 
-header "Creating candidate BOSH release..."
+echo "----- Creating candidate BOSH release..."
 bosh -n reset-release # in case dev_releases/ is in repo accidentally
+
+mkdir -p config
 
 cat > config/private.yml <<YAML
 ---
@@ -91,87 +41,33 @@ YAML
 bosh create-release
 bosh upload-release --rebase
 
-header "Deploying to ${BOSH_ENVIRONMENT}..."
+echo "----- Deploying to ${BOSH_ENVIRONMENT}..."
 release_name=$(bosh int config/final.yml --path /final_name)
 
-header "Choosing cloud-config options"
+echo "----- Choosing cloud-config options"
 vm_type=$(bosh int <(bosh cloud-config) --path /vm_types/0/name)
 disk_type=$(bosh int <(bosh cloud-config) --path /disk_types/0/name)
 network=$(bosh int <(bosh cloud-config) --path /networks/0/name)
 
 release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
-release_dev_version="${release_final_version}.latest"
+export RELEASE_VERSION="${release_final_version}.latest"
+echo "----- Created ${RELEASE_VERSION}"
 
-cat > tmp/deployment.yml <<YAML
----
-- type: replace
-  path: /name
-  value: ${BOSH_DEPLOYMENT}
+echo "----- Uploading stemcell"
+bosh -n upload-stemcell $stemcell_path
 
-- type: replace
-  path: /releases/name=${release_name}
-  value:
-    name: ${release_name}
-    version: ${release_dev_version}
-YAML
+echo "----- Uploading BPM"
+bosh -n upload-release $bpm_release_path
 
-for ig_name in $(spruce json ${MANIFEST_PATH} | jq -r ".instance_groups[].name"); do
-cat >> tmp/deployment.yml <<YAML
-- type: replace
-  path: /instance_groups/name=${ig_name}/vm_type
-  value: ${vm_type}
+export BOSH_PATH=$(which bosh)
+export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
 
-- type: replace
-  path: /instance_groups/name=${ig_name}/persistent_disk_type?
-  value: ${disk_type}
+cd "acceptance-tests"
 
-- type: replace
-  path: /instance_groups/name=${ig_name}/networks
-  value: [{name: ${network}}]
-YAML
-done
+echo "----- Installing dependencies"
+go mod download
 
-op_patch_files_flags=""
-for op_patch_file in ${MANIFEST_OP_PATHS//,/ } ; do
-   op_patch_files_flags="${op_patch_files_flags} -o $op_patch_file"
-done
+echo "----- Running tests"
 
-set -x
-
-bosh int ${MANIFEST_PATH} \
-  -o tmp/deployment.yml    \
-  ${op_patch_files_flags}            \
-  --vars-store tmp/creds.yml \
-  --vars-file  tmp/vars.yml  \
-  --var-errs \
-    > tmp/manifest.yml
-
-header "Uploading stemcell"
-bosh -n upload-stemcell $stemcell
-
-header "Uploading BPM"
-bosh -n upload-release $bpm_release
-
-bosh -n deploy tmp/manifest.yml
-
-TEST_ERRAND=${TEST_ERRAND:-} # backwards compatibility
-TEST_ERRANDS=${TEST_ERRANDS:-$TEST_ERRAND}
-if [[ -n ${TEST_ERRANDS} ]]; then
-	for errand in ${TEST_ERRANDS}; do
-		header "Running '${errand}' errand"
-		bosh -n run-errand ${errand}
-	done
-else
-	echo "No test errands specified, skipping."
-fi
-
-if [[ -z ${SKIP_DELETE_DEPLOYMENT:-} ]]; then
-	header "Cleaning up after successful deployment..."
-	bosh -n delete-deployment
-else
-	header "Skipping cleanup of successful deployment."
-fi
-
-echo
-echo "SUCCESS"
-exit 0
+export PATH=$PATH:$GOPATH/bin
+ginkgo -v -r -debug -trace -progress
