@@ -67,7 +67,11 @@ if_p("ha_proxy.crt_list") do |crt_list|
 %>/var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem<%= sslbindconf %><%= snifilter%>
 <%
   end
-
+%>
+<%- if p("ha_proxy.ext_crt_list") == true -%>
+#OPTIONAL_EXT_CERTS
+<%- end -%>
+<%
   crt_list.each_with_index do |list_entry, i|
     pem_block = list_entry["ssl_pem"];
     client_ca_file=""
@@ -75,9 +79,6 @@ if_p("ha_proxy.crt_list") do |crt_list|
       pem_block = pem_block['cert_chain'].strip + "\n" + pem_block['private_key'].strip
     end
 %>
-<% if p("ha_proxy.ext_crt_list") == true %>
-#OPTIONAL_EXT_CERTS
-<% end %>
 ========================== 0600 /var/vcap/jobs/haproxy/config/ssl/cert-<%= i %>.pem
 <%= pem_block %>
 <%
