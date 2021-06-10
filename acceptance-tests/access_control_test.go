@@ -1,7 +1,9 @@
 package acceptance_tests
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
@@ -58,7 +60,8 @@ var _ = Describe("Access Control", func() {
 
 		By("Denying access from non-whitelisted CIDRs (request from test runner)")
 		_, err := http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		Expect(err.Error()).To(ContainSubstring("EOF")) // when denying HAProxy returns an empty response
+		Expect(err).To(HaveOccurred())
+		Expect(errors.Is(err, io.EOF)).To(BeTrue())
 
 		By("Allowing access to whitelisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
 		resp, err := http.Get("http://127.0.0.1:11000")
@@ -94,7 +97,8 @@ var _ = Describe("Access Control", func() {
 
 		By("Denying access from blacklisted CIDRs (request from test runner)")
 		_, err := http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		Expect(err.Error()).To(ContainSubstring("EOF")) // when denying HAProxy returns an empty response
+		Expect(err).To(HaveOccurred())
+		Expect(errors.Is(err, io.EOF)).To(BeTrue())
 
 		By("Allowing access to non-blacklisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
 		resp, err := http.Get("http://127.0.0.1:11000")
