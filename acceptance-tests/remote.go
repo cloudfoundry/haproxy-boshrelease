@@ -181,3 +181,15 @@ func buildSSHClient(user string, addr string, privateKey string) (*ssh.Client, e
 	fmt.Printf("Connecting to %s:%d as user %s using private key\n", addr, 22, user)
 	return ssh.Dial("tcp", net.JoinHostPort(addr, "22"), config)
 }
+
+func checkListening(addr string) error {
+	conn, err := net.DialTimeout("tcp", addr, time.Second)
+	if err != nil {
+		return err
+	}
+	if conn != nil {
+		defer conn.Close()
+	}
+
+	return nil
+}

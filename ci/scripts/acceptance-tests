@@ -67,4 +67,4 @@ go mod download
 echo "----- Running tests"
 
 export PATH=$PATH:$GOPATH/bin
-ginkgo -v -r -debug -trace -progress
+ginkgo -v -r -debug -trace -progress -randomizeAllSpecs

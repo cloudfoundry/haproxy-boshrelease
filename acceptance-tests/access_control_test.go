@@ -34,18 +34,16 @@ var _ = Describe("Access Control", func() {
 `
 
 	It("Allows IPs in whitelisted CIDRS", func() {
-		deploymentName := "haproxy"
 		haproxyBackendPort := 12000
 
 		// Allow 127.0.0.1/32, but deny other connections
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileWhitelist}, map[string]interface{}{
 			"cidr_whitelist": []string{"127.0.0.1/32"},
 		}, true)
-		defer deleteDeployment(deploymentName)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -70,19 +68,17 @@ var _ = Describe("Access Control", func() {
 	})
 
 	It("Rejects IPs in blacklisted CIDRS", func() {
-		deploymentName := "haproxy"
 		haproxyBackendPort := 12000
 
 		// Allow 127.0.0.1/32, but deny other connections
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileBlacklist}, map[string]interface{}{
 			// traffic from test runner appears to come from this CIDR block
 			"cidr_blacklist": []string{"10.0.0.0/8"},
 		}, true)
-		defer deleteDeployment(deploymentName)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()

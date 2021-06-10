@@ -11,12 +11,6 @@ import (
 )
 
 var _ = Describe("HTTPS Frontend", func() {
-	deploymentName := "haproxy"
-
-	AfterEach(func() {
-		deleteDeployment(deploymentName)
-	})
-
 	It("Correctly proxies HTTPS requests", func() {
 		opsfileSSLCertificate := `---
 # Configure CA and cert chain
@@ -51,7 +45,7 @@ var _ = Describe("HTTPS Frontend", func() {
 		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileSSLCertificate}, map[string]interface{}{}, true)
 
 		var creds struct {

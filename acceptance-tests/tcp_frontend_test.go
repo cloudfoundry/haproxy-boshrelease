@@ -10,12 +10,6 @@ import (
 )
 
 var _ = Describe("TCP Frontend", func() {
-	deploymentName := "haproxy"
-
-	AfterEach(func() {
-		deleteDeployment(deploymentName)
-	})
-
 	It("Correctly proxies TCP requests", func() {
 		opsfileTCP := `---
 # Configure TCP Backend
@@ -33,7 +27,7 @@ var _ = Describe("TCP Frontend", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileTCP}, map[string]interface{}{
 			"tcp_frontend_port": tcpFrontendPort,
 			"tcp_backend_port":  tcpBackendPort,

@@ -30,8 +30,6 @@ import (
 																		 X-Forwarded-Client-Cert is overwritten for mTLS connections
 */
 var _ = Describe("forwarded_client_cert", func() {
-	deploymentName := "haproxy"
-
 	opsfileForwardedClientCert := `---
 # Configure X-Forwarded-Client-Cert handling
 - type: replace
@@ -112,8 +110,6 @@ var _ = Describe("forwarded_client_cert", func() {
 	recordedXFCCHeader := "initial"
 
 	AfterEach(func() {
-		defer deleteDeployment(deploymentName)
-
 		if closeLocalServer != nil {
 			defer closeLocalServer()
 		}
@@ -129,7 +125,7 @@ var _ = Describe("forwarded_client_cert", func() {
 		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileForwardedClientCert}, deployVars, true)
 
 		err := varsStoreReader(&creds)
