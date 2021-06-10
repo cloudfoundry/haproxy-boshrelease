@@ -19,13 +19,26 @@ type haproxyInfo struct {
 	PublicIP      string
 }
 
+type baseManifestVars struct {
+	haproxyBackendPort    int
+	haproxyBackendServers []string
+	deploymentName        string
+}
+
 type varsStoreReader func(interface{}) error
 
 // Helper method for deploying HAProxy
-// Takes the HAProxy backend port, an array of custom opsfiles, a map of custom vars
+// Takes the HAProxy base manifest vars, an array of custom opsfiles, and a map of custom vars
 // Returns 'info' struct containing public IP and ssh creds, and a callback to deserialise properties from the vars store
-func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars map[string]interface{}) (haproxyInfo, varsStoreReader) {
+func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, customVars map[string]interface{}, expectSuccess bool) (haproxyInfo, varsStoreReader) {
 	sshUser := "ginkgo"
+
+	opsfileChangeName := `---
+# change deployment name to allow multiple simulataneous deployments
+- type: replace
+  path: /name
+  value: ((deployment-name))
+`
 
 	opsfileChangeVersion := `---
 # Deploy dev version we just compiled
@@ -68,18 +81,24 @@ func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars m
 
 	vars := map[string]interface{}{
 		"release-version":         config.ReleaseVersion,
-		"haproxy-backend-port":    fmt.Sprintf("%d", haproxyBackendPort),
-		"haproxy-backend-servers": []string{"127.0.0.1"},
+		"haproxy-backend-port":    fmt.Sprintf("%d", baseManifestVars.haproxyBackendPort),
+		"haproxy-backend-servers": baseManifestVars.haproxyBackendServers,
+		"deployment-name":         baseManifestVars.deploymentName,
 		"ssh_user":                sshUser,
 	}
 	for k, v := range customVars {
 		vars[k] = v
 	}
 
-	opsfiles := append([]string{opsfileChangeVersion, opsfileAddSSHUser}, customOpsfiles...)
-	session, varsStoreReader := deployBaseManifest(opsfiles, vars)
+	opsfiles := append([]string{opsfileChangeName, opsfileChangeVersion, opsfileAddSSHUser}, customOpsfiles...)
+	session, varsStoreReader := deployBaseManifest(baseManifestVars.deploymentName, opsfiles, vars)
 
-	Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+	if expectSuccess {
+		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+	} else {
+		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit())
+		Expect(session.ExitCode()).NotTo(BeZero())
+	}
 
 	var creds struct {
 		SSHKey struct {
@@ -94,7 +113,7 @@ func deployHAProxy(haproxyBackendPort int, customOpsfiles []string, customVars m
 	Expect(creds.SSHKey.PublicKey).NotTo(BeEmpty())
 
 	By("Fetching the HAProxy public IP")
-	instances := boshInstances()
+	instances := boshInstances(baseManifestVars.deploymentName)
 	haproxyPublicIP := instances[0].ParseIPs()[0]
 	Expect(haproxyPublicIP).ToNot(BeEmpty())
 
@@ -121,10 +140,10 @@ func dumpHAProxyConfig(haproxyInfo haproxyInfo) {
 	fmt.Println("------------------------------------")
 }
 
-// Takes bosh deploy ops files and vars.
+// Takes bosh deployment name, ops files and vars.
 // Returns a session object and a callback to deserialise the bosh-generated vars store after session has executed
-func deployBaseManifest(opsFilesContents []string, vars map[string]interface{}) (*gexec.Session, varsStoreReader) {
-	By("Deploying HAProxy")
+func deployBaseManifest(boshDeployment string, opsFilesContents []string, vars map[string]interface{}) (*gexec.Session, varsStoreReader) {
+	By(fmt.Sprintf("Deploying HAProxy (deployment name: %s)", boshDeployment))
 	args := []string{"deploy"}
 
 	// ops files
@@ -187,7 +206,7 @@ func deployBaseManifest(opsFilesContents []string, vars map[string]interface{}) 
 		return yaml.Unmarshal(varsStoreBytes, target)
 	}
 
-	cmd := config.boshCmd(args...)
+	cmd := config.boshCmd(boshDeployment, args...)
 
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
@@ -215,9 +234,9 @@ func (instance boshInstance) ParseIPs() []string {
 	return strings.Split(instance.CommaSeparatedIPs, ",")
 }
 
-func boshInstances() []boshInstance {
+func boshInstances(boshDeployment string) []boshInstance {
 	fmt.Printf("Fetching Bosh instances")
-	cmd := config.boshCmd("--json", "instances", "--details")
+	cmd := config.boshCmd(boshDeployment, "--json", "instances", "--details")
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 	Eventually(session, time.Minute, time.Second).Should(gexec.Exit(0))
@@ -234,9 +253,9 @@ func boshInstances() []boshInstance {
 	return output.Tables[0].Rows
 }
 
-func deleteDeployment() {
-	By("Deleting the HAProxy deployment")
-	cmd := config.boshCmd("delete-deployment")
+func deleteDeployment(boshDeployment string) {
+	By(fmt.Sprintf("Deleting HAProxy deployment (deployment name: %s)", boshDeployment))
+	cmd := config.boshCmd(boshDeployment, "delete-deployment")
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 	Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))

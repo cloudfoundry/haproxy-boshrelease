@@ -80,7 +80,7 @@ func loadConfig() (Config, error) {
 	}, nil
 }
 
-func (config *Config) boshCmd(args ...string) *exec.Cmd {
+func (config *Config) boshCmd(boshDeployment string, args ...string) *exec.Cmd {
 	cmd := exec.Command(config.BoshPath, args...)
 	cmd.Env = []string{
 		fmt.Sprintf("BOSH_CA_CERT=%s", config.BoshCACert),
@@ -88,8 +88,8 @@ func (config *Config) boshCmd(args ...string) *exec.Cmd {
 		fmt.Sprintf("BOSH_CLIENT_SECRET=%s", config.BoshClientSecret),
 		fmt.Sprintf("BOSH_ENVIRONMENT=%s", config.BoshEnvironment),
 		fmt.Sprintf("HOME=%s", config.HomePath),
+		fmt.Sprintf("BOSH_DEPLOYMENT=%s", boshDeployment),
 		"BOSH_NON_INTERACTIVE=true",
-		"BOSH_DEPLOYMENT=haproxy",
 	}
 
 	return cmd

@@ -176,7 +176,7 @@ properties:
   ha_proxy.backend_ca_file:
     description: "Optional SSL CA certificate chain (PEM file) concatenated together for backend SSL servers, only used when one of the `backend_ssl` options is set to `verify`"
   ha_proxy.enable_health_check_http:
-    description: "Optionally enable http health-check on `haproxy_ip:8080/health`. It shows `200 OK` if >0 backend servers are up."
+    description: "Optionally enable http health-check on `haproxy_ip:8080/health`. It shows `200 OK` if >0 backend servers are up. If used with ext_crt_list_timeout you should make sure that the deployment canary_watch_time and update_watch_time are configured to wait at least the number of seconds defined by ext_crt_list_timeout."
     default: false
   ha_proxy.health_check_port:
     description: "port for http health-check"
@@ -379,7 +379,7 @@ properties:
   ha_proxy.tcp_link_port:
     description: "Port haproxy should listen on when using the tcp_backend link"
   ha_proxy.tcp_link_check_port:
-    description: "Optional port for tcp_backend health checks. Will use ha_proxy.tcp_link_port if not set."  
+    description: "Optional port for tcp_backend health checks. Will use ha_proxy.tcp_link_port if not set."
   ha_proxy.tcp_link_health_check_http:
     description: "Optional port for http health check when using the tcp_backend link."
   ha_proxy.resolvers:

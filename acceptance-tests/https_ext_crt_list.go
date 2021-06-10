@@ -28,8 +28,10 @@ import (
 */
 
 var _ = Describe("External Certificate Lists", func() {
+	deploymentName := "haproxy"
+
 	AfterEach(func() {
-		deleteDeployment()
+		deleteDeployment(deploymentName)
 	})
 
 	It("Uses the correct certs", func() {
@@ -99,9 +101,13 @@ var _ = Describe("External Certificate Lists", func() {
 
 		haproxyBackendPort := 12000
 		extCrtListPath := "/var/vcap/jobs/haproxy/config/ssl/ext-crt-list"
-		haproxyInfo, varsStoreReader := deployHAProxy(haproxyBackendPort, []string{opsfileSSLCertificate}, map[string]interface{}{
+		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentName,
+		}, []string{opsfileSSLCertificate}, map[string]interface{}{
 			"ext_crt_list_path": extCrtListPath,
-		})
+		}, true)
 
 		var creds struct {
 			CertA struct {
