@@ -26,6 +26,8 @@ import (
 */
 
 var _ = Describe("External Certificate Lists", func() {
+	haproxyBackendPort := 12000
+
 	It("Uses the correct certs", func() {
 		opsfileSSLCertificate := `---
 # Ensure HAProxy is in daemon mode (syslog server cannot be stdout)
@@ -91,7 +93,6 @@ var _ = Describe("External Certificate Lists", func() {
       alternative_names: [cert_c.haproxy.internal]
 `
 
-		haproxyBackendPort := 12000
 		extCrtListPath := "/var/vcap/jobs/haproxy/config/ssl/ext-crt-list"
 		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
@@ -224,10 +225,129 @@ var _ = Describe("External Certificate Lists", func() {
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
 	})
+
+	Context("When ext_crt_list_policy is set to fail", func() {
+		opfileExternalCertificatePolicyFail := `---
+# Ensure HAProxy is in daemon mode (syslog server cannot be stdout)
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/syslog_server?
+  value: "/var/vcap/sys/log/haproxy/syslog"
+
+# Configure external certificate list properties
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/ext_crt_list?
+  value: true
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/ext_crt_list_policy?
+  value: fail
+# crt_list or ssl_pem need to be non-nil for SSL to be enabled
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/crt_list?
+  value: []
+`
+
+		Context("When the external certificate does not exist", func() {
+			It("Fails the deployment", func() {
+				deployHAProxy(baseManifestVars{
+					haproxyBackendPort:    haproxyBackendPort,
+					haproxyBackendServers: []string{"127.0.0.1"},
+					deploymentName:        defaultDeploymentName,
+				}, []string{opfileExternalCertificatePolicyFail}, map[string]interface{}{
+					"ext_crt_list_path": "/var/vcap/jobs/haproxy/config/ssl/does-not-exist",
+				}, true)
+			})
+		})
+
+		Context("When the external certificate does exist", func() {
+			opsfileOSConfProvidedCertificate := `---
+# Configure os-conf to install "external" cert in pre-start script
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/-
+  value:
+    name: pre-start-script
+    release: os-conf
+    properties:
+      script: |-
+        #!/bin/bash
+        mkdir -p /var/vcap/jobs/haproxy/config/ssl/ext
+
+        # Write cert list
+        echo '/var/vcap/jobs/haproxy/config/ssl/ext/os-conf-cert haproxy.internal' > /var/vcap/jobs/haproxy/config/ssl/ext/crt-list
+
+        # Write cert chain
+        echo '((cert.certificate))((cert.ca))((cert.private_key))' > /var/vcap/jobs/haproxy/config/ssl/ext/os-conf-cert
+
+        # Ensure HAProxy can read certs
+        chown -R vcap:vcap /var/vcap/jobs/haproxy/config/ssl/ext
+# Generate CA and certificates
+- type: replace
+  path: /variables?/-
+  value:
+    name: common_ca
+    type: certificate
+    options:
+      is_ca: true
+      common_name: bosh
+- type: replace
+  path: /variables?/-
+  value:
+    name: cert
+    type: certificate
+    options:
+      ca: common_ca
+      common_name: haproxy.internal
+      alternative_names: [haproxy.internal]
+`
+
+			It("Succesfully loads and uses the certificate", func() {
+				haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
+					haproxyBackendPort:    haproxyBackendPort,
+					haproxyBackendServers: []string{"127.0.0.1"},
+					deploymentName:        defaultDeploymentName,
+				}, []string{opfileExternalCertificatePolicyFail, opsfileOSConfProvidedCertificate}, map[string]interface{}{
+					"ext_crt_list_path": "/var/vcap/jobs/haproxy/config/ssl/cert-written-by-os-conf",
+				}, true)
+
+				// Ensure file written by os-conf is cleaned up for next test
+				defer deleteRemoteFile(haproxyInfo, "/var/vcap/jobs/haproxy/config/ssl/ext")
+
+				var creds struct {
+					Cert struct {
+						Certificate string `yaml:"certificate"`
+						CA          string `yaml:"ca"`
+						PrivateKey  string `yaml:"private_key"`
+					} `yaml:"cert"`
+				}
+				err := varsStoreReader(&creds)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Wait for HAProxy to accept TCP connections
+				waitForHAProxyListening(haproxyInfo)
+
+				closeLocalServer, localPort := startDefaultTestServer()
+				defer closeLocalServer()
+
+				closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+				defer closeTunnel()
+
+				client := buildHTTPClient(
+					[]string{creds.Cert.CA},
+					map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
+					[]tls.Certificate{},
+				)
+
+				By("Sending a request to HAProxy using the external cert")
+				resp, err := client.Get("https://haproxy.internal:443")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+			})
+		})
+	})
 })
 
 func deleteRemoteFile(haproxyInfo haproxyInfo, remotePath string) {
-	_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, fmt.Sprintf("sudo rm -f %s", remotePath))
+	_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, fmt.Sprintf("sudo rm -rf %s", remotePath))
 	Expect(err).NotTo(HaveOccurred())
 }
 
