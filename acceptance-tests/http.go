@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"golang.org/x/net/http2"
 )
 
 // starts a local http server handling the provided handler
@@ -29,33 +31,43 @@ func startLocalHTTPServer(handler func(http.ResponseWriter, *http.Request)) (fun
 	return server.Close, int(port), nil
 }
 
-// Build an HTTP client with custom CAcertificate pool
-// which resolves hosts based on provided map
+// Build an HTTP client with custom CA certificate pool which resolves hosts based on provided map
 func buildHTTPClient(caCerts []string, addressMap map[string]string, clientCerts []tls.Certificate) *http.Client {
-	// Create HTTP Client with custom CAs
 	caCertPool := x509.NewCertPool()
-
 	for _, caCert := range caCerts {
 		caCertPool.AppendCertsFromPEM([]byte(caCert))
 	}
 
-	tlsConfig := &tls.Config{
-		RootCAs:      caCertPool,
-		Certificates: clientCerts,
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:      caCertPool,
+			Certificates: clientCerts,
+		},
+		// Override DialContext to force resolve with alternative addresses
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			if altAddr, ok := addressMap[addr]; ok {
+				addr = altAddr
+			}
+
+			return (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext(ctx, network, addr)
+		},
 	}
 
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	return &http.Client{Transport: transport}
+}
 
-	// Override HTTP transport to force resolve with alternative addresses
-	transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-		if altAddr, ok := addressMap[addr]; ok {
-			addr = altAddr
-		}
+// Build an HTTP2 client with custom CA certificate pool which resolves hosts based on provided map
+func buildHTTP2Client(caCerts []string, addressMap map[string]string, clientCerts []tls.Certificate) *http.Client {
 
-		return (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext(ctx, network, addr)
-	}
+	httpClient := buildHTTPClient(caCerts, addressMap, clientCerts)
+	transport := httpClient.Transport.(*http.Transport)
+	http2.ConfigureTransport(transport)
+
+	// force HTTP2-only
+	transport.TLSClientConfig.NextProtos = []string{"h2"}
+
 	return &http.Client{Transport: transport}
 }
