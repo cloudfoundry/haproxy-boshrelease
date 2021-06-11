@@ -396,8 +396,6 @@ describe 'config/certs.ttar' do
       let(:ttar) do
         template.render({
           'ha_proxy' => {
-            # FIXME: using ext_crt_list: true currently requires crt_list is [], not nil
-            # if there are no 'internal' certs but probably shouldn't require this
             'crt_list' => [],
             'ext_crt_list' => true
           }
