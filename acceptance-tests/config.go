@@ -81,7 +81,7 @@ func loadConfig() (Config, error) {
 }
 
 func (config *Config) boshCmd(boshDeployment string, args ...string) *exec.Cmd {
-	cmd := exec.Command(config.BoshPath, args...)
+	cmd := exec.Command(config.BoshPath, append([]string{"--tty", "--no-color"}, args...)...)
 	cmd.Env = []string{
 		fmt.Sprintf("BOSH_CA_CERT=%s", config.BoshCACert),
 		fmt.Sprintf("BOSH_CLIENT=%s", config.BoshClient),

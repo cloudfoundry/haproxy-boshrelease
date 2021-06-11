@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/gexec"
 )
 
 /*
@@ -252,34 +254,11 @@ var _ = Describe("External Certificate Lists", func() {
 					haproxyBackendPort:    haproxyBackendPort,
 					haproxyBackendServers: []string{"127.0.0.1"},
 					deploymentName:        defaultDeploymentName,
-				}, []string{opfileExternalCertificatePolicyFail}, map[string]interface{}{
-					"ext_crt_list_path": "/var/vcap/jobs/haproxy/config/ssl/does-not-exist",
-				}, true)
+				}, []string{opfileExternalCertificatePolicyFail}, map[string]interface{}{}, true)
 			})
 		})
 
-		Context("When the external certificate does exist", func() {
-			opsfileOSConfProvidedCertificate := `---
-# Configure os-conf to install "external" cert in pre-start script
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/-
-  value:
-    name: pre-start-script
-    release: os-conf
-    properties:
-      script: |-
-        #!/bin/bash
-        mkdir -p /var/vcap/jobs/haproxy/config/ssl/ext
-
-        # Write cert list
-        echo '/var/vcap/jobs/haproxy/config/ssl/ext/os-conf-cert haproxy.internal' > /var/vcap/jobs/haproxy/config/ssl/ext/crt-list
-
-        # Write cert chain
-        echo '((cert.certificate))((cert.ca))((cert.private_key))' > /var/vcap/jobs/haproxy/config/ssl/ext/os-conf-cert
-
-        # Ensure HAProxy can read certs
-        chown -R vcap:vcap /var/vcap/jobs/haproxy/config/ssl/ext
-# Generate CA and certificates
+		opsfileSSLCertVariable := `# Generate CA and certificates
 - type: replace
   path: /variables?/-
   value:
@@ -299,14 +278,35 @@ var _ = Describe("External Certificate Lists", func() {
       alternative_names: [haproxy.internal]
 `
 
+		Context("When the external certificate does exist", func() {
+			opsfileOSConfProvidedCertificate := `---
+# Configure os-conf to install "external" cert in pre-start script
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/-
+  value:
+    name: pre-start-script
+    release: os-conf
+    properties:
+      script: |-
+        #!/bin/bash
+        mkdir -p /var/vcap/jobs/haproxy/config/ssl/ext
+
+        # Write cert list to default external crt-list location
+        echo '/var/vcap/jobs/haproxy/config/ssl/ext/os-conf-cert haproxy.internal' > /var/vcap/jobs/haproxy/config/ssl/ext/crt-list
+
+        # Write cert chain
+        echo '((cert.certificate))((cert.ca))((cert.private_key))' > /var/vcap/jobs/haproxy/config/ssl/ext/os-conf-cert
+
+        # Ensure HAProxy can read certs
+        chown -R vcap:vcap /var/vcap/jobs/haproxy/config/ssl/ext
+`
+
 			It("Succesfully loads and uses the certificate", func() {
 				haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 					haproxyBackendPort:    haproxyBackendPort,
 					haproxyBackendServers: []string{"127.0.0.1"},
 					deploymentName:        defaultDeploymentName,
-				}, []string{opfileExternalCertificatePolicyFail, opsfileOSConfProvidedCertificate}, map[string]interface{}{
-					"ext_crt_list_path": "/var/vcap/jobs/haproxy/config/ssl/cert-written-by-os-conf",
-				}, true)
+				}, []string{opfileExternalCertificatePolicyFail, opsfileOSConfProvidedCertificate, opsfileSSLCertVariable}, map[string]interface{}{}, true)
 
 				// Ensure file written by os-conf is cleaned up for next test
 				defer deleteRemoteFile(haproxyInfo, "/var/vcap/jobs/haproxy/config/ssl/ext")
@@ -341,6 +341,93 @@ var _ = Describe("External Certificate Lists", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+			})
+
+			Context("When the external certificate is written after HAProxy is started", func() {
+				It("Succesfully loads and uses the certificate", func() {
+					// Ensure that HAProxy is already deployed
+					haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
+						haproxyBackendPort:    haproxyBackendPort,
+						haproxyBackendServers: []string{"127.0.0.1"},
+						deploymentName:        defaultDeploymentName,
+					}, []string{opfileExternalCertificatePolicyFail, opsfileSSLCertVariable}, map[string]interface{}{}, true)
+
+					var creds struct {
+						Cert struct {
+							Certificate string `yaml:"certificate"`
+							CA          string `yaml:"ca"`
+							PrivateKey  string `yaml:"private_key"`
+						} `yaml:"cert"`
+					}
+					err := varsStoreReader(&creds)
+					Expect(err).NotTo(HaveOccurred())
+
+					// now redeploy using same vars
+					baseManifestVars := baseManifestVars{
+						haproxyBackendPort:    haproxyBackendPort,
+						haproxyBackendServers: []string{"127.0.0.1"},
+						deploymentName:        defaultDeploymentName,
+					}
+					// Override SSH key and certificate with existing values to avoid re-generating
+					manifestVars := buildManifestVars(baseManifestVars, map[string]interface{}{
+						"ssh_key": map[string]string{
+							"private_key":            haproxyInfo.SSHPrivateKey,
+							"public_key":             haproxyInfo.SSHPublicKey,
+							"public_key_fingerprint": haproxyInfo.SSHPublicKeyFingerprint,
+						},
+						"cert": creds.Cert,
+					})
+					opsfiles := append(defaultOpsfiles, opfileExternalCertificatePolicyFail, opsfileSSLCertVariable)
+					deployCmd, _ := deployBaseManifestCmd(defaultDeploymentName, opsfiles, manifestVars)
+					// Recreate VM to ensure that HAProxy process is restarted
+					deployCmd.Args = append(deployCmd.Args, "--recreate")
+					buffer := gbytes.NewBuffer()
+					session, err := gexec.Start(deployCmd, buffer, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+
+					By("Waiting for monit to start HAProxy wrapper")
+					Eventually(buffer, 10*time.Minute, time.Second).Should(gbytes.Say("Updating instance haproxy"))
+					Eventually(buffer, 10*time.Minute, time.Second).Should(gbytes.Say("starting jobs: haproxy"))
+
+					// wait 30 seconds to simulate delayed certificate update
+					time.Sleep(30 * time.Second)
+
+					// external certs format is a concatenated file containing certificate PEM, CA PEM, private key PEM
+					extCertChain := bytes.NewBufferString(strings.Join([]string{creds.Cert.Certificate, creds.Cert.CA, creds.Cert.PrivateKey}, "\n"))
+					extCertChainPath := "/var/vcap/jobs/haproxy/config/ssl/ext/cert.haproxy.internal.pem"
+					extCrtList := bytes.NewBufferString(fmt.Sprintf("%s cert.haproxy.internal\n", extCertChainPath))
+					extCrtListPath := "/var/vcap/jobs/haproxy/config/ssl/ext/crt-list"
+
+					By("Uploading external certs while HAProxy wrapper is waiting")
+					uploadFile(haproxyInfo, extCertChain, extCertChainPath)
+					defer deleteRemoteFile(haproxyInfo, extCertChainPath)
+					uploadFile(haproxyInfo, extCrtList, extCrtListPath)
+					defer deleteRemoteFile(haproxyInfo, extCrtListPath)
+
+					By("Waiting for second deploy to finish")
+					Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+
+					// Wait for HAProxy to accept TCP connections
+					waitForHAProxyListening(haproxyInfo)
+
+					closeLocalServer, localPort := startDefaultTestServer()
+					defer closeLocalServer()
+
+					closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+					defer closeTunnel()
+
+					client := buildHTTPClient(
+						[]string{creds.Cert.CA},
+						map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
+						[]tls.Certificate{},
+					)
+
+					By("Sending a request to HAProxy using the external cert")
+					resp, err := client.Get("https://haproxy.internal:443")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.StatusCode).To(Equal(http.StatusOK))
+					Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+				})
 			})
 		})
 	})
