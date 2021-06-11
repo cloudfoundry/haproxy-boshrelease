@@ -19,18 +19,16 @@ var _ = Describe("HTTP Health Check", func() {
 `
 
 	It("Correctly fails to start if there is no healthy backend", func() {
-		deploymentName := "haproxy"
 		haproxyBackendPort := 12000
 		// Expect initial deployment to be failing due to lack of healthy backends
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileHTTPHealthcheck}, map[string]interface{}{}, false)
-		defer deleteDeployment(deploymentName)
 
 		// Verify that is in a failing state
-		Expect(boshInstances(deploymentName)[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
+		Expect(boshInstances(defaultDeploymentName)[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -43,7 +41,7 @@ var _ = Describe("HTTP Health Check", func() {
 		// and monit should in turn start reporting a healthy process
 		// We will up to wait one minute for the status to stabilise
 		Eventually(func() string {
-			return boshInstances(deploymentName)[0].ProcessState
+			return boshInstances(defaultDeploymentName)[0].ProcessState
 		}, time.Minute, time.Second).Should(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
@@ -77,16 +75,14 @@ var _ = Describe("HTTP Health Check", func() {
 		defer closeTunnel()
 
 		// Now deploy test HAProxy with 'haproxy-backend' configured as backend
-		deploymentName := "haproxy"
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    80,
 			haproxyBackendServers: []string{backendHaproxyInfo.PublicIP},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileHTTPHealthcheck}, map[string]interface{}{}, true)
-		defer deleteDeployment(deploymentName)
 
 		// Verify that instance is in a running state
-		Expect(boshInstances(deploymentName)[0].ProcessState).To(Equal("running"))
+		Expect(boshInstances(defaultDeploymentName)[0].ProcessState).To(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
 		resp, err := http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))

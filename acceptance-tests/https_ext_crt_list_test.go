@@ -5,11 +5,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,12 +26,6 @@ import (
 */
 
 var _ = Describe("External Certificate Lists", func() {
-	deploymentName := "haproxy"
-
-	AfterEach(func() {
-		deleteDeployment(deploymentName)
-	})
-
 	It("Uses the correct certs", func() {
 		opsfileSSLCertificate := `---
 # Ensure HAProxy is in daemon mode (syslog server cannot be stdout)
@@ -104,7 +96,7 @@ var _ = Describe("External Certificate Lists", func() {
 		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileSSLCertificate}, map[string]interface{}{
 			"ext_crt_list_path": extCrtListPath,
 		}, true)
@@ -174,7 +166,9 @@ var _ = Describe("External Certificate Lists", func() {
 
 		By("Uploading external certificates and external cert list to HAProxy")
 		uploadFile(haproxyInfo, pemChainCertB, pemChainCertBPath)
+		defer deleteRemoteFile(haproxyInfo, pemChainCertBPath)
 		uploadFile(haproxyInfo, extCrtList, extCrtListPath)
+		defer deleteRemoteFile(haproxyInfo, extCrtListPath)
 
 		By("Reloading HAProxy")
 		reloadHAProxy(haproxyInfo)
@@ -204,6 +198,7 @@ var _ = Describe("External Certificate Lists", func() {
 
 		deleteRemoteFile(haproxyInfo, pemChainCertBPath)
 		uploadFile(haproxyInfo, pemChainCertC, pemChainCertCPath)
+		defer deleteRemoteFile(haproxyInfo, pemChainCertCPath)
 		uploadFile(haproxyInfo, extCrtList, extCrtListPath)
 
 		By("Reloading HAProxy")
@@ -232,7 +227,7 @@ var _ = Describe("External Certificate Lists", func() {
 })
 
 func deleteRemoteFile(haproxyInfo haproxyInfo, remotePath string) {
-	_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, fmt.Sprintf("sudo rm %s", remotePath))
+	_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, fmt.Sprintf("sudo rm -f %s", remotePath))
 	Expect(err).NotTo(HaveOccurred())
 }
 
@@ -251,16 +246,4 @@ func uploadFile(haproxyInfo haproxyInfo, contents io.Reader, remotePath string) 
 
 	_, _, err = runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, fmt.Sprintf("sudo chown vcap:vcap %s", remotePath))
 	Expect(err).NotTo(HaveOccurred())
-}
-
-func checkListening(addr string) error {
-	conn, err := net.DialTimeout("tcp", addr, time.Second)
-	if err != nil {
-		return err
-	}
-	if conn != nil {
-		defer conn.Close()
-	}
-
-	return nil
 }

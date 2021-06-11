@@ -11,6 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// This deployment is reused between tests to speed up test execution
+var defaultDeploymentName = "haproxy"
+
 func TestAcceptanceTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "AcceptanceTests Suite")
@@ -23,6 +26,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
+	deleteDeployment(defaultDeploymentName)
 })
 
 // Starts a simple test server that returns 200 OK

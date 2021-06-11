@@ -10,18 +10,12 @@ import (
 )
 
 var _ = Describe("HTTP Frontend", func() {
-	deploymentName := "haproxy"
-
-	AfterEach(func() {
-		deleteDeployment(deploymentName)
-	})
-
 	It("Correctly proxies HTTP requests", func() {
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentName,
+			deploymentName:        defaultDeploymentName,
 		}, []string{}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
