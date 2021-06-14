@@ -2,7 +2,7 @@
 
 set -e
 
-<%- if p("ha_proxy.reload_max_instances") then -%>
+<%- if p("ha_proxy.reload_max_instances") -%>
 max_instances=<%= p("ha_proxy.reload_max_instances") %>
 <%- else -%>
 max_instances=0

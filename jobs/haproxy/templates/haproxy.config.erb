@@ -105,7 +105,7 @@ end
 # IPv4 and IPv6 binding (v4v6) Option {{{
 v4v6 = ""
 if_p("ha_proxy.v4v6") do
-  if p("ha_proxy.binding_ip") == "::" then
+  if p("ha_proxy.binding_ip") == "::"
     v4v6 = "v4v6"
   end
 end
@@ -113,7 +113,7 @@ end
 
 # ALPN Option {{{
 alpn_config = ""
-if p("ha_proxy.enable_http2") then
+if p("ha_proxy.enable_http2")
   alpn_config = "alpn h2,http/1.1 "
 end
 # }}}
@@ -125,8 +125,8 @@ global
   <%- if properties.ha_proxy.global_config -%>
     <%= p("ha_proxy.global_config") %>
   <%- end -%>
-  <%- if p("ha_proxy.nbproc") > 1 then -%>
-    <%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr" then
+  <%- if p("ha_proxy.nbproc") > 1  -%>
+    <%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr"
 			raise("ha_proxy.syslog_server cannot be stdout or stderr when ha_proxy.nbproc > 1. Try /dev/log instead")
 		end -%>
     nbproc <%= p("ha_proxy.nbproc") %>
@@ -241,7 +241,7 @@ frontend http-in
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
   <%- end -%>
-  <%- if p("ha_proxy.block_all") then -%>
+  <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
     capture request header Host len 256
@@ -313,17 +313,17 @@ frontend https-in
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
   <%- end -%>
-  <%- if p("ha_proxy.block_all") then -%>
+  <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
-  <%- if xfcc_forward_only then -%>
-    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled then %> if ! { ssl_c_used }<% end %>
-  <%- elsif xfcc_sanitize_set then -%>
+  <%- if xfcc_forward_only  -%>
+    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled  %> if ! { ssl_c_used }<% end %>
+  <%- elsif xfcc_sanitize_set  -%>
     http-request del-header X-Forwarded-Client-Cert
-    <%- if mutual_tls_enabled then -%>
+    <%- if mutual_tls_enabled  -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
     <%- end -%>
-  <%- elsif xfcc_forward_only_if_route_service then -%>
+  <%- elsif xfcc_forward_only_if_route_service  -%>
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
     http-request del-header X-Forwarded-Client-Cert if !route_service_request
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
@@ -393,14 +393,14 @@ frontend wss-in
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
   <%- end -%>
-  <%- if p("ha_proxy.block_all") then -%>
+  <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
-  <%- if xfcc_forward_only then -%>
-    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled then %> if ! { ssl_c_used }<% end %>
-  <%- elsif xfcc_sanitize_set then -%>
+  <%- if xfcc_forward_only  -%>
+    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled  %> if ! { ssl_c_used }<% end %>
+  <%- elsif xfcc_sanitize_set  -%>
     http-request del-header X-Forwarded-Client-Cert
-    <%- if mutual_tls_enabled then -%>
+    <%- if mutual_tls_enabled  -%>
     http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
     <%- end -%>
   <%- end -%>
@@ -472,7 +472,7 @@ backend http-routers
     backend_servers = backend.instances.map(&:address)
     backend_port = backend.p("port", p("ha_proxy.backend_port"))
 
-    if p("ha_proxy.backend_prefer_local_az") then
+    if p("ha_proxy.backend_prefer_local_az")
       backend_servers_local = backend.instances.select{ |n| n.az == spec.az }.map(&:address)
     end
   end.else_if_p("ha_proxy.backend_servers") do |servers|
@@ -488,23 +488,23 @@ backend http-routers
     backend_crt = "crt /var/vcap/jobs/haproxy/config/backend-crt.pem "
   end
   backend_ssl = ""
-  if p("ha_proxy.backend_ssl").downcase == "verify" then
+  if p("ha_proxy.backend_ssl").downcase == "verify"
     backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
     if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname |
       backend_ssl += "verifyhost #{verify_hostname} "
     end
     backend_ssl += alpn_config
-  elsif p("ha_proxy.backend_ssl").downcase == "noverify" then
+  elsif p("ha_proxy.backend_ssl").downcase == "noverify"
     backend_ssl = "ssl verify none "
     backend_ssl += alpn_config
   end
 -%>
-  <%- if p("ha_proxy.backend_use_http_health") == true then -%>
+  <%- if p("ha_proxy.backend_use_http_health") == true  -%>
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
   <%- end -%>
   <% backend_servers.each_with_index do |ip, index| %>
-    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip) then -%> backup<%- end -%>
+    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
   <% end %>
 # }}}
 
@@ -527,20 +527,20 @@ backend http-routed-backend-<%= prefix_hash %>
     resolvers = "resolvers default "
   end
   backend_ssl = ""
-  if data["backend_ssl"] then
-    if data["backend_ssl"].downcase == "verify" then
+  if data["backend_ssl"]
+    if data["backend_ssl"].downcase == "verify"
       backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
-      if data["backend_verifyhost"] then
+      if data["backend_verifyhost"]
         backend_ssl += "verifyhost #{data["backend_verifyhost"]} "
       end
       backend_ssl += alpn_config
-    elsif data["backend_ssl"].downcase == "noverify" then
+    elsif data["backend_ssl"].downcase == "noverify"
       backend_ssl = "ssl verify none "
       backend_ssl += alpn_config
     end
   end
 -%>
-  <%- if data["backend_use_http_health"] == true then -%>
+  <%- if data["backend_use_http_health"] == true  -%>
     <%- data["backend_http_health_port"] ||= data["port"] -%>
     <%- data["backend_http_health_uri"] ||= "/health" -%>
     option httpchk GET <%= data["backend_http_health_uri"] %>
@@ -622,22 +622,22 @@ backend tcp-<%= tcp_proxy["name"] %>
     resolvers = "resolvers default "
   end
   backend_ssl = ""
-  if tcp_proxy["backend_ssl"] then
-    if tcp_proxy["backend_ssl"].downcase == "verify" then
+  if tcp_proxy["backend_ssl"]
+    if tcp_proxy["backend_ssl"].downcase == "verify"
       backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
-      if tcp_proxy["backend_verifyhost"] then
+      if tcp_proxy["backend_verifyhost"]
         backend_ssl += "verifyhost #{tcp_proxy["backend_verifyhost"]} "
       end
-    elsif tcp_proxy["backend_ssl"].downcase == "noverify" then
+    elsif tcp_proxy["backend_ssl"].downcase == "noverify"
       backend_ssl = "ssl verify none "
     end
   end
 -%>
   <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check port <%= backend_check_port -%> inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip) then -%> backup<%- end -%>
+    server node<%= index %> <%= ip %>:<%= backend_port %> <%= resolvers -%>check port <%= backend_check_port -%> inter 1000 <%= backend_ssl %><%- if tcp_proxy["backend_servers_local"] && !tcp_proxy["backend_servers_local"].empty? && !tcp_proxy["backend_servers_local"].include?(ip)  -%> backup<%- end -%>
   <% end %>
 
-  <%- if tcp_proxy["health_check_http"] then -%>
+  <%- if tcp_proxy["health_check_http"]  -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>
     bind :<%= tcp_proxy["health_check_http"] %>
     mode http
