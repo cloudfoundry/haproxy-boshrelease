@@ -330,7 +330,16 @@ frontend https-in
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
-  <%- end -%>
+  <%-
+    else
+      if p("ha_proxy.hsts_include_subdomains")
+        abort "Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains"
+      end
+      if p("ha_proxy.hsts_preload")
+        abort "Conflicting configuration: hsts_enable must be true to enable hsts_preload"
+      end
+    end
+  -%>
     capture request header Host len 256
     default_backend http-routers
   <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>

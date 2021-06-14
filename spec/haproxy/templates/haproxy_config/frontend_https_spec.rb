@@ -197,10 +197,20 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'hsts_enable' => true, 'hsts_include_subdomains' => true })
       end
 
-      # FIXME: hsts_include_subdomains is true but hsts_enable is false, then it should error
-
       it 'sets the includeSubDomains flag' do
         expect(frontend_https).to include('http-response set-header Strict-Transport-Security max-age=31536000;\ includeSubDomains;')
+      end
+
+      context 'when ha_proxy.hsts_enable is false' do
+        let(:properties) do
+          default_properties.merge({ 'hsts_enable' => false, 'hsts_include_subdomains' => true })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_https
+          end.to raise_error /Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains/
+        end
       end
     end
 
@@ -209,10 +219,20 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'hsts_enable' => true, 'hsts_preload' => true })
       end
 
-      # FIXME: hsts_preload is true but hsts_enable is false, then it should error
-
       it 'sets the preload flag' do
         expect(frontend_https).to include('http-response set-header Strict-Transport-Security max-age=31536000;\ preload;')
+      end
+
+      context 'when ha_proxy.hsts_enable is false' do
+        let(:properties) do
+          default_properties.merge({ 'hsts_enable' => false, 'hsts_preload' => true })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_https
+          end.to raise_error /Conflicting configuration: hsts_enable must be true to enable hsts_preload/
+        end
       end
     end
   end
