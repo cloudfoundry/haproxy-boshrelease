@@ -160,11 +160,25 @@ describe 'config/haproxy.config backend http-routers' do
         }
       end
 
-      # FIXME: it should probably error if backend_ssl_verifyhost is provided but backend_ssl is not 'verify'
-
       it 'configures the server to use ssl: verify with verifyhost for the provided host name' do
         expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
         expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
+      end
+
+      context 'when ha_proxy.backend_ssl is not verify' do
+        let(:properties) do
+          {
+            'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+            'backend_ssl' => 'noverify',
+            'backend_ssl_verifyhost' => 'backend.com'
+          }
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            backend_http_routers
+          end.to raise_error /Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost/
+        end
       end
     end
 

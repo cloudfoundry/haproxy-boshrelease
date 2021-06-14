@@ -488,6 +488,13 @@ backend http-routers
     backend_crt = "crt /var/vcap/jobs/haproxy/config/backend-crt.pem "
   end
   backend_ssl = ""
+
+  if (p("ha_proxy.backend_ssl") || "").downcase != "verify"
+    if_p("ha_proxy.backend_ssl_verifyhost") do |_|
+      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost"
+    end
+  end
+
   if p("ha_proxy.backend_ssl").downcase == "verify"
     backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
     if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname |
@@ -527,6 +534,13 @@ backend http-routed-backend-<%= prefix_hash %>
     resolvers = "resolvers default "
   end
   backend_ssl = ""
+
+  if (data["backend_ssl"] || "").downcase != "verify"
+    if data["backend_verifyhost"]
+      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in routed_backend_servers"
+    end
+  end
+
   if data["backend_ssl"]
     if data["backend_ssl"].downcase == "verify"
       backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
@@ -622,6 +636,13 @@ backend tcp-<%= tcp_proxy["name"] %>
     resolvers = "resolvers default "
   end
   backend_ssl = ""
+
+  if (tcp_proxy["backend_ssl"] || "").downcase != "verify"
+    if tcp_proxy["backend_verifyhost"]
+      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in tcp backend configuration"
+    end
+  end
+
   if tcp_proxy["backend_ssl"]
     if tcp_proxy["backend_ssl"].downcase == "verify"
       backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
