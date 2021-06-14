@@ -613,7 +613,7 @@ backend tcp-<%= tcp_proxy["name"] %>
   if tcp_proxy["backend_port"]
     backend_port = tcp_proxy["backend_port"]
   end
-  backend_check_port = tcp_proxy["backend_port"]
+  backend_check_port = backend_port
   if_p("ha_proxy.tcp_link_check_port") do
     backend_check_port = p("ha_proxy.tcp_link_check_port")
   end
