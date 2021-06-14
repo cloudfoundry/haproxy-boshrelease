@@ -86,7 +86,7 @@ describe 'config/haproxy.config HTTPS frontend' do
 
   context 'when mutual tls is enabled' do
     let(:properties) do
-      default_properties.merge({ 'client_cert' => 'client_cert contents' })
+      default_properties.merge({ 'client_cert' => true })
     end
 
     it 'configures ssl to use the client ca' do
@@ -95,25 +95,45 @@ describe 'config/haproxy.config HTTPS frontend' do
 
     context 'when ha_proxy.client_cert_ignore_err is true' do
       let(:properties) do
-        default_properties.merge({ 'client_cert' => 'client_cert contents', 'client_cert_ignore_err' => true })
+        default_properties.merge({ 'client_cert' => true, 'client_cert_ignore_err' => true })
       end
-
-      # FIXME: if client_cert_ignore_err is true but client_cert is not provided, then it should error
 
       it 'adds the crt-ignore-err flag' do
         expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err true')
+      end
+
+      context 'when client_cert is not enabled' do
+        let(:properties) do
+          default_properties.merge({ 'client_cert_ignore_err' => true })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_https
+          end.to raise_error /Conflicting configuration: must enable client_cert to use client_cert_ignore_err/
+        end
       end
     end
 
     context 'when ha_proxy.client_revocation_list is provided' do
       let(:properties) do
-        default_properties.merge({ 'client_cert' => 'client_cert contents', 'client_revocation_list' => 'client_revocation_list contents' })
+        default_properties.merge({ 'client_cert' => true, 'client_revocation_list' => 'client_revocation_list contents' })
       end
-
-      # FIXME: if client_revocation_list is provided but client_cert is not provided, then it should error
 
       it 'references the crl list' do
         expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem')
+      end
+
+      context 'when client_cert is not enabled' do
+        let(:properties) do
+          default_properties.merge({ 'client_revocation_list' => 'client_revocation_list contents' })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_https
+          end.to raise_error /Conflicting configuration: must enable client_cert to use client_revocation_list/
+        end
       end
     end
   end
@@ -136,7 +156,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     context 'when mutual TLS is enabled' do
       let(:properties) do
         default_properties.merge({
-          'client_cert' => 'client_cert contents',
+          'client_cert' => true,
           'forwarded_client_cert' => 'forward_only'
         })
       end
@@ -159,7 +179,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     context 'when mutual TLS is enabled' do
       let(:properties) do
         default_properties.merge({
-          'client_cert' => 'client_cert contents',
+          'client_cert' => true,
           'forwarded_client_cert' => 'sanitize_set'
         })
       end

@@ -22,6 +22,16 @@
     end
   end
 
+  if !p("ha_proxy.client_cert", nil)
+    if p("ha_proxy.client_cert_ignore_err", false)
+      abort "Conflicting configuration: must provide client_cert to use client_cert_ignore_err"
+    end
+
+    if p("ha_proxy.client_revocation_list", false)
+      abort "Conflicting configuration: must provide client_cert to use client_revocation_list"
+    end
+  end
+
 require "digest"
 # Ruby Variables to make the template more readable
 
