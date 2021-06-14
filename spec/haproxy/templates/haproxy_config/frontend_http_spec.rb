@@ -26,10 +26,20 @@ describe 'config/haproxy.config HTTP frontend' do
         { 'drain_enable' => true, 'drain_frontend_grace_time' => 12 }
       end
 
-      # FIXME: if drain_frontend_grace_time is provided but drain_enable is false then it should error
-
       it 'overrides the grace period' do
         expect(frontend_http).to include('grace 12000')
+      end
+
+      context 'when ha_proxy.drain_enable is false' do
+        let(:properties) do
+          { 'drain_enable' => false, 'drain_frontend_grace_time' => 12 }
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_http
+          end.to raise_error /Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/
+        end
       end
     end
   end

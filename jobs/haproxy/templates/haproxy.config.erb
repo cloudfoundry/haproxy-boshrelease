@@ -1,9 +1,30 @@
 <% if properties.ha_proxy.raw_config -%>
 <%= p("ha_proxy.raw_config") %>
-<% else -%>
-<% require "digest" -%>
-<%# Ruby Variables to make the template more readable -%>
-<%
+<%- else -%>
+<%-
+  # Error checking
+  if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
+    abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
+  end
+
+  if !p("ha_proxy.hsts_enable", false)
+    if p("ha_proxy.hsts_include_subdomains")
+      abort "Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains"
+    end
+    if p("ha_proxy.hsts_preload")
+      abort "Conflicting configuration: hsts_enable must be true to enable hsts_preload"
+    end
+  end
+
+  if p("ha_proxy.backend_ssl", "").downcase != "verify"
+    if p("ha_proxy.backend_ssl_verifyhost", false)
+      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost"
+    end
+  end
+
+require "digest"
+# Ruby Variables to make the template more readable
+
 # Stats Binding Variables {{{
 stat = p("ha_proxy.stats_bind").split(':')
 stat_prefix = stat[0] + ":";
@@ -330,16 +351,7 @@ frontend https-in
   <%- end -%>
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
-  <%-
-    else
-      if p("ha_proxy.hsts_include_subdomains")
-        abort "Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains"
-      end
-      if p("ha_proxy.hsts_preload")
-        abort "Conflicting configuration: hsts_enable must be true to enable hsts_preload"
-      end
-    end
-  -%>
+  <%- end -%>
     capture request header Host len 256
     default_backend http-routers
   <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
@@ -497,12 +509,6 @@ backend http-routers
     backend_crt = "crt /var/vcap/jobs/haproxy/config/backend-crt.pem "
   end
   backend_ssl = ""
-
-  if (p("ha_proxy.backend_ssl") || "").downcase != "verify"
-    if_p("ha_proxy.backend_ssl_verifyhost") do |_|
-      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost"
-    end
-  end
 
   if p("ha_proxy.backend_ssl").downcase == "verify"
     backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
