@@ -312,8 +312,6 @@ describe 'config/haproxy.config backend http-routers' do
         { 'backend_prefer_local_az' => true }
       end
 
-      # FIXME: if backend_prefer_local_az is true, but no http_backend link is provided then it should probably error
-
       it 'configures servers in other azs as backup servers' do
         expect(backend_http_routers).to include('server node0 backend.az1.internal:80 check inter 1000')
         expect(backend_http_routers).to include('server node1 backend.az2.internal:80 check inter 1000   backup')

@@ -102,8 +102,6 @@ describe 'config/haproxy.config custom TCP backends' do
     end
   end
 
-  # FIXME: tcp backend ignores ha_proxy.backend_prefer_local_az
-
   it 'configures the backend servers' do
     expect(backend_tcp_redis).to include('server node0 10.0.0.1:6379 check port 6379 inter 1000')
     expect(backend_tcp_redis).to include('server node1 10.0.0.2:6379 check port 6379 inter 1000')
