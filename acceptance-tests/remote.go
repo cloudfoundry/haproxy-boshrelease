@@ -66,7 +66,12 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 		for {
 			localClient, err := localListener.Accept()
 			if err != nil {
-				fmt.Printf("Error accepting connection on local listener: %s (may have been closed)\n", err.Error())
+				if err == io.EOF {
+					fmt.Println("Local connection closed")
+				} else {
+					fmt.Printf("Error accepting connection on local listener: %s\n", err.Error())
+				}
+
 				return
 			}
 
@@ -108,7 +113,12 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 		for {
 			remoteClient, err := remoteListener.Accept()
 			if err != nil {
-				fmt.Printf("Error accepting connection on remote listener: %s (may have been closed)\n", err.Error())
+				if err == io.EOF {
+					fmt.Println("Remote connection closed")
+				} else {
+					fmt.Printf("Error accepting connection on remote listener: %s\n", err.Error())
+				}
+
 				return
 			}
 
