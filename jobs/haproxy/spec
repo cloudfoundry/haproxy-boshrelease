@@ -186,7 +186,7 @@ properties:
     description: "Disable port 80 traffic"
     default: false
   ha_proxy.enable_4443:
-    description: "Enables port 4443 for backwards compatibility with WSS-based apps using the old CF haproxy"
+    description: "Enables port 4443 for backwards compatibility with WSS-based apps using the old CF haproxy. If true you must provide a valid SSL config via ssl_pem or crt_list"
     default: false
   ha_proxy.https_redirect_domains:
     description: "For each domain in this array, a HTTPS redirect rule will be put in the config file. Redirect will be applied for all subdomains"

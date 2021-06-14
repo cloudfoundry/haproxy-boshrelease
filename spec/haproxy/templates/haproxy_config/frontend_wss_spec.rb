@@ -11,9 +11,6 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
   let(:frontend_wss) { haproxy_conf['frontend wss-in'] }
 
-  # FIXME: wss frontend should error if neither ssl_pem or crt_list are
-  # Currently the config is invalid without one of these options
-
   let(:default_properties) do
     {
       'enable_4443' => true,
@@ -398,6 +395,18 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
     it 'removes the wss frontend' do
       expect(haproxy_conf).not_to have_key('frontend wss-in')
+    end
+  end
+
+  context('when no valid SSL config is provided') do
+    let(:properties) do
+      { 'enable_4443' => true }
+    end
+
+    it 'aborts with a meaningful error message' do
+      expect do
+        frontend_wss
+      end.to raise_error /Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list/
     end
   end
 end

@@ -2,36 +2,6 @@
 <%= p("ha_proxy.raw_config") %>
 <%- else -%>
 <%-
-  # Error checking
-  if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
-    abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
-  end
-
-  if !p("ha_proxy.hsts_enable", false)
-    if p("ha_proxy.hsts_include_subdomains")
-      abort "Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains"
-    end
-    if p("ha_proxy.hsts_preload")
-      abort "Conflicting configuration: hsts_enable must be true to enable hsts_preload"
-    end
-  end
-
-  if p("ha_proxy.backend_ssl", "").downcase != "verify"
-    if p("ha_proxy.backend_ssl_verifyhost", false)
-      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost"
-    end
-  end
-
-  if !p("ha_proxy.client_cert", nil)
-    if p("ha_proxy.client_cert_ignore_err", false)
-      abort "Conflicting configuration: must provide client_cert to use client_cert_ignore_err"
-    end
-
-    if p("ha_proxy.client_revocation_list", false)
-      abort "Conflicting configuration: must provide client_cert to use client_revocation_list"
-    end
-  end
-
 require "digest"
 # Ruby Variables to make the template more readable
 
@@ -148,6 +118,40 @@ if p("ha_proxy.enable_http2")
   alpn_config = "alpn h2,http/1.1 "
 end
 # }}}
+
+# Error checking
+  if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
+    abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
+  end
+
+  if !p("ha_proxy.hsts_enable", false)
+    if p("ha_proxy.hsts_include_subdomains")
+      abort "Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains"
+    end
+    if p("ha_proxy.hsts_preload")
+      abort "Conflicting configuration: hsts_enable must be true to enable hsts_preload"
+    end
+  end
+
+  if p("ha_proxy.backend_ssl", "").downcase != "verify"
+    if p("ha_proxy.backend_ssl_verifyhost", false)
+      abort "Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost"
+    end
+  end
+
+  if !p("ha_proxy.client_cert", nil)
+    if p("ha_proxy.client_cert_ignore_err", false)
+      abort "Conflicting configuration: must enable client_cert to use client_cert_ignore_err"
+    end
+
+    if p("ha_proxy.client_revocation_list", false)
+      abort "Conflicting configuration: must enable client_cert to use client_revocation_list"
+    end
+  end
+
+  if p("ha_proxy.enable_4443") && !ssl_enabled
+    abort "Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list"
+  end
 -%>
 
 global
