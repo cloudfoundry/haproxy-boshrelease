@@ -66,7 +66,7 @@ properties:
     description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
     default: []
   ha_proxy.trusted_domain_cidrs:
-    description: "Space separated trusted cidr blocks for internal_only_domains"
+    description: "Space separated trusted cidr blocks for internal_only_domains. You may alternatively provide a base64-encoded gzipped HAProxy cidr file, with each CIDR on a new line."
     default: 0.0.0.0/32
   ha_proxy.strict_sni:
     description: "Optional setting to decide whether the SSL/TLS negotiation is allowed only if the client provided an SNI which strict match a certificate. If set to true, the default certificate is not used"
