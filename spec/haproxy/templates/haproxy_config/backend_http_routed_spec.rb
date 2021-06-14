@@ -129,8 +129,6 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
     end
   end
 
-  # FIXME: ha_proxy.backend_crt is not supported for routed http backends
-
   context 'when backend_ssl is verify' do
     let(:properties) do
       default_properties.deep_merge({

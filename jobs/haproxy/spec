@@ -313,7 +313,7 @@ properties:
         MyCustomHeader: 3
 
   ha_proxy.backend_crt:
-    description: "provides client certificate to backend server to do mutual ssl"
+    description: "Provides client certificate to backend server to do mutual ssl. Note this only configures the client cert for HTTP backends configured via the backend_servers property or through BOSH links. It is not used with backend servers configured via routed_backend_servers or TCP backends"
     example: |
       -----BEGIN CERTIFICATE-----
       ******
