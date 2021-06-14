@@ -81,8 +81,6 @@ describe 'config/haproxy.config backend http-routers' do
         }
       end
 
-      # FIXME: if backend_http_health_uri is provided but backend_use_http_health is false, it should error
-
       it 'configures the healthcheck' do
         expect(backend_http_routers).to include('option httpchk GET 1.2.3.5/health')
       end
@@ -101,8 +99,6 @@ describe 'config/haproxy.config backend http-routers' do
           'backend_servers' => ['10.0.0.1', '10.0.0.2']
         }
       end
-
-      # FIXME: if backend_http_health_port is provided but backend_use_http_health is false, it should error
 
       it 'configures the healthcheck' do
         expect(backend_http_routers).to include('option httpchk GET /health')

@@ -105,8 +105,6 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
         })
       end
 
-      # FIXME: if backend_http_health_port is provided but backend_use_http_health is false, it should error
-
       it 'configures the correct check port on the servers' do
         expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 port 9999')
         expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 port 9999')
@@ -124,8 +122,6 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
           }
         })
       end
-
-      # FIXME: if backend_http_health_uri is provided but backend_use_http_health is false, it should error
 
       it 'overrides the default health check uri' do
         expect(backend_images).to include('option httpchk GET /alive')
