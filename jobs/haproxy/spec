@@ -10,6 +10,7 @@ packages:
 templates:
   haproxy_wrapper.erb:          bin/haproxy_wrapper
   reload.erb:                   bin/reload
+  count-haproxy-processes.erb:  bin/count-haproxy-processes
   drain.erb:                    bin/drain
   pre-start.erb:                bin/pre-start
   bpm.yml:                      config/bpm.yml
