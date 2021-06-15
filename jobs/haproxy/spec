@@ -322,7 +322,18 @@ properties:
       ******
       -----END PRIVATE KEY-----
   ha_proxy.client_cert:
-    description: "Enable haproxy mutual auth and produce a client cert header (X-Forwarded-Client-Cert) to offload mutual ssl client certificate to backend"
+    description: |
+      Enable haproxy mutual auth and offload mutual ssl client certificate to backend.
+      The following headers will be produced if the client connects using a client certificate:
+        - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded).
+        - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
+        - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
+        - X-SSL-Client-Verify: Contains the number 0 if the client certificate verification was successful. Otherwise it contains the appropriate OpenSSL return code (see https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206)
+        - X-SSL-Client-Subject-DN: Contains the subject distinguished name of the client certificate.
+        - X-SSL-Client-Subject-CN: Contains the subject common name of the client certificate.
+        - X-SSL-Client-Issuer-DN: Contains the issuer distinguished name of the client certificate.
+        - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
+        - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.
     default: false
 
   ha_proxy.forwarded_client_cert:
