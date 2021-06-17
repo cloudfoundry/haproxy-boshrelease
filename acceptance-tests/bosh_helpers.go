@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -14,9 +15,11 @@ import (
 )
 
 type haproxyInfo struct {
-	SSHPrivateKey string
-	SSHUser       string
-	PublicIP      string
+	SSHPrivateKey           string
+	SSHPublicKey            string
+	SSHPublicKeyFingerprint string
+	SSHUser                 string
+	PublicIP                string
 }
 
 type baseManifestVars struct {
@@ -27,20 +30,14 @@ type baseManifestVars struct {
 
 type varsStoreReader func(interface{}) error
 
-// Helper method for deploying HAProxy
-// Takes the HAProxy base manifest vars, an array of custom opsfiles, and a map of custom vars
-// Returns 'info' struct containing public IP and ssh creds, and a callback to deserialise properties from the vars store
-func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, customVars map[string]interface{}, expectSuccess bool) (haproxyInfo, varsStoreReader) {
-	sshUser := "ginkgo"
-
-	opsfileChangeName := `---
+var opsfileChangeName string = `---
 # change deployment name to allow multiple simulataneous deployments
 - type: replace
   path: /name
   value: ((deployment-name))
 `
 
-	opsfileChangeVersion := `---
+var opsfileChangeVersion string = `---
 # Deploy dev version we just compiled
 - type: replace
   path: /releases/name=haproxy
@@ -49,7 +46,7 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
     version: ((release-version))
 `
 
-	opsfileAddSSHUser := `---
+var opsfileAddSSHUser string = `---
 # Install OS conf so that we can SSH into VM to inspect configuration
 - type: replace
   path: /releases/-
@@ -79,31 +76,31 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
     type: ssh
 `
 
+// opsfiles that need to be set for all tests
+var defaultOpsfiles = []string{opsfileChangeName, opsfileChangeVersion, opsfileAddSSHUser}
+var defaultSSHUser string = "ginkgo"
+
+func buildManifestVars(baseManifestVars baseManifestVars, customVars map[string]interface{}) map[string]interface{} {
 	vars := map[string]interface{}{
 		"release-version":         config.ReleaseVersion,
 		"haproxy-backend-port":    fmt.Sprintf("%d", baseManifestVars.haproxyBackendPort),
 		"haproxy-backend-servers": baseManifestVars.haproxyBackendServers,
 		"deployment-name":         baseManifestVars.deploymentName,
-		"ssh_user":                sshUser,
+		"ssh_user":                defaultSSHUser,
 	}
 	for k, v := range customVars {
 		vars[k] = v
 	}
 
-	opsfiles := append([]string{opsfileChangeName, opsfileChangeVersion, opsfileAddSSHUser}, customOpsfiles...)
-	session, varsStoreReader := deployBaseManifest(baseManifestVars.deploymentName, opsfiles, vars)
+	return vars
+}
 
-	if expectSuccess {
-		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
-	} else {
-		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit())
-		Expect(session.ExitCode()).NotTo(BeZero())
-	}
-
+func buildHAProxyInfo(baseManifestVars baseManifestVars, varsStoreReader varsStoreReader) haproxyInfo {
 	var creds struct {
 		SSHKey struct {
-			PrivateKey string `yaml:"private_key"`
-			PublicKey  string `yaml:"public_key"`
+			PrivateKey           string `yaml:"private_key"`
+			PublicKey            string `yaml:"public_key"`
+			PublicKeyFingerprint string `yaml:"public_key_fingerprint"`
 		} `yaml:"ssh_key"`
 	}
 	err := varsStoreReader(&creds)
@@ -117,11 +114,34 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 	haproxyPublicIP := instances[0].ParseIPs()[0]
 	Expect(haproxyPublicIP).ToNot(BeEmpty())
 
-	haproxyInfo := haproxyInfo{
-		PublicIP:      haproxyPublicIP,
-		SSHPrivateKey: creds.SSHKey.PrivateKey,
-		SSHUser:       sshUser,
+	return haproxyInfo{
+		PublicIP:                haproxyPublicIP,
+		SSHPrivateKey:           creds.SSHKey.PrivateKey,
+		SSHPublicKey:            creds.SSHKey.PublicKey,
+		SSHPublicKeyFingerprint: creds.SSHKey.PublicKeyFingerprint,
+		SSHUser:                 defaultSSHUser,
 	}
+}
+
+// Helper method for deploying HAProxy
+// Takes the HAProxy base manifest vars, an array of custom opsfiles, and a map of custom vars
+// Returns 'info' struct containing public IP and ssh creds, and a callback to deserialise properties from the vars store
+func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, customVars map[string]interface{}, expectSuccess bool) (haproxyInfo, varsStoreReader) {
+	manifestVars := buildManifestVars(baseManifestVars, customVars)
+	opsfiles := append(defaultOpsfiles, customOpsfiles...)
+	cmd, varsStoreReader := deployBaseManifestCmd(baseManifestVars.deploymentName, opsfiles, manifestVars)
+
+	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Expect(err).NotTo(HaveOccurred())
+
+	if expectSuccess {
+		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+	} else {
+		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit())
+		Expect(session.ExitCode()).NotTo(BeZero())
+	}
+
+	haproxyInfo := buildHAProxyInfo(baseManifestVars, varsStoreReader)
 
 	// Dump HAProxy config to help debugging
 	dumpHAProxyConfig(haproxyInfo)
@@ -141,8 +161,8 @@ func dumpHAProxyConfig(haproxyInfo haproxyInfo) {
 }
 
 // Takes bosh deployment name, ops files and vars.
-// Returns a session object and a callback to deserialise the bosh-generated vars store after session has executed
-func deployBaseManifest(boshDeployment string, opsFilesContents []string, vars map[string]interface{}) (*gexec.Session, varsStoreReader) {
+// Returns a cmd object and a callback to deserialise the bosh-generated vars store after cmd has executed
+func deployBaseManifestCmd(boshDeployment string, opsFilesContents []string, vars map[string]interface{}) (*exec.Cmd, varsStoreReader) {
 	By(fmt.Sprintf("Deploying HAProxy (deployment name: %s)", boshDeployment))
 	args := []string{"deploy"}
 
@@ -206,12 +226,7 @@ func deployBaseManifest(boshDeployment string, opsFilesContents []string, vars m
 		return yaml.Unmarshal(varsStoreBytes, target)
 	}
 
-	cmd := config.boshCmd(boshDeployment, args...)
-
-	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-
-	return session, varsStoreReader
+	return config.boshCmd(boshDeployment, args...), varsStoreReader
 }
 
 type boshInstance struct {
