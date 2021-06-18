@@ -108,6 +108,17 @@ var _ = Describe("forwarded_client_cert", func() {
 	var mtlsClient *http.Client
 	var nonMTLSClient *http.Client
 	recordedXFCCHeader := "initial"
+	//var recordedHeaders http.Header
+	//additionalmTLSHeaders := []string{
+	//	"X-SSL-Client",
+	//	"X-SSL-Client-Session-ID",
+	//	"X-SSL-Client-Verify",
+	//	"X-SSL-Client-Subject-DN",
+	//	"X-SSL-Client-Subject-CN",
+	//	"X-SSL-Client-Issuer-DN",
+	//	"X-SSL-Client-NotBefore",
+	//	"X-SSL-Client-NotAfter",
+	//}
 
 	AfterEach(func() {
 		if closeLocalServer != nil {
@@ -137,6 +148,7 @@ var _ = Describe("forwarded_client_cert", func() {
 		closeLocalServer, localPort, err = startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Backend server handling incoming request")
 			recordedXFCCHeader = r.Header.Get("X-Forwarded-Client-Cert")
+			//recordedHeaders = r.Header
 			w.Write([]byte("OK"))
 		})
 		Expect(err).NotTo(HaveOccurred())
@@ -176,6 +188,9 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 			Expect(recordedXFCCHeader).To(BeEmpty())
+			//for _,additionalHeader := range additionalmTLSHeaders {
+			//	Expect(recordedHeaders).NotTo(HaveKey(additionalHeader))
+			//}
 
 			By("Correctly replaces the X-Forwarded-Client-Cert in mTLS requests")
 			resp, err = mtlsClient.Do(req)
@@ -185,6 +200,10 @@ var _ = Describe("forwarded_client_cert", func() {
 			By("Verifying that the XFCC header passed to the backend server is the base-64 DER-encoded client certificate")
 			Expect(recordedXFCCHeader).ToNot(BeEmpty())
 			Expect(parseXFCCHeader(recordedXFCCHeader)).To(Equal(creds.ClientCert.Certificate))
+			//for _,additionalHeader := range additionalmTLSHeaders {
+			//	Expect(recordedHeaders).To(HaveKey(additionalHeader))
+			//	//TODO: check value of header with cert value
+			//}
 		})
 	})
 
