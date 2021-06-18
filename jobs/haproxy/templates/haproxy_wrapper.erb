@@ -3,11 +3,9 @@
 
 set -e
 
-PATH=/var/vcap/packages/haproxy/bin:${PATH}
-DAEMON=/var/vcap/packages/haproxy/bin/haproxy
+export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
-export PATH=$PATH:/var/vcap/packages/ttar/bin
 
 cleanup_daemon() {
   if [ -f ${PID_FILE} ]; then
@@ -84,13 +82,28 @@ trap shutdown QUIT INT TERM EXIT
 # enable hitless reloads
 trap reload_daemon USR2
 
+<%-
+  flags=[]
+
+  # Enable background mode only if syslog is not configured to output to stdout/stderr
+  run_in_foreground = p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr"
+
+  if run_in_foreground
+    flags += ['-V', '-db']
+  else
+    flags += ['-D']
+  end
+
+  if p('ha_proxy.master_cli_enable')
+    flags += ['-S', p('ha_proxy.master_cli_bind')]
+  end
+-%>
+
 # Start up
 echo "$(date): Starting HAProxy"
-<%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr" -%>
-"${DAEMON}" -f "${CONFIG}" -W -p ${PID_FILE} -V -db
-<%- else -%>
-"${DAEMON}" -f "${CONFIG}" -W -D -p ${PID_FILE}
+haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %>
 
+<%- if !run_in_foreground -%>
 # Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
 # to work properly, and BPM requires the process to stay running, sleep infinitely here
 sleep infinity
