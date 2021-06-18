@@ -105,8 +105,6 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
         })
       end
 
-      # FIXME: if backend_http_health_port is provided but backend_use_http_health is false, it should error
-
       it 'configures the correct check port on the servers' do
         expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 port 9999')
         expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 port 9999')
@@ -125,15 +123,11 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
         })
       end
 
-      # FIXME: if backend_http_health_uri is provided but backend_use_http_health is false, it should error
-
       it 'overrides the default health check uri' do
         expect(backend_images).to include('option httpchk GET /alive')
       end
     end
   end
-
-  # FIXME: ha_proxy.backend_crt is not supported for routed http backends
 
   context 'when backend_ssl is verify' do
     let(:properties) do
@@ -169,7 +163,7 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       end
     end
 
-    context 'when ha_proxy.backend_ssl_verifyhost is provided' do
+    context 'when ha_proxy.backend_verifyhost is provided' do
       let(:properties) do
         default_properties.deep_merge({
           'routed_backend_servers' => {
@@ -181,11 +175,28 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
         })
       end
 
-      # FIXME: it should probably error if backend_ssl_verifyhost is provided but backend_ssl is not 'verify'
-
       it 'configures the server to use ssl: verify with verifyhost for the provided host name' do
         expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
         expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
+      end
+
+      context 'when backend_ssl is not verify' do
+        let(:properties) do
+          default_properties.deep_merge({
+            'routed_backend_servers' => {
+              '/images' => {
+                'backend_ssl' => 'noverify',
+                'backend_verifyhost' => 'backend.com'
+              }
+            }
+          })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            backend_images
+          end.to raise_error /Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in routed_backend_servers/
+        end
       end
     end
   end

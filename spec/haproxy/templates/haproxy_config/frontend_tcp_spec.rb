@@ -65,12 +65,22 @@ describe 'config/haproxy.config custom TCP frontends' do
         default_properties.merge({ 'drain_enable' => true, 'drain_frontend_grace_time' => 12 })
       end
 
-      # FIXME: if drain_frontend_grace_time is provided but drain_enable is false then it should error
-
       it 'overrides the grace period' do
         expect(frontend_tcp_redis).to include('grace 12000')
         expect(frontend_tcp_mysql).to include('grace 12000')
         expect(frontend_tcp_postgres_via_link).to include('grace 12000')
+      end
+
+      context 'when ha_proxy.drain_enable is false' do
+        let(:properties) do
+          default_properties.merge({ 'drain_enable' => false, 'drain_frontend_grace_time' => 12 })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_tcp_redis
+          end.to raise_error /Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/
+        end
       end
     end
   end

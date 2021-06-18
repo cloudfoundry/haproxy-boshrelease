@@ -25,7 +25,6 @@ describe 'config/trusted_domain_cidrs.txt' do
       end
     end
 
-    # FIXME: this feature does not seem to be documented
     context 'when a newline-separated, gzipped, base64-encoded list of cidrs is provided' do
       it 'has the correct contents' do
         expect(template.render({

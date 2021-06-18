@@ -11,9 +11,6 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
   let(:frontend_wss) { haproxy_conf['frontend wss-in'] }
 
-  # FIXME: wss frontend should error if neither ssl_pem or crt_list are
-  # Currently the config is invalid without one of these options
-
   let(:default_properties) do
     {
       'enable_4443' => true,
@@ -37,10 +34,20 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         default_properties.merge({ 'drain_enable' => true, 'drain_frontend_grace_time' => 12 })
       end
 
-      # FIXME: if drain_frontend_grace_time is provided but drain_enable is false then it should error
-
       it 'overrides the grace period' do
         expect(frontend_wss).to include('grace 12000')
+      end
+
+      context 'when ha_proxy.drain_enable is false' do
+        let(:properties) do
+          default_properties.merge({ 'drain_enable' => false, 'drain_frontend_grace_time' => 12 })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_wss
+          end.to raise_error /Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/
+        end
       end
     end
   end
@@ -81,7 +88,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
   context 'when mutual tls is enabled' do
     let(:properties) do
-      default_properties.merge({ 'client_cert' => 'client_cert contents' })
+      default_properties.merge({ 'client_cert' => true })
     end
 
     it 'configures ssl to use the client ca' do
@@ -90,25 +97,45 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
     context 'when ha_proxy.client_cert_ignore_err is true' do
       let(:properties) do
-        default_properties.merge({ 'client_cert' => 'client_cert contents', 'client_cert_ignore_err' => true })
+        default_properties.merge({ 'client_cert' => true, 'client_cert_ignore_err' => true })
       end
-
-      # FIXME: if client_cert_ignore_err is true but client_cert is not provided, then it should error
 
       it 'adds the crt-ignore-err flag' do
         expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err true')
+      end
+
+      context 'when client_cert is not enabled' do
+        let(:properties) do
+          default_properties.merge({ 'client_cert_ignore_err' => true })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_wss
+          end.to raise_error /Conflicting configuration: must enable client_cert to use client_cert_ignore_err/
+        end
       end
     end
 
     context 'when ha_proxy.client_revocation_list is provided' do
       let(:properties) do
-        default_properties.merge({ 'client_cert' => 'client_cert contents', 'client_revocation_list' => 'client_revocation_list contents' })
+        default_properties.merge({ 'client_cert' => true, 'client_revocation_list' => 'client_revocation_list contents' })
       end
-
-      # FIXME: if client_revocation_list is provided but client_cert is not provided, then it should error
 
       it 'references the crl list' do
         expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem')
+      end
+
+      context 'when client_cert is not enabled' do
+        let(:properties) do
+          default_properties.merge({ 'client_revocation_list' => 'client_revocation_list contents' })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_wss
+          end.to raise_error /Conflicting configuration: must enable client_cert to use client_revocation_list/
+        end
       end
     end
   end
@@ -132,7 +159,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       context 'when mutual TLS is enabled' do
         let(:properties) do
           default_properties.merge({
-            'client_cert' => 'client_cert contents',
+            'client_cert' => true,
             'forwarded_client_cert' => 'forward_only'
           })
         end
@@ -155,7 +182,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       context 'when mutual TLS is enabled' do
         let(:properties) do
           default_properties.merge({
-            'client_cert' => 'client_cert contents',
+            'client_cert' => true,
             'forwarded_client_cert' => 'sanitize_set'
           })
         end
@@ -192,7 +219,17 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         default_properties.merge({ 'hsts_enable' => true, 'hsts_include_subdomains' => true })
       end
 
-      # FIXME: hsts_include_subdomains is true but hsts_enable is false, then it should error
+      context 'when ha_proxy.hsts_enable is false' do
+        let(:properties) do
+          default_properties.merge({ 'hsts_enable' => false, 'hsts_include_subdomains' => true })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_wss
+          end.to raise_error /Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains/
+        end
+      end
 
       it 'sets the includeSubDomains flag' do
         expect(frontend_wss).to include('http-response set-header Strict-Transport-Security max-age=31536000;\ includeSubDomains;')
@@ -204,10 +241,20 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         default_properties.merge({ 'hsts_enable' => true, 'hsts_preload' => true })
       end
 
-      # FIXME: hsts_preload is true but hsts_enable is false, then it should error
-
       it 'sets the preload flag' do
         expect(frontend_wss).to include('http-response set-header Strict-Transport-Security max-age=31536000;\ preload;')
+      end
+
+      context 'when ha_proxy.hsts_enable is false' do
+        let(:properties) do
+          default_properties.merge({ 'hsts_enable' => false, 'hsts_preload' => true })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_wss
+          end.to raise_error /Conflicting configuration: hsts_enable must be true to enable hsts_preload/
+        end
       end
     end
   end
@@ -348,6 +395,18 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
     it 'removes the wss frontend' do
       expect(haproxy_conf).not_to have_key('frontend wss-in')
+    end
+  end
+
+  context('when no valid SSL config is provided') do
+    let(:properties) do
+      { 'enable_4443' => true }
+    end
+
+    it 'aborts with a meaningful error message' do
+      expect do
+        frontend_wss
+      end.to raise_error /Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list/
     end
   end
 end

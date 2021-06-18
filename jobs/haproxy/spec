@@ -66,7 +66,7 @@ properties:
     description: "Array of domains for internal-only apps/services (not hostnames for the apps/services)"
     default: []
   ha_proxy.trusted_domain_cidrs:
-    description: "Space separated trusted cidr blocks for internal_only_domains"
+    description: "Space separated trusted cidr blocks for internal_only_domains. You may alternatively provide a base64-encoded gzipped HAProxy cidr file, with each CIDR on a new line."
     default: 0.0.0.0/32
   ha_proxy.strict_sni:
     description: "Optional setting to decide whether the SSL/TLS negotiation is allowed only if the client provided an SNI which strict match a certificate. If set to true, the default certificate is not used"
@@ -186,7 +186,7 @@ properties:
     description: "Disable port 80 traffic"
     default: false
   ha_proxy.enable_4443:
-    description: "Enables port 4443 for backwards compatibility with WSS-based apps using the old CF haproxy"
+    description: "Enables port 4443 for backwards compatibility with WSS-based apps using the old CF haproxy. If true you must provide a valid SSL config via ssl_pem or crt_list"
     default: false
   ha_proxy.https_redirect_domains:
     description: "For each domain in this array, a HTTPS redirect rule will be put in the config file. Redirect will be applied for all subdomains"
@@ -313,7 +313,7 @@ properties:
         MyCustomHeader: 3
 
   ha_proxy.backend_crt:
-    description: "provides client certificate to backend server to do mutual ssl"
+    description: "Provides client certificate to backend server to do mutual ssl. Note this only configures the client cert for HTTP backends configured via the backend_servers property or through BOSH links. It is not used with backend servers configured via routed_backend_servers or TCP backends"
     example: |
       -----BEGIN CERTIFICATE-----
       ******
@@ -375,6 +375,8 @@ properties:
           backend_servers: # required - list of backend IPs to connect to
           - 10.20.10.10
           - 10.20.10.11
+          backend_servers_local: # optional - list of backend IPs which have priority routing (for example those in the same AZ). IPs must also be included in backend_servers.
+          - 10.20.10.10
           balance: roundrobin # optional - sets algorithm used to select a server when doing load balancing
           backend_port: 80 # optional - sets backend port - otherwise defaults to `port`
           ssl: true        # optional - enables ssl, and uses the `ha_proxy.ssl_pem` provided key
@@ -549,7 +551,7 @@ properties:
     default: 0
   ha_proxy.backend_prefer_local_az:
     description: |
-      Prefer backend servers which are located on the same availability zone
+      Prefer backend servers which are located on the same availability zone. Note that this only affects servers provided via the http_backend link property. Servers provided via the tcp backend_link will automatically prefer the local AZ.
     default: false
   ha_proxy.enable_http2:
     description: Enables ingress and egress HTTP/2 ALPN negotiation

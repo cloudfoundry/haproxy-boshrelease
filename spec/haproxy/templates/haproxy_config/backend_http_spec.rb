@@ -81,8 +81,6 @@ describe 'config/haproxy.config backend http-routers' do
         }
       end
 
-      # FIXME: if backend_http_health_uri is provided but backend_use_http_health is false, it should error
-
       it 'configures the healthcheck' do
         expect(backend_http_routers).to include('option httpchk GET 1.2.3.5/health')
       end
@@ -101,8 +99,6 @@ describe 'config/haproxy.config backend http-routers' do
           'backend_servers' => ['10.0.0.1', '10.0.0.2']
         }
       end
-
-      # FIXME: if backend_http_health_port is provided but backend_use_http_health is false, it should error
 
       it 'configures the healthcheck' do
         expect(backend_http_routers).to include('option httpchk GET /health')
@@ -164,11 +160,25 @@ describe 'config/haproxy.config backend http-routers' do
         }
       end
 
-      # FIXME: it should probably error if backend_ssl_verifyhost is provided but backend_ssl is not 'verify'
-
       it 'configures the server to use ssl: verify with verifyhost for the provided host name' do
         expect(backend_http_routers).to include('server node0 10.0.0.1:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
         expect(backend_http_routers).to include('server node1 10.0.0.2:80 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
+      end
+
+      context 'when ha_proxy.backend_ssl is not verify' do
+        let(:properties) do
+          {
+            'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+            'backend_ssl' => 'noverify',
+            'backend_ssl_verifyhost' => 'backend.com'
+          }
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            backend_http_routers
+          end.to raise_error /Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost/
+        end
       end
     end
 
@@ -301,8 +311,6 @@ describe 'config/haproxy.config backend http-routers' do
       let(:properties) do
         { 'backend_prefer_local_az' => true }
       end
-
-      # FIXME: if backend_prefer_local_az is true, but no http_backend link is provided then it should probably error
 
       it 'configures servers in other azs as backup servers' do
         expect(backend_http_routers).to include('server node0 backend.az1.internal:80 check inter 1000')

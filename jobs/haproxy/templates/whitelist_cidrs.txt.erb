@@ -6,7 +6,7 @@ require 'stringio'
 
 if_p("ha_proxy.cidr_whitelist") do |cidrs|
   uncompressed = ''
-  if cidrs.is_a?(Array) then
+  if cidrs.is_a?(Array)
     uncompressed << "\# detected cidrs provided as array in cleartext format\n"
     cidrs.each do |cidr|
       uncompressed << cidr << "\n"

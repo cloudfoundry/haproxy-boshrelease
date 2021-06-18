@@ -10,7 +10,7 @@ end
 
 if_p("ha_proxy.trusted_domain_cidrs") do |cidrs|
   uncompressed = ''
-  if contains_ip_address?(cidrs) then
+  if contains_ip_address?(cidrs)
     cidrs.split(' ').each do |cidr|
       uncompressed << cidr << "\n"
     end
