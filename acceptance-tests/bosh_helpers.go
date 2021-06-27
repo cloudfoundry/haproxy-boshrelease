@@ -135,9 +135,9 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 	Expect(err).NotTo(HaveOccurred())
 
 	if expectSuccess {
-		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
+		Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit(0))
 	} else {
-		Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit())
+		Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit())
 		Expect(session.ExitCode()).NotTo(BeZero())
 	}
 
