@@ -28,7 +28,7 @@ import (
 																		 X-Forwarded-Client-Cert is forwarded for non-mTLS connections when X-Cf-Proxy-Signature header is present
 																		 X-Forwarded-Client-Cert is overwritten for mTLS connections
 */
-var _ = FDescribe("forwarded_client_cert", func() {
+var _ = Describe("forwarded_client_cert", func() {
 	opsfileForwardedClientCert := `---
 # Configure X-Forwarded-Client-Cert handling
 - type: replace
