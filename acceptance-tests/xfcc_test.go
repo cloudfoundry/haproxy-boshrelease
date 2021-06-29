@@ -369,10 +369,6 @@ func checkXFCCHeaders(recordedXFCCHeader string, recordedHeaders http.Header) {
 	Expect(recordedHeaders.Get("X-Ssl-Client-Issuer-Dn")).To(ContainSubstring(cert.Issuer.Country[0]))
 	Expect(recordedHeaders.Get("X-Ssl-Client-Issuer-Dn")).To(ContainSubstring(cert.Issuer.Organization[0]))
 	Expect(recordedHeaders.Get("X-Ssl-Client-Issuer-Dn")).To(ContainSubstring(cert.Issuer.CommonName))
-	notBeforeString := fmt.Sprintf("%02d%02d%02d%02d%02d%02dZ", cert.NotBefore.Year()-2000,
-		cert.NotBefore.Month(), cert.NotBefore.Day(), cert.NotBefore.Hour(), cert.NotBefore.Minute(), cert.NotBefore.Second())
-	Expect(recordedHeaders.Get("X-Ssl-Client-Notbefore")).To(Equal(notBeforeString))
-	notAfterString := fmt.Sprintf("%02d%02d%02d%02d%02d%02dZ", cert.NotAfter.Year()-2000,
-		cert.NotAfter.Month(), cert.NotAfter.Day(), cert.NotAfter.Hour(), cert.NotAfter.Minute(), cert.NotAfter.Second())
-	Expect(recordedHeaders.Get("X-Ssl-Client-Notafter")).To(Equal(notAfterString))
+	Expect(recordedHeaders.Get("X-Ssl-Client-Notbefore")).To(Equal(cert.NotBefore.UTC().Format("060102150405Z"))) //YYMMDDhhmmss[Z]
+	Expect(recordedHeaders.Get("X-Ssl-Client-Notafter")).To(Equal(cert.NotAfter.UTC().Format("060102150405Z")))   //YYMMDDhhmmss[Z]
 }
