@@ -433,6 +433,12 @@ frontend wss-in
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
+  <%- if p("ha_proxy.disable_domain_fronting")-%>
+    # Check whether the client is attempting domain fronting.
+    http-request set-var(txn.host) hdr(host)
+    acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
+    http-request deny deny_status 421 unless ssl_sni_http_host_match
+  <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
