@@ -86,6 +86,18 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
   end
 
+  context 'when ha_proxy.disable_domain_fronting is true' do
+    let(:properties) do
+      default_properties.merge({ 'disable_domain_fronting' => true })
+    end
+
+    it 'disables domain fronting by checkig SNI against the Host header' do
+      expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host)')
+      expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0')
+      expect(frontend_wss).to include('http-request deny deny_status 421 unless ssl_sni_http_host_match')
+    end
+  end
+
   context 'when mutual tls is enabled' do
     let(:properties) do
       default_properties.merge({ 'client_cert' => true })
