@@ -148,7 +148,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			fmt.Println("Backend server handling incoming request")
 			recordedXFCCHeader = r.Header.Get("X-Forwarded-Client-Cert")
 			recordedHeaders = r.Header
-			_,_ = w.Write([]byte("OK"))
+			_, _ = w.Write([]byte("OK"))
 		})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -189,7 +189,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(recordedXFCCHeader).To(BeEmpty())
 
 			By("Does not add mTLS-related additional headers to non-mTLS requests")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).NotTo(HaveKey(additionalHeader))
 			}
 
@@ -200,10 +200,10 @@ var _ = Describe("forwarded_client_cert", func() {
 
 			By("Verifying that the XFCC header passed to the backend server is the base-64 DER-encoded client certificate")
 			Expect(recordedXFCCHeader).ToNot(BeEmpty())
-			Expect(parseXFCCHeader(recordedXFCCHeader)).To(Equal(creds.ClientCert.Certificate))
+			Expect(parseXFCCHeaderToPEM(recordedXFCCHeader)).To(Equal(creds.ClientCert.Certificate))
 
 			By("Verifying that mTLS-related additional headers are added and match the client certificate")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).To(HaveKey(additionalHeader))
 			}
 			checkXFCCHeaders(recordedXFCCHeader, recordedHeaders)
@@ -229,7 +229,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(recordedXFCCHeader).To(Equal("my-client-cert"))
 
 			By("Does not add mTLS-related additional headers to non-mTLS requests")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).NotTo(HaveKey(additionalHeader))
 			}
 
@@ -240,7 +240,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(recordedXFCCHeader).To(Equal("my-client-cert"))
 
 			By("Verifying that mTLS-related additional headers are added")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).To(HaveKey(additionalHeader))
 			}
 		})
@@ -265,7 +265,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(recordedXFCCHeader).To(BeEmpty())
 
 			By("Does not add mTLS-related additional headers to non-mTLS requests")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).NotTo(HaveKey(additionalHeader))
 			}
 
@@ -276,7 +276,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(recordedXFCCHeader).To(Equal("my-client-cert"))
 
 			By("Verifying that mTLS-related additional headers are added")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).To(HaveKey(additionalHeader))
 			}
 		})
@@ -301,7 +301,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(recordedXFCCHeader).To(BeEmpty())
 
 			By("Does not add mTLS-related additional headers to non-mTLS requests")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).NotTo(HaveKey(additionalHeader))
 			}
 
@@ -315,7 +315,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(req.Header.Get("X-Cf-Proxy-Signature")).To(Equal("abc123"))
 
 			By("Does not add mTLS-related additional headers to non-mTLS requests where X-Cf-Proxy-Signature is present")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).NotTo(HaveKey(additionalHeader))
 			}
 
@@ -326,11 +326,11 @@ var _ = Describe("forwarded_client_cert", func() {
 
 			By("Verifying that the XFCC header passed to the backend server is the base-64 DER-encoded client certificate")
 			Expect(recordedXFCCHeader).ToNot(BeEmpty())
-			Expect(parseXFCCHeader(recordedXFCCHeader)).To(Equal(creds.ClientCert.Certificate))
+			Expect(parseXFCCHeaderToPEM(recordedXFCCHeader)).To(Equal(creds.ClientCert.Certificate))
 			Expect(req.Header.Get("X-Cf-Proxy-Signature")).To(Equal("abc123"))
 
 			By("Verifying that mTLS-related additional headers are added and match the client certificate")
-			for _,additionalHeader := range additionalmTLSHeaders {
+			for _, additionalHeader := range additionalmTLSHeaders {
 				Expect(recordedHeaders).To(HaveKey(additionalHeader))
 			}
 			checkXFCCHeaders(recordedXFCCHeader, recordedHeaders)
@@ -338,15 +338,11 @@ var _ = Describe("forwarded_client_cert", func() {
 	})
 })
 
-func parseXFCCHeader(header string) string {
-	derEncodedCert, err := base64.StdEncoding.DecodeString(header)
-	Expect(err).NotTo(HaveOccurred())
-
-	cert, err := x509.ParseCertificate(derEncodedCert)
-	Expect(err).NotTo(HaveOccurred())
+func parseXFCCHeaderToPEM(header string) string {
+	cert := parseXFCCHeaderToCert(header)
 
 	var certPEM bytes.Buffer
-	err = pem.Encode(&certPEM, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	err := pem.Encode(&certPEM, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
 	Expect(err).NotTo(HaveOccurred())
 
 	return certPEM.String()
