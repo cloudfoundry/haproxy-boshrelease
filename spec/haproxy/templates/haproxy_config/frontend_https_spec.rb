@@ -84,9 +84,37 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
   end
 
+  context 'when mutual tls is disabled' do
+    let(:properties) do
+      default_properties.merge({ 'client_cert' => false })
+    end
+
+    it 'does not add additional mTLS headers' do
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client              %[ssl_c_used]            if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Session-ID   %[ssl_fc_session_id,hex] if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Verify       %[ssl_c_verify]          if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Subject-DN   %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Subject-CN   %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Issuer-DN    %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-NotBefore    %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
+      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-NotAfter     %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
+    end
+  end
+
   context 'when mutual tls is enabled' do
     let(:properties) do
       default_properties.merge({ 'client_cert' => true })
+    end
+
+    it 'adds additional mTLS headers' do
+      expect(frontend_https).to include('http-request set-header X-SSL-Client              %[ssl_c_used]            if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID   %[ssl_fc_session_id,hex] if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify       %[ssl_c_verify]          if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN   %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN   %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN    %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore    %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
+      expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter     %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
     end
 
     it 'configures ssl to use the client ca' do
