@@ -71,6 +71,13 @@ properties:
   ha_proxy.strict_sni:
     description: "Optional setting to decide whether the SSL/TLS negotiation is allowed only if the client provided an SNI which strict match a certificate. If set to true, the default certificate is not used"
     default: false
+  ha_proxy.disable_domain_fronting:
+    description: |
+      If set to true, it will prevent clients from setting a host header different from the SNI value for HTTPS and WSS (secured websockets) connections. This is called domain fronting and is mostly used by CDNs.
+      If domain fronting is disabled, such requests will result in a 421 Misdirected Request error.
+      Example:
+        curl -H "Host: bob.com" https://alice.com    <-- This will result in a 421 Misdirected Request
+    default: false
   ha_proxy.ssl_pem:
     description: |
       Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing fields 'cert_chain' and 'private_key',
