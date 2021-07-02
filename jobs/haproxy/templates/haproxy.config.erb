@@ -85,23 +85,29 @@ end
 tls_bind_options = "ssl #{tls_options}"
 # }}}
 # X-Forwarded-Client-Cert (XFCC) Option {{{
-xfcc_forward_only = false
-xfcc_sanitize_set = false
-xfcc_forward_only_if_route_service = false
+mtls_header_deletion_policy = :never
+write_mtls_headers = false
 
 forwarded_client_cert_option = p("ha_proxy.forwarded_client_cert").downcase
 case forwarded_client_cert_option
 when "always_forward_only"
   # NOP
 when "forward_only"
-  xfcc_forward_only = true
+  if mutual_tls_enabled
+    mtls_header_deletion_policy = :non_mtls_only
+  else
+    mtls_header_deletion_policy = :always
+  end
 when "sanitize_set"
-  xfcc_sanitize_set = true
+  mtls_header_deletion_policy = :always
+  write_mtls_headers = mutual_tls_enabled
 when "forward_only_if_route_service"
-  xfcc_forward_only_if_route_service = true
+  mtls_header_deletion_policy = :non_route_service_only
+  write_mtls_headers = mutual_tls_enabled
 else
   abort("Unknown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set', 'forward_only_if_route_service'")
 end
+
 # }}}
 # IPv4 and IPv6 binding (v4v6) Option {{{
 v4v6 = ""
@@ -357,28 +363,53 @@ frontend https-in
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
-  <%- if xfcc_forward_only  -%>
-    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled  %> if ! { ssl_c_used }<% end %>
-  <%- elsif xfcc_sanitize_set  -%>
+
+  <%- case mtls_header_deletion_policy -%>
+  <%- when :always -%>
     http-request del-header X-Forwarded-Client-Cert
-    <%- if mutual_tls_enabled  -%>
-    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
-    <%- end -%>
-  <%- elsif xfcc_forward_only_if_route_service  -%>
+    http-request del-header X-SSL-Client
+    http-request del-header X-SSL-Client-Session-ID
+    http-request del-header X-SSL-Client-Verify
+    http-request del-header X-SSL-Client-Subject-DN
+    http-request del-header X-SSL-Client-Subject-CN
+    http-request del-header X-SSL-Client-Issuer-DN
+    http-request del-header X-SSL-Client-NotBefore
+    http-request del-header X-SSL-Client-NotAfter
+  <%- when :non_mtls_only -%>
+    http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }
+    http-request del-header X-SSL-Client            if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Session-ID if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Verify     if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
+  <%- when :non_route_service_only -%>
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
     http-request del-header X-Forwarded-Client-Cert if !route_service_request
-    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
+    http-request del-header X-SSL-Client            if !route_service_request
+    http-request del-header X-SSL-Client-Session-ID if !route_service_request
+    http-request del-header X-SSL-Client-Verify     if !route_service_request
+    http-request del-header X-SSL-Client-Subject-DN if !route_service_request
+    http-request del-header X-SSL-Client-Subject-CN if !route_service_request
+    http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request
+    http-request del-header X-SSL-Client-NotBefore  if !route_service_request
+    http-request del-header X-SSL-Client-NotAfter   if !route_service_request
   <%- end -%>
-  <%- if mutual_tls_enabled then -%>
-    http-request set-header X-SSL-Client              %[ssl_c_used]            if { ssl_c_used }
-    http-request set-header X-SSL-Client-Session-ID   %[ssl_fc_session_id,hex] if { ssl_c_used }
-    http-request set-header X-SSL-Client-Verify       %[ssl_c_verify]          if { ssl_c_used }
-    http-request set-header X-SSL-Client-Subject-DN   %{+Q}[ssl_c_s_dn]        if { ssl_c_used }
-    http-request set-header X-SSL-Client-Subject-CN   %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }
-    http-request set-header X-SSL-Client-Issuer-DN    %{+Q}[ssl_c_i_dn]        if { ssl_c_used }
-    http-request set-header X-SSL-Client-NotBefore    %{+Q}[ssl_c_notbefore]   if { ssl_c_used }
-    http-request set-header X-SSL-Client-NotAfter     %{+Q}[ssl_c_notafter]    if { ssl_c_used }
+
+  <%- if write_mtls_headers -%>
+    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]      if { ssl_c_used }
+    http-request set-header X-SSL-Client            %[ssl_c_used]            if { ssl_c_used }
+    http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex] if { ssl_c_used }
+    http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]          if { ssl_c_used }
+    http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]        if { ssl_c_used }
+    http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }
+    http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]        if { ssl_c_used }
+    http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]   if { ssl_c_used }
+    http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]    if { ssl_c_used }
   <%- end -%>
+
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
   <%- end -%>
@@ -453,14 +484,53 @@ frontend wss-in
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
-  <%- if xfcc_forward_only  -%>
-    http-request del-header X-Forwarded-Client-Cert<% if mutual_tls_enabled  %> if ! { ssl_c_used }<% end %>
-  <%- elsif xfcc_sanitize_set  -%>
+
+  <%- case mtls_header_deletion_policy -%>
+  <%- when :always -%>
     http-request del-header X-Forwarded-Client-Cert
-    <%- if mutual_tls_enabled  -%>
-    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }
-    <%- end -%>
+    http-request del-header X-SSL-Client
+    http-request del-header X-SSL-Client-Session-ID
+    http-request del-header X-SSL-Client-Verify
+    http-request del-header X-SSL-Client-Subject-DN
+    http-request del-header X-SSL-Client-Subject-CN
+    http-request del-header X-SSL-Client-Issuer-DN
+    http-request del-header X-SSL-Client-NotBefore
+    http-request del-header X-SSL-Client-NotAfter
+  <%- when :non_mtls_only -%>
+    http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }
+    http-request del-header X-SSL-Client            if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Session-ID if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Verify     if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
+  <%- when :non_route_service_only -%>
+    acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
+    http-request del-header X-Forwarded-Client-Cert if !route_service_request
+    http-request del-header X-SSL-Client            if !route_service_request
+    http-request del-header X-SSL-Client-Session-ID if !route_service_request
+    http-request del-header X-SSL-Client-Verify     if !route_service_request
+    http-request del-header X-SSL-Client-Subject-DN if !route_service_request
+    http-request del-header X-SSL-Client-Subject-CN if !route_service_request
+    http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request
+    http-request del-header X-SSL-Client-NotBefore  if !route_service_request
+    http-request del-header X-SSL-Client-NotAfter   if !route_service_request
   <%- end -%>
+
+  <%- if write_mtls_headers -%>
+    http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]      if { ssl_c_used }
+    http-request set-header X-SSL-Client            %[ssl_c_used]            if { ssl_c_used }
+    http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex] if { ssl_c_used }
+    http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]          if { ssl_c_used }
+    http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]        if { ssl_c_used }
+    http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }
+    http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]        if { ssl_c_used }
+    http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]   if { ssl_c_used }
+    http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]    if { ssl_c_used }
+  <%- end -%>
+
   <%- if p("ha_proxy.hsts_enable") -%>
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
   <%- end -%>
