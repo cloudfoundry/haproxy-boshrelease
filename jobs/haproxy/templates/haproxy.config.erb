@@ -345,9 +345,10 @@ frontend https-in
     bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= alpn_config %>
   <%- if p("ha_proxy.disable_domain_fronting")-%>
     # Check whether the client is attempting domain fronting.
-    http-request set-var(txn.host) hdr(host)
+    # Ignore optional port in Host header when comparing to SNI
+    http-request set-var(txn.host) hdr(host),field(1,:)
     acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
-    http-request deny deny_status 421 unless ssl_sni_http_host_match
+    http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
@@ -466,9 +467,10 @@ frontend wss-in
     bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
   <%- if p("ha_proxy.disable_domain_fronting")-%>
     # Check whether the client is attempting domain fronting.
-    http-request set-var(txn.host) hdr(host)
+    # Ignore optional port in Host header when comparing to SNI
+    http-request set-var(txn.host) hdr(host),field(1,:)
     acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
-    http-request deny deny_status 421 unless ssl_sni_http_host_match
+    http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>

@@ -41,8 +41,8 @@ var _ = Describe("Domain fronting", func() {
     type: certificate
     options:
       ca: https_frontend_ca
-      common_name: haproxy.internal
-      alternative_names: [haproxy.internal]
+      common_name: ((cert_common_name))
+      alternative_names: ((cert_sans))
 `
 
 	var creds struct {
@@ -51,6 +51,10 @@ var _ = Describe("Domain fronting", func() {
 			PrivateKey  string `yaml:"private_key"`
 			CA          string `yaml:"ca"`
 		} `yaml:"https_frontend"`
+		HTTPSFrontendCA struct {
+			Certificate string `yaml:"certificate"`
+			PrivateKey  string `yaml:"private_key"`
+		} `yaml:"https_frontend_ca"`
 	}
 
 	It("Disables domain fronting", func() {
@@ -59,7 +63,10 @@ var _ = Describe("Domain fronting", func() {
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        defaultDeploymentName,
-		}, []string{opsfile}, map[string]interface{}{}, true)
+		}, []string{opsfile}, map[string]interface{}{
+			"cert_common_name": "haproxy.internal",
+			"cert_sans":        []string{"haproxy.internal"},
+		}, true)
 
 		err := varsStoreReader(&creds)
 		Expect(err).NotTo(HaveOccurred())
@@ -87,10 +94,64 @@ var _ = Describe("Domain fronting", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusMisdirectedRequest))
 
-		By("Sending a request to HAProxy without a spoofed Host header it returns a 200 as normal")
-		resp, err = httpClient.Get("https://haproxy.internal")
+		By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
+		req, err = http.NewRequest("GET", "https://haproxy.internal", nil)
 		Expect(err).NotTo(HaveOccurred())
+		req.Host = "haproxy.internal"
+		resp, err = httpClient.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+
+		By("Sending a request to HAProxy with a matching Host header including the optional port it returns a 200 as normal")
+		req, err = http.NewRequest("GET", "https://haproxy.internal", nil)
+		Expect(err).NotTo(HaveOccurred())
+		req.Host = "haproxy.internal:443"
+
+		resp, err = httpClient.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+
+		By("Sending a request to HAProxy with no SNI it returns a 200, regardless of host header")
+		haproxyIP := haproxyInfo.PublicIP
+
+		// Requests that use an IP rather than a hostname do not send an SNI.
+		// However the IP of HAProxy is not known until deploy time.
+		// After the first deploy, BOSH won't change the IP, so we will now
+		// redeploy and update the cert to include the IP
+		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        defaultDeploymentName,
+		}, []string{opsfile}, map[string]interface{}{
+			// Update cert to include public IP
+			"cert_common_name": haproxyIP,
+			"cert_sans":        []string{haproxyIP, "haproxy.internal"},
+			// Keep previous CA so we can re-use HTTP client
+			"https_frontend_ca": map[string]string{
+				"certificate": creds.HTTPSFrontendCA.Certificate,
+				"private_key": creds.HTTPSFrontendCA.PrivateKey,
+			},
+		}, true)
+
+		err = varsStoreReader(&creds)
+		Expect(err).NotTo(HaveOccurred())
+
+		// Confirm IP has not changed
+		Expect(haproxyInfo.PublicIP).To(Equal(haproxyIP))
+
+		req, err = http.NewRequest("GET", fmt.Sprintf("https://%s", haproxyIP), nil)
+		Expect(err).NotTo(HaveOccurred())
+
+		// Although we are using a 'spoofed' host header here, HAProxy
+		// should not care as there is no SNI in the request
+		req.Host = "spoof.internal"
+
+		resp, err = httpClient.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	})
 })
