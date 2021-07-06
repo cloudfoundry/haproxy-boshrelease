@@ -2,13 +2,17 @@ package acceptance_tests
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 )
 
 // This deployment is reused between tests to speed up test execution
@@ -63,4 +67,47 @@ func setupTunnelFromLocalMachineToHAProxy(haproxyInfo haproxyInfo, localPort, ha
 	Expect(err).NotTo(HaveOccurred())
 
 	return cancelFunc
+}
+
+func expectTestServer200(resp *http.Response, err error) {
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+}
+
+func expect200(resp *http.Response, err error) {
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+}
+
+func expect400(resp *http.Response, err error) {
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+}
+
+func expect421(resp *http.Response, err error) {
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusMisdirectedRequest))
+}
+
+func expectTLSUnknownCertificateAuthorityErr(err error) {
+	checkTLSErr(err, "tls: unknown certificate authority")
+}
+
+func expectTLSHandshakeFailureErr(err error) {
+	checkTLSErr(err, "tls: handshake failure")
+}
+
+func expectTLSUnrecognizedNameErr(err error) {
+	checkTLSErr(err, "tls: unrecognized name")
+}
+
+func checkTLSErr(err error, expectString string) {
+	Expect(err).To(HaveOccurred())
+	urlErr, ok := err.(*url.Error)
+	Expect(ok).To(BeTrue())
+	tlsErr := urlErr.Unwrap()
+	var opErr *net.OpError
+	Expect(errors.As(tlsErr, &opErr)).To(BeTrue())
+	Expect(opErr.Err.Error()).To(ContainSubstring(expectString))
 }

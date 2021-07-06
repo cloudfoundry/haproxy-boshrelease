@@ -7,7 +7,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("max_rewrite and buffer_size_bytes", func() {
@@ -45,10 +44,7 @@ var _ = Describe("max_rewrite and buffer_size_bytes", func() {
 		// ensure total header size (key+value) is 64kb
 		req.Header.Set("X-Custom", string(randBytes(64*1024-len("X-Custom: "))))
 
-		resp, err := http.DefaultClient.Do(req)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(http.DefaultClient.Do(req))
 
 		By("Sending a request to HAProxy with a 72kb header is not allowed")
 		req, err = http.NewRequest("GET", fmt.Sprintf("http://%s", haproxyInfo.PublicIP), nil)
@@ -57,9 +53,7 @@ var _ = Describe("max_rewrite and buffer_size_bytes", func() {
 		// ensure total header size (key+value) is 72k
 		req.Header.Set("X-Custom", string(randBytes(72*1024-len("X-Custom: "))))
 
-		resp, err = http.DefaultClient.Do(req)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+		expect400(http.DefaultClient.Do(req))
 	})
 })
 

@@ -7,7 +7,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("HTTP Health Check", func() {
@@ -45,16 +44,10 @@ var _ = Describe("HTTP Health Check", func() {
 		}, time.Minute, time.Second).Should(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
-		resp, err := http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
 
 		By("Sending a request to HAProxy works")
-		resp, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
-
+		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
 	})
 
 	It("Correctly starts if there is a healthy backend", func() {
@@ -85,14 +78,9 @@ var _ = Describe("HTTP Health Check", func() {
 		Expect(boshInstances(defaultDeploymentName)[0].ProcessState).To(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
-		resp, err := http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
 
 		By("Sending a request to HAProxy works")
-		resp, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
 	})
 })

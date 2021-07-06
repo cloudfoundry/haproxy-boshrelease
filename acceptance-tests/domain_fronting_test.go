@@ -8,7 +8,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("Domain fronting", func() {
@@ -169,25 +168,25 @@ var _ = Describe("Domain fronting", func() {
 		It("Disables domain fronting", func() {
 			By("Sending a request to HAProxy with a mismatched SNI and Host header it returns a 421")
 			req := buildRequest("https://haproxy.internal", "spoof.internal")
-			expect421(req, nonMTLSClient)
-			expect421(req, mtlsClient)
+			expect421(nonMTLSClient.Do(req))
+			expect421(mtlsClient.Do(req))
 
 			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal")
-			expect200(req, nonMTLSClient)
-			expect200(req, mtlsClient)
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
 
 			By("Sending a request to HAProxy with a matching Host header including the optional port it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal:443")
-			expect200(req, nonMTLSClient)
-			expect200(req, mtlsClient)
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
 
 			By("Sending a request to HAProxy with no SNI it returns a 200, regardless of host header")
 			// Although we are using a 'spoofed' host header here, HAProxy
 			// should not care as there is no SNI in the request
 			req = buildRequest("https://haproxy.internal", "spoof.internal")
-			expect200(req, nonMTLSClientNoSNI)
-			expect200(req, mtlsClientNoSNI)
+			expect200(nonMTLSClientNoSNI.Do(req))
+			expect200(mtlsClientNoSNI.Do(req))
 		})
 	})
 
@@ -199,25 +198,25 @@ var _ = Describe("Domain fronting", func() {
 		It("Disables domain fronting for MTLS requests only", func() {
 			By("Sending a request to HAProxy with a mismatched SNI and Host header it returns a 421 only for mTLS requests")
 			req := buildRequest("https://haproxy.internal", "spoof.internal")
-			expect200(req, nonMTLSClient)
-			expect421(req, mtlsClient)
+			expect200(nonMTLSClient.Do(req))
+			expect421(mtlsClient.Do(req))
 
 			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal")
-			expect200(req, nonMTLSClient)
-			expect200(req, mtlsClient)
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
 
 			By("Sending a request to HAProxy with a matching Host header including the optional port it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal:443")
-			expect200(req, nonMTLSClient)
-			expect200(req, mtlsClient)
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
 
 			By("Sending a request to HAProxy with no SNI it returns a 200, regardless of host header")
 			// Although we are using a 'spoofed' host header here, HAProxy
 			// should not care as there is no SNI in the request
 			req = buildRequest("https://haproxy.internal", "spoof.internal")
-			expect200(req, nonMTLSClientNoSNI)
-			expect200(req, mtlsClientNoSNI)
+			expect200(nonMTLSClientNoSNI.Do(req))
+			expect200(mtlsClientNoSNI.Do(req))
 		})
 	})
 })
@@ -227,17 +226,4 @@ func buildRequest(address string, hostHeader string) *http.Request {
 	Expect(err).NotTo(HaveOccurred())
 	req.Host = hostHeader
 	return req
-}
-
-func expect200(req *http.Request, client *http.Client) {
-	resp, err := client.Do(req)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
-}
-
-func expect421(req *http.Request, client *http.Client) {
-	resp, err := client.Do(req)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusMisdirectedRequest))
 }

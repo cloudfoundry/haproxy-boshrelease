@@ -97,7 +97,6 @@ var _ = Describe("HTTPS Frontend", func() {
 		By("Sending a request to HAProxy using HTTP 1.1")
 		resp, err := http1Client.Get("https://haproxy.internal:443")
 		Expect(err).NotTo(HaveOccurred())
-
 		Expect(resp.ProtoMajor).To(Equal(1))
 
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
