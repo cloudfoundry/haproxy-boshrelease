@@ -98,6 +98,36 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
   end
 
+  context 'when ha_proxy.disable_domain_fronting is mtls_only' do
+    let(:properties) do
+      default_properties.merge({ 'disable_domain_fronting' => 'mtls_only' })
+    end
+
+    it 'disables domain fronting by checkig SNI against the Host header for mtls connections only' do
+      expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),field(1,:)')
+      expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0')
+      expect(frontend_wss).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
+    end
+  end
+
+  context 'when ha_proxy.disable_domain_fronting is false (the default)' do
+    it 'allows domain fronting' do
+      expect(frontend_wss).not_to include(/http-request deny deny_status 421/)
+    end
+  end
+
+  context 'when ha_proxy.disable_domain_fronting is an invalid value' do
+    let(:properties) do
+      default_properties.merge({ 'disable_domain_fronting' => 'foobar' })
+    end
+
+    it 'aborts with a meaningful error message' do
+      expect do
+        frontend_wss
+      end.to raise_error /Unknown 'disable_domain_fronting' option: foobar. Known options: true, false or 'mtls_only'/
+    end
+  end
+
   context 'when mutual tls is enabled' do
     let(:properties) do
       default_properties.merge({ 'client_cert' => true })

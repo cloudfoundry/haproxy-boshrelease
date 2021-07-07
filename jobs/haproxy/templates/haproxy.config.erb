@@ -108,6 +108,11 @@ else
   abort("Unknown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set', 'forward_only_if_route_service'")
 end
 
+disable_domain_fronting = p("ha_proxy.disable_domain_fronting")
+if ![true, false, "true", "false", "mtls_only"].include?(disable_domain_fronting)
+  abort("Unknown 'disable_domain_fronting' option: #{disable_domain_fronting}. Known options: true, false or 'mtls_only'")
+end
+
 # }}}
 # IPv4 and IPv6 binding (v4v6) Option {{{
 v4v6 = ""
@@ -343,12 +348,18 @@ frontend https-in
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= alpn_config %>
-  <%- if p("ha_proxy.disable_domain_fronting")-%>
+  <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
+    # Ensure a host header exists to check against
+    http-request deny deny_status 400 content-type text/plain string "400 Bad Request: missing required Host header" if { req.hdr_cnt(host) eq 0 }
     # Ignore optional port in Host header when comparing to SNI
     http-request set-var(txn.host) hdr(host),field(1,:)
     acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
+    <%- if disable_domain_fronting  == 'mtls_only' %>
+    http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match
+    <%- elsif [true, "true"].include?(disable_domain_fronting) -%>
     http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match
+    <%- end -%>
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
@@ -465,12 +476,18 @@ frontend wss-in
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
-  <%- if p("ha_proxy.disable_domain_fronting")-%>
+  <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
+    # Ensure a host header exists to check against
+    http-request deny deny_status 400 content-type text/plain string "400 Bad Request: missing required Host header" if { req.hdr_cnt(host) eq 0 }
     # Ignore optional port in Host header when comparing to SNI
     http-request set-var(txn.host) hdr(host),field(1,:)
     acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
+    <%- if disable_domain_fronting  == 'mtls_only' %>
+    http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match
+    <%- elsif [true, "true"].include?(disable_domain_fronting) -%>
     http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match
+    <%- end -%>
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>

@@ -147,14 +147,14 @@ var _ = Describe("mTLS", func() {
 			"b.haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
 		}
 
-		httpClientA := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{clientCertA})
+		httpClientA := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{clientCertA}, "")
 
 		clientCertB, err := tls.X509KeyPair([]byte(creds.ClientB.Certificate), []byte(creds.ClientB.PrivateKey))
 		Expect(err).NotTo(HaveOccurred())
 
-		httpClientB := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{clientCertB})
+		httpClientB := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{clientCertB}, "")
 
-		httpClientNonMTLS := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{})
+		httpClientNonMTLS := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{}, "")
 
 		By("Using client A cert with endpoint A works")
 		resp, err := httpClientA.Get("https://a.haproxy.internal")

@@ -80,7 +80,7 @@ var _ = Describe("HTTPS Frontend", func() {
 		http1Client = buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
-			[]tls.Certificate{},
+			[]tls.Certificate{}, "",
 		)
 	})
 
