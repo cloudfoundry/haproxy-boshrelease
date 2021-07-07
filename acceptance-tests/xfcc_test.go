@@ -162,13 +162,13 @@ var _ = Describe("forwarded_client_cert", func() {
 		nonMTLSClient = buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
-			[]tls.Certificate{},
+			[]tls.Certificate{}, "",
 		)
 
 		mtlsClient = buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
-			[]tls.Certificate{clientCert},
+			[]tls.Certificate{clientCert}, "",
 		)
 
 		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)

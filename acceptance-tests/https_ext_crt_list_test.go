@@ -140,7 +140,7 @@ var _ = Describe("External Certificate Lists", func() {
 				"cert_b.haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
 				"cert_c.haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
 			},
-			[]tls.Certificate{},
+			[]tls.Certificate{}, "",
 		)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")
@@ -333,7 +333,7 @@ var _ = Describe("External Certificate Lists", func() {
 				client := buildHTTPClient(
 					[]string{creds.Cert.CA},
 					map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
-					[]tls.Certificate{},
+					[]tls.Certificate{}, "",
 				)
 
 				By("Sending a request to HAProxy using the external cert")
@@ -419,7 +419,7 @@ var _ = Describe("External Certificate Lists", func() {
 					client := buildHTTPClient(
 						[]string{creds.Cert.CA},
 						map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
-						[]tls.Certificate{},
+						[]tls.Certificate{}, "",
 					)
 
 					By("Sending a request to HAProxy using the external cert")
