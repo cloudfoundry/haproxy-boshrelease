@@ -2,15 +2,10 @@ package acceptance_tests
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
-	"net"
-	"net/http"
-	"net/url"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("mTLS", func() {
@@ -157,43 +152,24 @@ var _ = Describe("mTLS", func() {
 		httpClientNonMTLS := buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{}, "")
 
 		By("Using client A cert with endpoint A works")
-		resp, err := httpClientA.Get("https://a.haproxy.internal")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(httpClientA.Get("https://a.haproxy.internal"))
 
 		By("Using client B cert with endpoint B works")
-		resp, err = httpClientB.Get("https://b.haproxy.internal")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(httpClientB.Get("https://b.haproxy.internal"))
 
 		By("Using client B cert with endpoint A is not allowed")
 		_, err = httpClientB.Get("https://a.haproxy.internal")
-		checkTLSErr(err, "tls: unknown certificate authority")
+		expectTLSUnknownCertificateAuthorityErr(err)
 
 		By("Using client A cert with endpoint B is not allowed")
 		_, err = httpClientA.Get("https://b.haproxy.internal")
-		checkTLSErr(err, "tls: unknown certificate authority")
+		expectTLSUnknownCertificateAuthorityErr(err)
 
 		By("Making a non-mTLS request to an endpoint with optional mTLS works")
-		resp, err = httpClientNonMTLS.Get("https://a.haproxy.internal")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(httpClientNonMTLS.Get("https://a.haproxy.internal"))
 
 		By("Making a non-mTLS request to an endpoint with required mTLS fails")
 		_, err = httpClientNonMTLS.Get("https://b.haproxy.internal")
-		checkTLSErr(err, "tls: handshake failure")
+		expectTLSHandshakeFailureErr(err)
 	})
 })
-
-func checkTLSErr(err error, expectString string) {
-	Expect(err).To(HaveOccurred())
-	urlErr, ok := err.(*url.Error)
-	Expect(ok).To(BeTrue())
-	tlsErr := urlErr.Unwrap()
-	var opErr *net.OpError
-	Expect(errors.As(tlsErr, &opErr)).To(BeTrue())
-	Expect(opErr.Err.Error()).To(ContainSubstring(expectString))
-}

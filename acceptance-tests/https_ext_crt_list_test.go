@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -144,10 +143,7 @@ var _ = Describe("External Certificate Lists", func() {
 		)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")
-		resp, err := client.Get("https://cert_a.haproxy.internal:443")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(client.Get("https://cert_a.haproxy.internal:443"))
 
 		By("Sending a request to HAProxy using external cert B fails (external cert not yet added)")
 		_, err = client.Get("https://cert_b.haproxy.internal:443")
@@ -180,16 +176,10 @@ var _ = Describe("External Certificate Lists", func() {
 		waitForHAProxyListening(haproxyInfo)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")
-		resp, err = client.Get("https://cert_a.haproxy.internal:443")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(client.Get("https://cert_a.haproxy.internal:443"))
 
 		By("Sending a request to HAProxy using external cert B works (external cert now added)")
-		resp, err = client.Get("https://cert_b.haproxy.internal:443")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(client.Get("https://cert_b.haproxy.internal:443"))
 
 		By("Sending a request to HAProxy using external cert C fails (external cert not yet added)")
 		_, err = client.Get("https://cert_c.haproxy.internal:443")
@@ -211,10 +201,7 @@ var _ = Describe("External Certificate Lists", func() {
 		waitForHAProxyListening(haproxyInfo)
 
 		By("Sending a request to HAProxy using internal cert A works (default cert)")
-		resp, err = client.Get("https://cert_a.haproxy.internal:443")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(client.Get("https://cert_a.haproxy.internal:443"))
 
 		By("Sending a request to HAProxy using external cert B fails (external cert that was removed)")
 		_, err = client.Get("https://cert_b.haproxy.internal:443")
@@ -222,10 +209,7 @@ var _ = Describe("External Certificate Lists", func() {
 		Expect(err.Error()).To(ContainSubstring("certificate is valid for cert_a.haproxy.internal, not cert_b.haproxy.internal"))
 
 		By("Sending a request to HAProxy using external cert C works (external cert that was added)")
-		resp, err = client.Get("https://cert_c.haproxy.internal:443")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		expectTestServer200(client.Get("https://cert_c.haproxy.internal:443"))
 	})
 
 	Context("When ext_crt_list_policy is set to fail", func() {
@@ -337,10 +321,7 @@ var _ = Describe("External Certificate Lists", func() {
 				)
 
 				By("Sending a request to HAProxy using the external cert")
-				resp, err := client.Get("https://haproxy.internal:443")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+				expectTestServer200(client.Get("https://haproxy.internal:443"))
 			})
 
 			Context("When the external certificate is written after HAProxy is started", func() {
@@ -423,10 +404,7 @@ var _ = Describe("External Certificate Lists", func() {
 					)
 
 					By("Sending a request to HAProxy using the external cert")
-					resp, err := client.Get("https://haproxy.internal:443")
-					Expect(err).NotTo(HaveOccurred())
-					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+					expectTestServer200(client.Get("https://haproxy.internal:443"))
 				})
 			})
 		})
