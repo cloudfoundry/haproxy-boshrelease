@@ -3,8 +3,6 @@
 require 'rspec'
 
 describe 'config/haproxy.config HTTPS Websockets frontend' do
-  let(:template) { haproxy_job.template('config/haproxy.config') }
-
   let(:haproxy_conf) do
     parse_haproxy_config(template.render({ 'ha_proxy' => properties }))
   end

@@ -13,6 +13,7 @@ module SharedContext
   let(:release_path) { File.join(File.dirname(__FILE__), '..') }
   let(:release) { Bosh::Template::Test::ReleaseDir.new(release_path) }
   let(:haproxy_job) { release.job('haproxy') }
+  let(:template) { haproxy_job.template('config/haproxy.config') }
 end
 
 RSpec.configure do |config|
@@ -67,9 +68,6 @@ def parse_haproxy_config(config) # rubocop:disable Metrics/AbcSize
 
     # remove empty lines
     properties = properties.split(/\n/).reject(&:empty?).join("\n")
-
-    # unindent propertiess
-    properties = properties.gsub(/^\s+/, '')
 
     # split and strip leading/trailing whitespace
     properties = properties.split(/\n/).map(&:strip)

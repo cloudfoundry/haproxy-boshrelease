@@ -4,8 +4,6 @@ require 'rspec'
 require 'haproxy-tools'
 
 describe 'config/haproxy.config global and default options' do
-  let(:template) { haproxy_job.template('config/haproxy.config') }
-
   let(:haproxy_conf) do
     parse_haproxy_config(template.render({ 'ha_proxy' => properties }))
   end
