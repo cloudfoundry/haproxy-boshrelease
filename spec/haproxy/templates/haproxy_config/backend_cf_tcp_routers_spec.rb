@@ -3,8 +3,6 @@
 require 'rspec'
 
 describe 'config/haproxy.config backend cf_tcp_routers' do
-  let(:template) { haproxy_job.template('config/haproxy.config') }
-
   let(:tcp_router_link) do
     Bosh::Template::Test::Link.new(
       name: 'tcp_router',
