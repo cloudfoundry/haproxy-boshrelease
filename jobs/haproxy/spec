@@ -73,9 +73,11 @@ properties:
     default: false
   ha_proxy.disable_domain_fronting:
     description: |
+      Must be one of true, false, or "mtls_only"
       If set to true, it will prevent clients from setting a host header different from the SNI value for HTTPS and WSS (secured websockets) connections. This is called domain fronting and is mostly used by CDNs.
       If domain fronting is disabled, such requests will result in a 421 Misdirected Request error.
-      Example:
+      If set to "mtls_only", the host header will only be checked against the SNI for mtls connections
+      Example
         curl -H "Host: bob.com" https://alice.com    <-- This will result in a 421 Misdirected Request
     default: false
   ha_proxy.ssl_pem:
@@ -330,17 +332,7 @@ properties:
       -----END PRIVATE KEY-----
   ha_proxy.client_cert:
     description: |
-      Enable haproxy mutual auth and offload mutual ssl client certificate to backend.
-      The following headers will be produced if the client connects using a client certificate:
-        - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded).
-        - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
-        - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
-        - X-SSL-Client-Verify: Contains the number 0 if the client certificate verification was successful. Otherwise it contains the appropriate OpenSSL return code (see https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206)
-        - X-SSL-Client-Subject-DN: Contains the subject distinguished name of the client certificate.
-        - X-SSL-Client-Subject-CN: Contains the subject common name of the client certificate.
-        - X-SSL-Client-Issuer-DN: Contains the issuer distinguished name of the client certificate.
-        - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
-        - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.
+      Enable haproxy mutual auth
     default: false
 
   ha_proxy.forwarded_client_cert:
@@ -349,20 +341,38 @@ properties:
       On http frontends the `always_forward_only` option is active by default and can't be changed.
       On https frontends your options are:
       - always_forward_only:
-          Least secure option. Always forward the XFCC header in the request, regardless of whether the client connection is mTLS.
+          Least secure option. Always forward the X-Forwarded-Client-Cert header in the request, regardless of whether the client connection is mTLS. The following headers will also be forwarded if they are present in the original request: X-SSL-Client, X-SSL-Client-Session-ID, X-SSL-Client-Verify, X-SSL-Client-Subject-DN, X-SSL-Client-Subject-CN, X-SSL-Client-Issuer-DN, X-SSL-Client-NotBefore, X-SSL-Client-NotAfter.
           Use this value when your load balancer is forwarding the client certificate and requests are not forwarded to HAProxy over mTLS.
           In the case where the connection between load balancer and HAProxy is mTLS, the client certificate received by HAProxy in the mTLS handshake will not be forwarded.
       - forward_only:
-          Secure version of `always_forward_only`. Forward the XFCC header received from the client only when the client connection is mTLS.
-          The client certificate received by HAProxy in the mTLS handshake will not be forwarded.
+          Secure version of `always_forward_only`. Forward the X-Forwarded-Client-Cert header received from the client only when the client connection is mTLS. The following headers will also be forwarded for mTLS connections if they are present in the original request: X-SSL-Client, X-SSL-Client-Session-ID, X-SSL-Client-Verify, X-SSL-Client-Subject-DN, X-SSL-Client-Subject-CN, X-SSL-Client-Issuer-DN, X-SSL-Client-NotBefore, X-SSL-Client-NotAfter.
+          If the client connection does not use mTLS, these X-Forwarded-Client-Cert and X-SSL-Client-* headers will be removed if they are present.
+          In the case where the connection between load balancer and HAProxy is mTLS, the client certificate received by HAProxy in the mTLS handshake will not be forwarded.
       - sanitize_set:
           Most secure option. Strip any instances of XFCC headers from the client request.
-          When the client connection is mTLS, the client certificate received by HAProxy in the mTLS handshake will be forwarded in this header.
-          Values will be base64 encoded PEM. Use this value when HAProxy is the first component to terminate TLS.
+          When the client connection is mTLS, the following headers will be overwritten in the request
+            - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded). Backends should use this header to authenticate incoming requests.
+            - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
+            - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
+            - X-SSL-Client-Verify: Contains the number 0 if the client certificate verification was successful. Otherwise it contains the appropriate OpenSSL return code (see https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206)
+            - X-SSL-Client-Subject-DN: Contains the subject distinguished name of the client certificate.
+            - X-SSL-Client-Subject-CN: Contains the subject common name of the client certificate.
+            - X-SSL-Client-Issuer-DN: Contains the issuer distinguished name of the client certificate.
+            - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
+            - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.
       - forward_only_if_route_service:
           This option is useful to support Mutual TLS with CF Route Services.
-          When the client connection is mTLS, the client certificate received by HAProxy in the mTLS handshake will be forwarded in the XFCC header.
-          When the client connection is not mTLS, the XFCC header will be removed UNLESS there is an X-Cf-Proxy-Signature header.
+          When the client connection is not mTLS, the X-Forwarded-Client-Cert and X-SSL-Client-* headers will be removed UNLESS there is an X-Cf-Proxy-Signature header.
+          When the client connection is mTLS, the following headers will be overwritten in the request
+            - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded). Backends should use this header to authenticate incoming requests.
+            - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
+            - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
+            - X-SSL-Client-Verify: Contains the number 0 if the client certificate verification was successful. Otherwise it contains the appropriate OpenSSL return code (see https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206)
+            - X-SSL-Client-Subject-DN: Contains the subject distinguished name of the client certificate.
+            - X-SSL-Client-Subject-CN: Contains the subject common name of the client certificate.
+            - X-SSL-Client-Issuer-DN: Contains the issuer distinguished name of the client certificate.
+            - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
+            - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.
           This option is only secure if Gorouter is deployed behind Haproxy to validate that X-Cf-Proxy-Signature is coming from a route service.
     default: sanitize_set
 

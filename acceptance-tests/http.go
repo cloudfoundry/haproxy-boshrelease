@@ -32,17 +32,10 @@ func startLocalHTTPServer(handler func(http.ResponseWriter, *http.Request)) (fun
 }
 
 // Build an HTTP client with custom CA certificate pool which resolves hosts based on provided map
-func buildHTTPClient(caCerts []string, addressMap map[string]string, clientCerts []tls.Certificate) *http.Client {
-	caCertPool := x509.NewCertPool()
-	for _, caCert := range caCerts {
-		caCertPool.AppendCertsFromPEM([]byte(caCert))
-	}
-
+func buildHTTPClient(caCerts []string, addressMap map[string]string, clientCerts []tls.Certificate, serverName string) *http.Client {
+	tlsConfig := buildTLSConfig(caCerts, clientCerts, serverName)
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			RootCAs:      caCertPool,
-			Certificates: clientCerts,
-		},
+		TLSClientConfig: tlsConfig,
 		// Override DialContext to force resolve with alternative addresses
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			if altAddr, ok := addressMap[addr]; ok {
@@ -59,10 +52,29 @@ func buildHTTPClient(caCerts []string, addressMap map[string]string, clientCerts
 	return &http.Client{Transport: transport}
 }
 
+func buildTLSConfig(caCerts []string, clientCerts []tls.Certificate, serverName string) *tls.Config {
+	caCertPool := x509.NewCertPool()
+	for _, caCert := range caCerts {
+		caCertPool.AppendCertsFromPEM([]byte(caCert))
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: clientCerts,
+	}
+
+	if serverName != "" {
+		tlsConfig.ServerName = serverName
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	return tlsConfig
+}
+
 // Build an HTTP2 client with custom CA certificate pool which resolves hosts based on provided map
 func buildHTTP2Client(caCerts []string, addressMap map[string]string, clientCerts []tls.Certificate) *http.Client {
 
-	httpClient := buildHTTPClient(caCerts, addressMap, clientCerts)
+	httpClient := buildHTTPClient(caCerts, addressMap, clientCerts, "")
 	transport := httpClient.Transport.(*http.Transport)
 	http2.ConfigureTransport(transport)
 

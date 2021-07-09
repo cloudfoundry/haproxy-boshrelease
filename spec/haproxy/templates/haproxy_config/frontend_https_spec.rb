@@ -3,8 +3,6 @@
 require 'rspec'
 
 describe 'config/haproxy.config HTTPS frontend' do
-  let(:template) { haproxy_job.template('config/haproxy.config') }
-
   let(:haproxy_conf) do
     parse_haproxy_config(template.render({ 'ha_proxy' => properties }))
   end
@@ -90,9 +88,39 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
 
     it 'disables domain fronting by checkig SNI against the Host header' do
-      expect(frontend_https).to include('http-request set-var(txn.host) hdr(host)')
+      expect(frontend_https).to include('http-request set-var(txn.host) hdr(host),field(1,:)')
       expect(frontend_https).to include('acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0')
-      expect(frontend_https).to include('http-request deny deny_status 421 unless ssl_sni_http_host_match')
+      expect(frontend_https).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match')
+    end
+  end
+
+  context 'when ha_proxy.disable_domain_fronting is mtls_only' do
+    let(:properties) do
+      default_properties.merge({ 'disable_domain_fronting' => 'mtls_only' })
+    end
+
+    it 'disables domain fronting by checkig SNI against the Host header for mtls connections only' do
+      expect(frontend_https).to include('http-request set-var(txn.host) hdr(host),field(1,:)')
+      expect(frontend_https).to include('acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0')
+      expect(frontend_https).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
+    end
+  end
+
+  context 'when ha_proxy.disable_domain_fronting is false (the default)' do
+    it 'allows domain fronting' do
+      expect(frontend_https).not_to include(/http-request deny deny_status 421/)
+    end
+  end
+
+  context 'when ha_proxy.disable_domain_fronting is an invalid value' do
+    let(:properties) do
+      default_properties.merge({ 'disable_domain_fronting' => 'foobar' })
+    end
+
+    it 'aborts with a meaningful error message' do
+      expect do
+        frontend_https
+      end.to raise_error /Unknown 'disable_domain_fronting' option: foobar. Known options: true, false or 'mtls_only'/
     end
   end
 
@@ -101,32 +129,15 @@ describe 'config/haproxy.config HTTPS frontend' do
       default_properties.merge({ 'client_cert' => false })
     end
 
-    it 'does not add additional mTLS headers' do
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client              %[ssl_c_used]            if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Session-ID   %[ssl_fc_session_id,hex] if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Verify       %[ssl_c_verify]          if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Subject-DN   %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Subject-CN   %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-Issuer-DN    %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-NotBefore    %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
-      expect(frontend_https).not_to include('http-request set-header X-SSL-Client-NotAfter     %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
+    it 'does not add mTLS headers' do
+      expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+      expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
     end
   end
 
   context 'when mutual tls is enabled' do
     let(:properties) do
       default_properties.merge({ 'client_cert' => true })
-    end
-
-    it 'adds additional mTLS headers' do
-      expect(frontend_https).to include('http-request set-header X-SSL-Client              %[ssl_c_used]            if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID   %[ssl_fc_session_id,hex] if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify       %[ssl_c_verify]          if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN   %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN   %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN    %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore    %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
-      expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter     %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
     end
 
     it 'configures ssl to use the client ca' do
@@ -178,68 +189,177 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
   end
 
-  context 'when ha_proxy.forwarded_client_cert is always_forward_only (the default)' do
-    it 'deletes the X-Forwarded-Client-Cert header by default' do
-      expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert')
-    end
-  end
-
-  context 'when ha_proxy.forwarded_client_cert is forward_only' do
-    let(:properties) do
-      default_properties.merge({ 'forwarded_client_cert' => 'forward_only' })
-    end
-
-    it 'deletes the X-Forwarded-Client-Cert header' do
-      expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert')
-    end
-
-    context 'when mutual TLS is enabled' do
+  describe 'ha_proxy.forwarded_client_cert' do
+    context 'when ha_proxy.forwarded_client_cert is always_forward_only' do
       let(:properties) do
-        default_properties.merge({
-          'client_cert' => true,
-          'forwarded_client_cert' => 'forward_only'
-        })
+        default_properties.merge({ 'forwarded_client_cert' => 'always_forward_only' })
       end
 
-      it 'only deletes the X-Forwarded-Client-Cert header when mTLS is not used' do
-        expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }')
+      it 'does not delete mTLS headers' do
+        expect(frontend_https).not_to include(/http-request del-header X-Forwarded-Client-Cert/)
+        expect(frontend_https).not_to include(/http-request del-header X-SSL-Client/)
+      end
+
+      it 'does not add mTLS headers' do
+        expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+        expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
       end
     end
-  end
 
-  context 'when ha_proxy.forwarded_client_cert is sanitize_set' do
-    let(:properties) do
-      default_properties.merge({ 'forwarded_client_cert' => 'sanitize_set' })
-    end
-
-    it 'deletes the X-Forwarded-Client-Cert header' do
-      expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert')
-    end
-
-    context 'when mutual TLS is enabled' do
+    context 'when ha_proxy.forwarded_client_cert is forward_only' do
       let(:properties) do
-        default_properties.merge({
-          'client_cert' => true,
-          'forwarded_client_cert' => 'sanitize_set'
-        })
+        default_properties.merge({ 'forwarded_client_cert' => 'forward_only' })
       end
 
-      it 'sets X-Forwarded-Client-Cert to the client cert for mTLS connections ' do
+      it 'deletes mTLS headers' do
         expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert')
-        expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Session-ID')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Verify')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter')
+      end
+
+      it 'does not add mTLS headers' do
+        expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+        expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
+      end
+
+      context 'when mutual TLS is enabled' do
+        let(:properties) do
+          default_properties.merge({
+            'client_cert' => true,
+            'forwarded_client_cert' => 'forward_only'
+          })
+        end
+
+        it 'deletes mTLS headers when mTLS is not used' do
+          expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client            if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Session-ID if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Verify     if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }')
+        end
+
+        it 'does not add mTLS headers' do
+          expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+          expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
+        end
       end
     end
-  end
 
-  context 'when ha_proxy.forwarded_client_cert is forward_only_if_route_service' do
-    let(:properties) do
-      default_properties.merge({ 'forwarded_client_cert' => 'forward_only_if_route_service' })
+    context 'when ha_proxy.forwarded_client_cert is sanitize_set (the default)' do
+      it 'always deletes mTLS headers' do
+        expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Session-ID')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Verify')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter')
+      end
+
+      it 'does not add mTLS headers' do
+        expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+        expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
+      end
+
+      context 'when mutual TLS is enabled' do
+        let(:properties) do
+          default_properties.merge({ 'client_cert' => true })
+        end
+
+        it 'always deletes mTLS headers' do
+          expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Session-ID')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Verify')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter')
+        end
+
+        it 'writes mTLS headers when mTLS is used' do
+          expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]      if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client            %[ssl_c_used]            if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex] if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]          if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
+        end
+      end
     end
 
-    it 'deletes the X-Forwarded-Client-Cert header for non-route service requests' do
-      expect(frontend_https).to include('acl route_service_request hdr(X-Cf-Proxy-Signature) -m found')
-      expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert if !route_service_request')
-      expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64] if { ssl_c_used }')
+    context 'when ha_proxy.forwarded_client_cert is forward_only_if_route_service' do
+      let(:properties) do
+        default_properties.merge({ 'forwarded_client_cert' => 'forward_only_if_route_service' })
+      end
+
+      it 'deletes mTLS headers for non-route service requests (for mTLS and non-mTLS)' do
+        expect(frontend_https).to include('acl route_service_request hdr(X-Cf-Proxy-Signature) -m found')
+        expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client            if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Session-ID if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Verify     if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
+      end
+
+      it 'does not add mTLS headers' do
+        expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+        expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
+      end
+
+      context 'when mutual TLS is enabled' do
+        let(:properties) do
+          default_properties.merge({
+            'client_cert' => true,
+            'forwarded_client_cert' => 'forward_only_if_route_service'
+          })
+        end
+
+        it 'deletes mTLS headers for non-route service requests (for mTLS and non-mTLS)' do
+          expect(frontend_https).to include('acl route_service_request hdr(X-Cf-Proxy-Signature) -m found')
+          expect(frontend_https).to include('http-request del-header X-Forwarded-Client-Cert if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client            if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Session-ID if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Verify     if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
+        end
+
+        it 'overwrites mTLS headers when mTLS is used' do
+          expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]      if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client            %[ssl_c_used]            if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex] if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]          if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
+        end
+      end
     end
   end
 

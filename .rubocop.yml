@@ -21,6 +21,9 @@ Layout/LineLength:
 Naming/FileName:
   Enabled: false
 
+Naming/InclusiveLanguage:
+  Enabled: false
+
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
 
@@ -34,4 +37,7 @@ RSpec/ExampleLength:
   Enabled: false
 
 RSpec/DescribeClass:
+  Enabled: false
+
+Style/Documentation:
   Enabled: false

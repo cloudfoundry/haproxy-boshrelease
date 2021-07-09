@@ -62,9 +62,7 @@ var _ = Describe("Access Control", func() {
 		Expect(errors.Is(err, io.EOF)).To(BeTrue())
 
 		By("Allowing access to whitelisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
-		resp, err := http.Get("http://127.0.0.1:11000")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		expectTestServer200(http.Get("http://127.0.0.1:11000"))
 	})
 
 	It("Rejects IPs in blacklisted CIDRS", func() {
@@ -97,8 +95,6 @@ var _ = Describe("Access Control", func() {
 		Expect(errors.Is(err, io.EOF)).To(BeTrue())
 
 		By("Allowing access to non-blacklisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
-		resp, err := http.Get("http://127.0.0.1:11000")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		expectTestServer200(http.Get("http://127.0.0.1:11000"))
 	})
 })

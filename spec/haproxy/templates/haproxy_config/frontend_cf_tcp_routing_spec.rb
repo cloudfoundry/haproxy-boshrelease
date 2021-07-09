@@ -4,8 +4,6 @@ require 'rspec'
 require 'tempfile'
 
 describe 'config/haproxy.config frontend cf_tcp_routing' do
-  let(:template) { haproxy_job.template('config/haproxy.config') }
-
   let(:tcp_router_link) do
     Bosh::Template::Test::Link.new(
       name: 'tcp_router',
