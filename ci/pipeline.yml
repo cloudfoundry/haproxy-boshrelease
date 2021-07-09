@@ -164,8 +164,6 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git
-            AWS_ACCESS_KEY:       ((aws.access_key))
-            AWS_SECRET_KEY:       ((aws.secret_key))
       on_failure:
         put: notify
         params:
@@ -207,8 +205,6 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git-pull-requests
-            AWS_ACCESS_KEY:       ((aws.access_key))
-            AWS_SECRET_KEY:       ((aws.secret_key))
       - task: pr-success-message
         config:
           platform: linux

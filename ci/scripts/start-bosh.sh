@@ -178,7 +178,9 @@ function main() {
   local local_bosh_dir
   local_bosh_dir="/tmp/local-bosh/director"
 
-  docker network create -d bridge --subnet=10.245.0.0/16 director_network
+  if !docker network ls | grep director_network; then
+    docker network create -d bridge --subnet=10.245.0.0/16 director_network
+  fi
 
   pushd ${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment} > /dev/null
       export BOSH_DIRECTOR_IP="10.245.0.3"
