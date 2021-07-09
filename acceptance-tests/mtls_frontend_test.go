@@ -170,6 +170,6 @@ var _ = Describe("mTLS", func() {
 
 		By("Making a non-mTLS request to an endpoint with required mTLS fails")
 		_, err = httpClientNonMTLS.Get("https://b.haproxy.internal")
-		expectTLSHandshakeFailureErr(err)
+		expectTLSCertificateRequiredErr(err)
 	})
 })

@@ -325,7 +325,7 @@ var _ = Describe("External Certificate Lists", func() {
 			})
 
 			Context("When the external certificate is written after HAProxy is started", func() {
-				It("Succesfully loads and uses the certificate", func() {
+				It("Successfully loads and uses the certificate", func() {
 					// Ensure that HAProxy is already deployed
 					haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 						haproxyBackendPort:    haproxyBackendPort,
