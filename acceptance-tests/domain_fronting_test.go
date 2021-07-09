@@ -1,10 +1,14 @@
 package acceptance_tests
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -93,6 +97,7 @@ var _ = Describe("Domain fronting", func() {
 	var nonMTLSClient *http.Client
 	var mtlsClientNoSNI *http.Client
 	var nonMTLSClientNoSNI *http.Client
+	var tlsConfig *tls.Config
 	haproxyBackendPort := 12000
 
 	JustBeforeEach(func() {
@@ -117,37 +122,15 @@ var _ = Describe("Domain fronting", func() {
 		clientCert, err = tls.X509KeyPair([]byte(creds.Client.Certificate), []byte(creds.Client.PrivateKey))
 		Expect(err).NotTo(HaveOccurred())
 
-		nonMTLSClient = buildHTTPClient(
-			[]string{creds.HTTPSFrontend.CA},
-			map[string]string{
-				"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
-			},
-			[]tls.Certificate{}, "",
-		)
+		addressMap := map[string]string{
+			"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
+		}
 
-		mtlsClient = buildHTTPClient(
-			[]string{creds.HTTPSFrontend.CA},
-			map[string]string{
-				"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
-			},
-			[]tls.Certificate{clientCert}, "",
-		)
-
-		nonMTLSClientNoSNI = buildHTTPClient(
-			[]string{creds.HTTPSFrontend.CA},
-			map[string]string{
-				"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
-			},
-			[]tls.Certificate{}, "1.2.3.4",
-		)
-
-		mtlsClientNoSNI = buildHTTPClient(
-			[]string{creds.HTTPSFrontend.CA},
-			map[string]string{
-				"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP),
-			},
-			[]tls.Certificate{clientCert}, "1.2.3.4",
-		)
+		nonMTLSClient = buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{}, "")
+		mtlsClient = buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{clientCert}, "")
+		nonMTLSClientNoSNI = buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{}, "1.2.3.4")
+		mtlsClientNoSNI = buildHTTPClient([]string{creds.HTTPSFrontend.CA}, addressMap, []tls.Certificate{clientCert}, "1.2.3.4")
+		tlsConfig = buildTLSConfig([]string{creds.HTTPSFrontend.CA}, []tls.Certificate{clientCert}, "haproxy.internal")
 	})
 
 	AfterEach(func() {
@@ -160,6 +143,39 @@ var _ = Describe("Domain fronting", func() {
 		}
 	})
 
+	Context("When disable domain fronting is false", func() {
+		BeforeEach(func() {
+			disableDomainFronting = false
+		})
+
+		It("Allows domain fronting", func() {
+			By("Sending a request to HAProxy with a mismatched SNI and Host header it returns a 200")
+			req := buildRequest("https://haproxy.internal", "spoof.internal")
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
+
+			By("Sending a request to HAProxy with no Host header returns a 400")
+			expect400BadRequestNoHostHeader(haproxyInfo.PublicIP, tlsConfig)
+
+			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
+			req = buildRequest("https://haproxy.internal", "haproxy.internal")
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
+
+			By("Sending a request to HAProxy with a matching Host header including the optional port it returns a 200 as normal")
+			req = buildRequest("https://haproxy.internal", "haproxy.internal:443")
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
+
+			By("Sending a request to HAProxy with no SNI it returns a 200, regardless of host header")
+			// Although we are using a 'spoofed' host header here, HAProxy
+			// should not care as there is no SNI in the request
+			req = buildRequest("https://haproxy.internal", "spoof.internal")
+			expect200(nonMTLSClientNoSNI.Do(req))
+			expect200(mtlsClientNoSNI.Do(req))
+		})
+	})
+
 	Context("When disable domain fronting is true", func() {
 		BeforeEach(func() {
 			disableDomainFronting = true
@@ -170,6 +186,9 @@ var _ = Describe("Domain fronting", func() {
 			req := buildRequest("https://haproxy.internal", "spoof.internal")
 			expect421(nonMTLSClient.Do(req))
 			expect421(mtlsClient.Do(req))
+
+			By("Sending a request to HAProxy with no Host header returns a 400")
+			expect400BadRequestNoHostHeader(haproxyInfo.PublicIP, tlsConfig)
 
 			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal")
@@ -201,6 +220,9 @@ var _ = Describe("Domain fronting", func() {
 			expect200(nonMTLSClient.Do(req))
 			expect421(mtlsClient.Do(req))
 
+			By("Sending a request to HAProxy with no Host header returns a 400")
+			expect400BadRequestNoHostHeader(haproxyInfo.PublicIP, tlsConfig)
+
 			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal")
 			expect200(nonMTLSClient.Do(req))
@@ -226,4 +248,29 @@ func buildRequest(address string, hostHeader string) *http.Request {
 	Expect(err).NotTo(HaveOccurred())
 	req.Host = hostHeader
 	return req
+}
+
+func expect400BadRequestNoHostHeader(haproxyIP string, tlsConfig *tls.Config) {
+	addr := fmt.Sprintf("%s:443", haproxyIP)
+	conn, err := tls.Dial("tcp", addr, tlsConfig)
+	Expect(err).ToNot(HaveOccurred())
+	defer conn.Close()
+
+	// Send an malformed HTTP request with a missing host header
+	_, err = conn.Write([]byte(strings.Join([]string{
+		"GET / HTTP/1.1",
+		"Content-Length: 0",
+		"Content-Type: text/plain",
+		"\r\n",
+	}, "\r\n")))
+	Expect(err).ToNot(HaveOccurred())
+
+	err = conn.SetDeadline(time.Now().Add(time.Second))
+	Expect(err).ToNot(HaveOccurred())
+
+	buffer := bytes.NewBuffer([]byte{})
+	io.Copy(buffer, conn)
+
+	Expect(buffer.String()).To(ContainSubstring("HTTP/1.1 400"))
+	Expect(buffer.String()).To(ContainSubstring("Bad Request: missing required Host header"))
 }
