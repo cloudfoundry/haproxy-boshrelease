@@ -98,6 +98,10 @@ func expectTLSHandshakeFailureErr(err error) {
 	checkTLSErr(err, "tls: handshake failure")
 }
 
+func expectTLSCertificateRequiredErr(err error) {
+	checkTLSErr(err, "tls: certificate required")
+}
+
 func expectTLSUnrecognizedNameErr(err error) {
 	checkTLSErr(err, "tls: unrecognized name")
 }

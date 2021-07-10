@@ -133,7 +133,7 @@ var _ = Describe("Strict SNI", func() {
 
 			By("Sending a request to HAProxy with an incorrect SNI is forbidden")
 			_, err = httpClientWrongSNI.Get("https://haproxy.internal")
-			expectTLSUnrecognizedNameErr(err)
+			expectTLSHandshakeFailureErr(err)
 		})
 	})
 })
