@@ -5,9 +5,9 @@ set -e -x
 mkdir -p ${BOSH_INSTALL_TARGET}/common
 cp -a ${BOSH_COMPILE_TARGET}/common/* ${BOSH_INSTALL_TARGET}/common
 
-#Source can be downloaded at : http://www.keepalived.org/software/keepalived-1.2.24.tar.gz
-tar xzvf keepalived/keepalived-1.2.24.tar.gz
-cd keepalived-1.2.24/
+#Source can be downloaded at : http://www.keepalived.org/software/keepalived-2.2.2.tar.gz
+tar xzvf keepalived/keepalived-2.2.2.tar.gz
+cd keepalived-2.2.2/
 
 #compile keepalive
 ./configure --prefix=${BOSH_INSTALL_TARGET}
