@@ -4,7 +4,7 @@
 
 * Docker installed locally
 * A matching stemcell tgz downloaded to `ci/scripts/stemcell`
-  * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-xenial-go_agent
+  * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
 * A BPM release tgz downloaded to `ci/scripts/bpm`
   * Get it from https://bosh.io/releases/github.com/cloudfoundry/bpm-release?all=1
 

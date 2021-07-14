@@ -18,7 +18,7 @@ haproxy/socat-1.7.3.4.tar.gz:
   size: 615381
   object_id: 2afef81a-e6b6-4daf-6d4e-62db4c82b262
   sha: 2fa45073df61dd01b7ccbf2f8a8cc78580de7144
-keepalived/keepalived-1.2.24.tar.gz:
-  size: 601873
-  object_id: aa936bbe-fe82-49cc-82c8-99d867e5b4bb
-  sha: a69b2c40627a9bd69698a57e81a8c8c97826025d
+keepalived/keepalived-2.2.2.tar.gz:
+  size: 1159896
+  object_id: e1cf2ca1-b248-4119-7dda-925e4271588f
+  sha: sha256:103692bd5345a4ed9f4581632ea636214fdf53e45682e200aab122c4fa674ece

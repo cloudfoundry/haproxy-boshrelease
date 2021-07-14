@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -eu
+
+stemcell_path=$PWD/stemcell/*.tgz
+bpm_release_path=$PWD/bpm/*.tgz
+
+cd ${REPO_ROOT:?required}
+echo "----- Pulling in any git submodules..."
+git submodule update --init --recursive --force
+
+echo "----- Starting BOSH"
+
+./ci/scripts/start-bosh.sh
+
+function stop_docker() {
+  echo "----- stopping docker"
+  service docker stop
+}
+
+trap stop_docker EXIT
+
+source /tmp/local-bosh/director/env
+
+echo "----- Creating candidate BOSH release..."
+bosh -n reset-release # in case dev_releases/ is in repo accidentally
+
+bosh create-release
+bosh upload-release --rebase
+release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
+export RELEASE_VERSION="${release_final_version}.latest"
+echo "----- Created ${RELEASE_VERSION}"
+
+echo "----- Uploading stemcell"
+bosh -n upload-stemcell $stemcell_path
+
+echo "----- Uploading BPM"
+bosh -n upload-release $bpm_release_path
+
+export BOSH_PATH=$(which bosh)
+export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
+
+bash

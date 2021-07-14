@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
 
 function generate_certs() {
   local certs_dir
@@ -53,9 +53,9 @@ function generate_certs() {
    bosh int ./certs.yml --path=/client_docker_tls/private_key > ./key.pem
     # generate certs in json format
     #
-   ruby -e 'puts File.read("./ca.pem").split("\n").join("\\n")' > $certs_dir/ca_json_safe.pem
-   ruby -e 'puts File.read("./cert.pem").split("\n").join("\\n")' > $certs_dir/client_certificate_json_safe.pem
-   ruby -e 'puts File.read("./key.pem").split("\n").join("\\n")' > $certs_dir/client_private_key_json_safe.pem
+   ruby -e 'puts File.read("./ca.pem").split("\n").join("\\n")' > "$certs_dir/ca_json_safe.pem"
+   ruby -e 'puts File.read("./cert.pem").split("\n").join("\\n")' > "$certs_dir/client_certificate_json_safe.pem"
+   ruby -e 'puts File.read("./key.pem").split("\n").join("\\n")' > "$certs_dir/client_private_key_json_safe.pem"
   popd
 }
 
@@ -105,7 +105,8 @@ function stop_docker() {
 }
 
 function start_docker() {
-  generate_certs $1
+  generate_certs "$1"
+  local mtu
   mkdir -p /var/log
   mkdir -p /var/run
 
@@ -122,7 +123,7 @@ function start_docker() {
     mount -o remount,rw /proc/sys
   fi
 
-  local mtu=$(cat /sys/class/net/$(ip route get 8.8.8.8|awk '{ print $5 }')/mtu)
+  mtu=$(cat /sys/class/net/$(ip route get 8.8.8.8|awk '{ print $5 }')/mtu)
 
   [[ ! -d /etc/docker ]] && mkdir /etc/docker
   cat <<EOF > /etc/docker/daemon.json
@@ -178,7 +179,7 @@ function main() {
   local local_bosh_dir
   local_bosh_dir="/tmp/local-bosh/director"
 
-  if !docker network ls | grep director_network; then
+  if ! docker network ls | grep director_network; then
     docker network create -d bridge --subnet=10.245.0.0/16 director_network
   fi
 

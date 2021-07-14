@@ -31,7 +31,7 @@ type baseManifestVars struct {
 type varsStoreReader func(interface{}) error
 
 var opsfileChangeName string = `---
-# change deployment name to allow multiple simulataneous deployments
+# change deployment name to allow multiple simultaneous deployments
 - type: replace
   path: /name
   value: ((deployment-name))
@@ -125,12 +125,13 @@ func buildHAProxyInfo(baseManifestVars baseManifestVars, varsStoreReader varsSto
 
 // Helper method for deploying HAProxy
 // Takes the HAProxy base manifest vars, an array of custom opsfiles, and a map of custom vars
-// Returns 'info' struct containing public IP and ssh creds, and a callback to deserialise properties from the vars store
+// Returns 'info' struct containing public IP and ssh creds, and a callback to deserialize properties from the vars store
 func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, customVars map[string]interface{}, expectSuccess bool) (haproxyInfo, varsStoreReader) {
 	manifestVars := buildManifestVars(baseManifestVars, customVars)
 	opsfiles := append(defaultOpsfiles, customOpsfiles...)
 	cmd, varsStoreReader := deployBaseManifestCmd(baseManifestVars.deploymentName, opsfiles, manifestVars)
 
+	dumpCmd(cmd)
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -149,12 +150,16 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 	return haproxyInfo, varsStoreReader
 }
 
+func dumpCmd(cmd *exec.Cmd) {
+	fmt.Println("---------- Command to run ----------")
+	fmt.Println(cmd.String())
+	fmt.Println("------------------------------------")
+}
+
 func dumpHAProxyConfig(haproxyInfo haproxyInfo) {
 	By("Checking /var/vcap/jobs/haproxy/config/haproxy.config")
 	haProxyConfig, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "cat /var/vcap/jobs/haproxy/config/haproxy.config")
 	Expect(err).NotTo(HaveOccurred())
-	fmt.Println("HAProxy Config")
-
 	fmt.Println("---------- HAProxy Config ----------")
 	fmt.Println(haProxyConfig)
 	fmt.Println("------------------------------------")

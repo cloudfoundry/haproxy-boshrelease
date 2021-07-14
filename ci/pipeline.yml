@@ -414,7 +414,7 @@ resources:
   - name: stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-warden-boshlite-ubuntu-xenial-go_agent
+      name: bosh-warden-boshlite-ubuntu-bionic-go_agent
 
   - name: bpm
     type: bosh-io-release
