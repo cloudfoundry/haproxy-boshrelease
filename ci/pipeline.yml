@@ -205,29 +205,6 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git-pull-requests
-      - task: pr-success-message
-        config:
-          platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
-          inputs:
-            - { name: git-pull-requests }
-          outputs:
-            - { name: message }
-          run:
-            path: sh
-            args:
-            - -ce
-            - |
-              cd git-pull-requests
-              pr_url=$(git config --get pullrequest.url)
-              cd -
-              echo "<${pr_url}|Pull request passed acceptance tests> Merge when ready: ${pr_url}" > message/body
     on_success:
       put: git-pull-requests
       params:
