@@ -5,5 +5,5 @@ dependencies: []
 
 files:
 - common/utils.sh
-- keepalived/keepalived-1.2.24.tar.gz
+- keepalived/keepalived-2.2.2.tar.gz
 
