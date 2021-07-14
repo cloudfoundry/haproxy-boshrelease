@@ -230,6 +230,9 @@ properties:
   ha_proxy.disable_tls_11:
     default: false
     description: "Disable TLS 1.1 in HA Proxy"
+  ha_proxy.disable_tls_12:
+    default: false
+    description: "Disable TLS 1.2 in HA Proxy"
 
   ha_proxy.connect_timeout:
     description: "Timeout (in floating point seconds) used on connections from haproxy to a backend, while waiting for the TCP handshake to complete + connection to establish"

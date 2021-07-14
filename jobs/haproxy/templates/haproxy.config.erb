@@ -28,6 +28,9 @@ end
 if p("ha_proxy.disable_tls_11")
   ssl_flags = "#{ssl_flags} no-tlsv11"
 end
+if p("ha_proxy.disable_tls_12")
+  ssl_flags = "#{ssl_flags} no-tlsv12"
+end
 if p("ha_proxy.disable_tls_tickets")
   ssl_flags = "#{ssl_flags} no-tls-tickets"
 end
