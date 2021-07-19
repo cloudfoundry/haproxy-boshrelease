@@ -1,10 +1,17 @@
 # abort script on any command that exit with a non zero value
 set -e
 
-LUA_VERSION=5.4.1
-PCRE_VERSION=10.34
-SOCAT_VERSION=1.7.3.4
-HAPROXY_VERSION=2.2.14
+# https://www.lua.org/ftp/lua-5.4.3.tar.gz
+LUA_VERSION=5.4.3
+
+# https://ftp.pcre.org/pub/pcre/pcre2-10.37.tar.gz
+PCRE_VERSION=10.37
+
+# http://www.dest-unreach.org/socat/download/socat-1.7.4.1.tar.gz
+SOCAT_VERSION=1.7.4.1
+
+# http://www.haproxy.org/download/2.4/src/haproxy-2.4.2.tar.gz
+HAPROXY_VERSION=2.4.2
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
