@@ -196,6 +196,9 @@ global
   <%- p("ha_proxy.lua_scripts").each do |script| -%>
     lua-load <%= script %>
   <%- end -%>
+  <%- p("ha_proxy.lua_scripts_per_thread").each do |script| -%>
+    lua-load-per-thread <%= script %>
+  <%- end -%>
     tune.ssl.default-dh-param <%= p("ha_proxy.default_dh_param") %>
     tune.bufsize <%= p("ha_proxy.buffer_size_bytes") %>
   <%- if_p("ha_proxy.max_rewrite") do -%>
