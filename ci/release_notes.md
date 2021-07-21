@@ -10,6 +10,7 @@
 | Lua        | 5.4.1   | 5.4.3   |
 | PCRE       | 10.34   | 10.37   |
 | Socat      | 1.7.3.4 | 1.7.4.1 |
+| keepalived | 1.2.24  | 2.2.2   |
 | Stemcell   | xenial  | bionic  |
 
 # Acknowledgements
