@@ -135,13 +135,13 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional')
     end
 
-    context 'when ha_proxy.client_cert_ignore_err is true' do
+    context 'when ha_proxy.client_cert_ignore_err is all' do
       let(:properties) do
-        default_properties.merge({ 'client_cert' => true, 'client_cert_ignore_err' => true })
+        default_properties.merge({ 'client_cert' => true, 'client_cert_ignore_err' => 'all' })
       end
 
-      it 'adds the crt-ignore-err flag' do
-        expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err true')
+      it 'adds the crt-ignore-err and ca-ignore-err flags' do
+        expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err all ca-ignore-err all')
       end
 
       context 'when client_cert is not enabled' do

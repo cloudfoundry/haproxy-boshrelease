@@ -130,7 +130,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
 
     it 'does not add mTLS headers' do
-      expect(frontend_https).not_to include(/http-request set-header X-Fowarded-Client-Cert/)
+      expect(frontend_https).not_to include(/http-request set-header X-Forwarded-Client-Cert/)
       expect(frontend_https).not_to include(/http-request set-header X-SSL-Client/)
     end
   end
@@ -144,18 +144,18 @@ describe 'config/haproxy.config HTTPS frontend' do
       expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional')
     end
 
-    context 'when ha_proxy.client_cert_ignore_err is true' do
+    context 'when ha_proxy.client_cert_ignore_err is all' do
       let(:properties) do
-        default_properties.merge({ 'client_cert' => true, 'client_cert_ignore_err' => true })
+        default_properties.merge({ 'client_cert' => true, 'client_cert_ignore_err' => 'all' })
       end
 
-      it 'adds the crt-ignore-err flag' do
-        expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err true')
+      it 'adds the crt-ignore-err and ca-ignore-err flags' do
+        expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err all ca-ignore-err all')
       end
 
       context 'when client_cert is not enabled' do
         let(:properties) do
-          default_properties.merge({ 'client_cert_ignore_err' => true })
+          default_properties.merge({ 'client_cert_ignore_err' => 'all' })
         end
 
         it 'aborts with a meaningful error message' do
