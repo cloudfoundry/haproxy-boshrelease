@@ -393,7 +393,13 @@ properties:
       -----END PRIVATE KEY-----
 
   ha_proxy.client_cert_ignore_err:
-    description: "Error code(s) to ignore from verifying a client cert during a mutual ssl handshake, in a pipe-separated list. For example, 2 is if it cannot get the issuer certificate, 10 if the certificate has expired and 18 if the certificate is self-signed. The keyword 'all' will ignore all possible errors. See the openssl verify documentation [https://wiki.openssl.org/index.php/Manual:Verify(1)] for a full list of all error codes and their meanings."
+    description: |
+      Error code(s) to ignore from verifying a client cert during a mutual ssl handshake, in a pipe-separated list.
+      For example, 2 is if it cannot get the issuer certificate, 10 if the certificate has expired and 18 if the certificate is self-signed.
+      The keyword 'all' will ignore all possible errors.
+      Note that the errors will be ignored on both the certificate and the CA verification.
+      See the openssl verify documentation [https://www.openssl.org/docs/manmaster/man3/X509_STORE_CTX_get_error.html] for a full list of all error codes and their meanings.
+      See https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206 for a mapping of error codes to symbols.
     example: 2|10|18
 
   ha_proxy.client_revocation_list:

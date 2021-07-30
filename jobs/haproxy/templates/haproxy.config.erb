@@ -82,6 +82,7 @@ if mutual_tls_enabled
   tls_options = "#{tls_options} ca-file #{client_ca_certs} verify optional"
   if_p("ha_proxy.client_cert_ignore_err") do |ignore_errs|
     tls_options = "#{tls_options} crt-ignore-err #{ignore_errs}"
+    tls_options = "#{tls_options} ca-ignore-err #{ignore_errs}"
   end
   if_p("ha_proxy.client_revocation_list") do
     tls_options = "#{tls_options} crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem"
