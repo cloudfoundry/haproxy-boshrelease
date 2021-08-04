@@ -109,6 +109,19 @@ fi
  git status
  git commit -m "release v${VERSION}")
 
+# After creating a final release we will also create a dev release with RFC 6455 compliance patch
+pushd ${REPO_ROOT}
+echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+tar -czvf haproxy-patches.tar.gz haproxy-patches
+bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+bosh upload-blobs
+
+bosh -n create-release --force --version ${VERSION}-patched \
+  --tarball releases/$RELEASE_NAME/$RELEASE_NAME-$VERSION-patched.tgz
+popd
+
+mv ${REPO_ROOT}/releases/$RELEASE_NAME/$RELEASE_NAME-$VERSION-patched.tgz ${RELEASE_ROOT}/artifacts
+
 # so that future steps in the pipeline can push our changes
 cp -a ${REPO_ROOT} ${REPO_OUT}
 

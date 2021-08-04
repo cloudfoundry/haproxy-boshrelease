@@ -1,5 +1,5 @@
-# abort script on any command that exit with a non zero value
-set -e
+# abort script on failures
+set -euxo pipefail
 
 # https://www.lua.org/ftp/lua-5.4.3.tar.gz
 LUA_VERSION=5.4.3
@@ -38,9 +38,27 @@ pushd socat-${SOCAT_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
-echo "Installing HAproxy..."
+echo "Unpacking HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
+  if [ -f ../haproxy/patches.tar.gz ]; then
+    mkdir -p ${BOSH_INSTALL_TARGET}/applied-patches
+    tar xf ../haproxy/patches.tar.gz
+
+    for patchfile in haproxy-patches/*.patch; do
+      echo "Applying patch file ${patchfile}"
+
+      # Conservatively limit patch fuzz factor to 0 to reduce chance of faulty patch
+      patch -F 0 -p0 < ${patchfile}
+
+      # Save patches in install target for inspection later
+      cp ${patchfile} ${BOSH_INSTALL_TARGET}/applied-patches
+    done
+
+    rm -r haproxy-patches
+  fi
+
+  echo "Installing HAproxy..."
   make TARGET=linux-glibc USE_OPENSSL=1 USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
