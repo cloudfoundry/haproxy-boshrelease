@@ -89,9 +89,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       default_properties.merge({ 'disable_domain_fronting' => true })
     end
 
-    it 'disables domain fronting by checkig SNI against the Host header' do
-      expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),field(1,:)')
-      expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0')
+    it 'disables domain fronting by checking SNI against the Host header' do
+      expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),field(1,:),lower')
+      expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0')
       expect(frontend_wss).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match')
     end
   end
@@ -101,9 +101,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       default_properties.merge({ 'disable_domain_fronting' => 'mtls_only' })
     end
 
-    it 'disables domain fronting by checkig SNI against the Host header for mtls connections only' do
-      expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),field(1,:)')
-      expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0')
+    it 'disables domain fronting by checking SNI against the Host header for mtls connections only' do
+      expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),field(1,:),lower')
+      expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0')
       expect(frontend_wss).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
     end
   end

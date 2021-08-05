@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/net/http2"
@@ -38,7 +39,7 @@ func buildHTTPClient(caCerts []string, addressMap map[string]string, clientCerts
 		TLSClientConfig: tlsConfig,
 		// Override DialContext to force resolve with alternative addresses
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			if altAddr, ok := addressMap[addr]; ok {
+			if altAddr, ok := addressMap[strings.ToLower(addr)]; ok {
 				addr = altAddr
 			}
 
