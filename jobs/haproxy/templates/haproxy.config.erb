@@ -363,8 +363,8 @@ frontend https-in
     # Ensure a host header exists to check against
     http-request deny deny_status 400 content-type text/plain string "400 Bad Request: missing required Host header" if { req.hdr_cnt(host) eq 0 }
     # Ignore optional port in Host header when comparing to SNI
-    http-request set-var(txn.host) hdr(host),field(1,:)
-    acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
+    http-request set-var(txn.host) hdr(host),field(1,:),lower
+    acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0
     <%- if disable_domain_fronting  == 'mtls_only' %>
     http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match
     <%- elsif [true, "true"].include?(disable_domain_fronting) -%>
@@ -491,8 +491,8 @@ frontend wss-in
     # Ensure a host header exists to check against
     http-request deny deny_status 400 content-type text/plain string "400 Bad Request: missing required Host header" if { req.hdr_cnt(host) eq 0 }
     # Ignore optional port in Host header when comparing to SNI
-    http-request set-var(txn.host) hdr(host),field(1,:)
-    acl ssl_sni_http_host_match ssl_fc_sni,strcmp(txn.host) eq 0
+    http-request set-var(txn.host) hdr(host),field(1,:),lower
+    acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0
     <%- if disable_domain_fronting  == 'mtls_only' %>
     http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match
     <%- elsif [true, "true"].include?(disable_domain_fronting) -%>

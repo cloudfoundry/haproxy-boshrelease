@@ -190,12 +190,19 @@ var _ = Describe("Domain fronting", func() {
 			By("Sending a request to HAProxy with no Host header returns a 400")
 			expect400BadRequestNoHostHeader(haproxyInfo.PublicIP, tlsConfig)
 
-			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
+			By("Sending a request to HAProxy with a matching SNI and Host header it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal")
 			expect200(nonMTLSClient.Do(req))
 			expect200(mtlsClient.Do(req))
 
-			By("Sending a request to HAProxy with a matching Host header including the optional port it returns a 200 as normal")
+			By("Sending a request to HAProxy with a case-mismatched SNI and Host header it returns a 200 as normal")
+			req = buildRequest("https://haproxy.internal", "haproxy.internal")
+			// overwrite host field directly to skip canonicalization
+			req.Host = "HAPROXY.internal"
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
+
+			By("Sending a request to HAProxy with a matching SNI and Host header including the optional port it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal:443")
 			expect200(nonMTLSClient.Do(req))
 			expect200(mtlsClient.Do(req))
@@ -223,12 +230,19 @@ var _ = Describe("Domain fronting", func() {
 			By("Sending a request to HAProxy with no Host header returns a 400")
 			expect400BadRequestNoHostHeader(haproxyInfo.PublicIP, tlsConfig)
 
-			By("Sending a request to HAProxy with a matching Host header it returns a 200 as normal")
+			By("Sending a request to HAProxy with a matching SNI and Host header it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal")
 			expect200(nonMTLSClient.Do(req))
 			expect200(mtlsClient.Do(req))
 
-			By("Sending a request to HAProxy with a matching Host header including the optional port it returns a 200 as normal")
+			By("Sending a request to HAProxy with a case-mismatched SNI and Host header it returns a 200 as normal")
+			req = buildRequest("https://haproxy.internal", "haproxy.internal")
+			// overwrite host field directly to skip canonicalization
+			req.Host = "HAPROXY.internal"
+			expect200(nonMTLSClient.Do(req))
+			expect200(mtlsClient.Do(req))
+
+			By("Sending a request to HAProxy with a matching SNI and Host header including the optional port it returns a 200 as normal")
 			req = buildRequest("https://haproxy.internal", "haproxy.internal:443")
 			expect200(nonMTLSClient.Do(req))
 			expect200(mtlsClient.Do(req))
