@@ -449,6 +449,6 @@ resources:
     source:
       bucket:            cf-haproxy-boshrelease-pipeline
       region_name:       us-east-1
-      regexp:            haproxy-(.*).tgz
+      regexp:            haproxy-([0-9\.]+).tgz
       access_key_id:     ((aws.access_key))
       secret_access_key: ((aws.secret_key))
