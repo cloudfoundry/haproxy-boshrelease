@@ -116,14 +116,14 @@ pushd ${REPO_ROOT}
   bosh upload-blobs
 
   bosh -n create-release --force --version ${VERSION}-patched \
-    --tarball ../$RELEASE_NAME-$VERSION-patched.tgz
+    --tarball ../${RELEASE_NAME}_patched-$VERSION.tgz
 
   # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 popd
 
-mv $RELEASE_NAME-$VERSION-patched.tgz ${RELEASE_ROOT}/artifacts
+mv ${RELEASE_NAME}_patched-$VERSION.tgz ${RELEASE_ROOT}/artifacts
 
 # so that future steps in the pipeline can push our changes
 cp -a ${REPO_ROOT} ${REPO_OUT}
