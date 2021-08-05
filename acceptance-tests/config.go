@@ -23,48 +23,48 @@ var config Config
 func loadConfig() (Config, error) {
 	releaseRepoPath, err := getEnvOrFail("REPO_ROOT")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	releaseVersion, err := getEnvOrFail("RELEASE_VERSION")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	boshCACert, err := getEnvOrFail("BOSH_CA_CERT")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	boshClient, err := getEnvOrFail("BOSH_CLIENT")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	boshClientSecret, err := getEnvOrFail("BOSH_CLIENT_SECRET")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	boshEnvironment, err := getEnvOrFail("BOSH_ENVIRONMENT")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	boshPath, err := getEnvOrFail("BOSH_PATH")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	baseManifestPath, err := getEnvOrFail("BASE_MANIFEST_PATH")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	// BOSH commands require HOME is set
 	homePath, err := getEnvOrFail("HOME")
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	return Config{
