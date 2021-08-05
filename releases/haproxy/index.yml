@@ -21,6 +21,8 @@ builds:
     version: "1"
   455dc8b6-8b06-43f1-af10-5079f4858f5e:
     version: 8.0.9
+  49cea072-30d5-4b47-4db2-47007bbaadc7:
+    version: 11.4.0
   4a8b1ff5-c8ea-4b76-a1d0-99e76b8778c0:
     version: 8.0.4
   53d69e13-909b-42da-56c6-6abb3b9e6203:
