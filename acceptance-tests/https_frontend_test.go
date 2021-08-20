@@ -93,9 +93,25 @@ var _ = Describe("HTTPS Frontend", func() {
 		}
 	})
 
-	It("Correctly proxies HTTPS requests", func() {
-		By("Sending a request to HAProxy using HTTP 1.1")
+	It("Correctly proxies HTTPS requests with TLSv1.2 and 1.3", func() {
+		By("Sending a request to HAProxy using HTTP 1.1 and TLSv1.2")
+
+		http1Client.Transport.(*http.Transport).TLSClientConfig.MaxVersion = tls.VersionTLS12
+		http1Client.Transport.(*http.Transport).TLSClientConfig.MinVersion = tls.VersionTLS12
+
 		resp, err := http1Client.Get("https://haproxy.internal:443")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.ProtoMajor).To(Equal(1))
+
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+
+		By("Sending a request to HAProxy using HTTP 1.1 and TLSv1.3")
+
+		http1Client.Transport.(*http.Transport).TLSClientConfig.MaxVersion = tls.VersionTLS13
+		http1Client.Transport.(*http.Transport).TLSClientConfig.MinVersion = tls.VersionTLS13
+
+		resp, err = http1Client.Get("https://haproxy.internal:443")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.ProtoMajor).To(Equal(1))
 
