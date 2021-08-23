@@ -29,6 +29,8 @@ builds:
     version: 9.1.0
   629cf530-f528-40ab-56e2-eb9fd5ebacb0:
     version: 10.6.0
+  64711483-b4b1-48da-7e31-13cf6fbc47b6:
+    version: 11.4.2
   67641731-8395-4522-827d-0699dc8e7a1e:
     version: "4"
   678db2df-6efc-4281-bd7e-9ad1527c0043:
