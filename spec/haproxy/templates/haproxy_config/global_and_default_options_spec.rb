@@ -244,10 +244,10 @@ describe 'config/haproxy.config global and default options' do
     end
   end
 
-  context 'when ha_proxy.ssl_chiphersuites is provided' do
+  context 'when ha_proxy.ssl_ciphersuites is provided' do
     let(:properties) do
       {
-        'ssl_chiphersuites' => 'TLS_AES_128_GCM_SHA256'
+        'ssl_ciphersuites' => 'TLS_AES_128_GCM_SHA256'
       }
     end
 

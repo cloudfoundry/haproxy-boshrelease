@@ -215,10 +215,10 @@ global
     stats timeout 2m
     ssl-default-bind-options <%= ssl_flags %>
     ssl-default-bind-ciphers <%= p("ha_proxy.ssl_ciphers") %>
-    ssl-default-bind-ciphersuites <%= p("ha_proxy.ssl_chiphersuites") %>
+    ssl-default-bind-ciphersuites <%= p("ha_proxy.ssl_ciphersuites") %>
     ssl-default-server-options <%= ssl_flags %>
     ssl-default-server-ciphers <%= p("ha_proxy.ssl_ciphers") %>
-    ssl-default-server-ciphersuites <%= p("ha_proxy.ssl_chiphersuites") %>
+    ssl-default-server-ciphersuites <%= p("ha_proxy.ssl_ciphersuites") %>
 
 defaults
     log global
