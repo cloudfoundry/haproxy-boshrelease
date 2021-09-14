@@ -190,6 +190,9 @@ properties:
   ha_proxy.enable_health_check_http:
     description: "Optionally enable http health-check on `haproxy_ip:8080/health`. It shows `200 OK` if >0 backend servers are up. If used with ext_crt_list_timeout you should make sure that the deployment canary_watch_time and update_watch_time are configured to wait at least the number of seconds defined by ext_crt_list_timeout."
     default: false
+  ha_proxy.enable_monit_health_check_http:
+    description: "Optionally enable http health-check on `haproxy_ip:8080/health` using monit."
+    default: false
   ha_proxy.health_check_port:
     description: "port for http health-check"
     default: 8080
