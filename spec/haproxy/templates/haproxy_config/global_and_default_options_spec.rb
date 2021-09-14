@@ -257,6 +257,20 @@ describe 'config/haproxy.config global and default options' do
     end
   end
 
+  context 'when xenial_compatibility is set' do
+    let(:properties) do
+      {
+        'ssl_ciphersuites' => 'TLS_AES_128_GCM_SHA256',
+        'xenial_compatibility' => 'true'
+      }
+    end
+
+    it 'does not set ciphers controlled by ssl_ciphersuites at all' do
+      expect(global).not_to include('ssl-default-server-ciphersuites TLS_AES_128_GCM_SHA256')
+      expect(global).not_to include('ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256')
+    end
+  end
+
   context 'when ha_proxy.max_connections is provided' do
     let(:properties) do
       {

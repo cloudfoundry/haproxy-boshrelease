@@ -1,15 +1,6 @@
-# Fixes
-- fix a
-- fix b
-
 # New Features
-- feature a
-- feature b
-
-# Upgrades
-
-- `component` has been upgraded to v1.2.3 from v1.0.0
+- Added the flag `ha_proxy.xenial_compatibility` to enable compatibility with the xenial stemcell disabling the use of `ssl_ciphersuites`.
 
 # Acknowledgements
 
-Thanks @person for the PR / fixes!
+Thanks @jaristiz/@anEXPer for the PR / fixes!

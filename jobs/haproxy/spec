@@ -211,6 +211,13 @@ properties:
   ha_proxy.ssl_ciphersuites:
     default: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
     description: "List of TLSv1.3 Ciphers that are passed to HAProxy"
+  ha_proxy.xenial_compatibility:
+    default: false
+    description: |
+      Suppress configuration that relies on openssl versions not available on the Xenial stemcell line.
+      Note: this means that TLS 1.3 ciphersuites will not be configured,
+      and the ha_proxy.ssl_ciphersuites property and any properties that override it
+      will be excluded from the haproxy templates at render time.
   ha_proxy.hsts_enable:
     default: false
     description: "Enables HSTS(Strict-Transport-Security Header) for all the SSL/TLS listeners"

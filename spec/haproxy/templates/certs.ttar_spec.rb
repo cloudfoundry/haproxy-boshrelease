@@ -346,6 +346,30 @@ describe 'config/certs.ttar' do
     end
   end
 
+  describe 'ha_proxy.xenial_compatibility' do
+    let(:ttar) do
+      template.render({
+        'ha_proxy' => {
+          'xenial_compatibility' => 'true',
+          'crt_list' => [{
+            'ssl_ciphers' => 'AES:ALL:!aNULL:!eNULL:+RC4:@STRENGTH',
+            'ssl_ciphersuites' => 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384',
+            'ssl_pem' => 'ssl_pem contents'
+          }]
+        }
+      })
+    end
+
+    it 'is includes ciphers but not ciphersuites in the crt list' do
+      expect(ttar_entry(ttar, '/var/vcap/jobs/haproxy/config/ssl/crt-list')).to eq(<<~EXPECTED)
+
+        /var/vcap/jobs/haproxy/config/ssl/cert-0.pem [ciphers AES:ALL:!aNULL:!eNULL:+RC4:@STRENGTH]
+
+
+      EXPECTED
+    end
+  end
+
   describe 'ha_proxy.crt_list[].ssl_min_version' do
     let(:ttar) do
       template.render({
