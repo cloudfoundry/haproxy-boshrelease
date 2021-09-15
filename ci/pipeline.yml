@@ -143,6 +143,7 @@ jobs:
       - in_parallel:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
+        - { get: stemcell-xenial }
         - { get: bpm }
       - task: acceptance-tests
         privileged: true
@@ -158,6 +159,7 @@ jobs:
           inputs:
             - { name: git }
             - { name: stemcell }
+            - { name: stemcell-xenial }
             - { name: bpm }
           run:
             path: ./git/ci/scripts/acceptance-tests
@@ -179,6 +181,7 @@ jobs:
     - do:
       - { get: git-pull-requests, trigger: true, version: every, passed: [unit-tests-pr] }
       - { get: stemcell }
+      - { get: stemcell-xenial }
       - { get: bpm }
       - put: git-pull-requests
         params:
@@ -199,6 +202,7 @@ jobs:
           inputs:
             - { name: git-pull-requests }
             - { name: stemcell }
+            - { name: stemcell-xenial }
             - { name: bpm }
           run:
             path: ./git-pull-requests/ci/scripts/acceptance-tests
@@ -410,6 +414,11 @@ resources:
       repository:   cloudfoundry-incubator/haproxy-boshrelease
       base_branch:  master
       labels:       [approved]
+
+  - name: stemcell-xenial
+    type: bosh-io-stemcell
+    source:
+      name: bosh-warden-boshlite-ubuntu-xenial-go_agent
 
   - name: stemcell
     type: bosh-io-stemcell
