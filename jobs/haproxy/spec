@@ -190,6 +190,9 @@ properties:
   ha_proxy.enable_health_check_http:
     description: "Optionally enable http health-check on `haproxy_ip:8080/health`. It shows `200 OK` if >0 backend servers are up. If used with ext_crt_list_timeout you should make sure that the deployment canary_watch_time and update_watch_time are configured to wait at least the number of seconds defined by ext_crt_list_timeout."
     default: false
+  ha_proxy.disable_monit_health_check_http:
+    description: "The HAProxy health check endpoint returns a healthy status if at least one backend server is responding. By default when enable_health_check_http: true, Bosh will consider the HAProxy VM unhealthy if the HAProxy health check returns an unhealthy status. In some cases this might not be desired, for example when deploying HAProxy before deploying the backend servers. To prevent Bosh from considering the HAProxy VM unhealthy when all backend servers are unhealthy set disable_monit_health_check_http: true. Note that this flag is ignored unless enable_health_check_http: true."
+    default: false
   ha_proxy.health_check_port:
     description: "port for http health-check"
     default: 8080
