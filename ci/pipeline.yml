@@ -399,6 +399,15 @@ resource_types:
     source:
       repository: teliaoss/github-pr-resource
 
+  # FIXME: Need to use latest version of this resource due to
+  # https://github.com/concourse/github-release-resource/issues/108
+  # https://github.com/concourse/github-release-resource/pull/107
+  # Until Concourse is updated to 7.5.0+
+  - name: github-release-alt
+    type: registry-image
+    source:
+      repository: concourse/github-release-resource
+
 resources:
   - name: git
     type: git
@@ -447,7 +456,7 @@ resources:
       url: ((slack.webhook))
 
   - name: github
-    type: github-release
+    type: github-release-alt
     source:
       user:         cloudfoundry-incubator
       repository:   haproxy-boshrelease
