@@ -1,17 +1,31 @@
 package acceptance_tests
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"math/big"
 	"net/http"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
+type Certificate struct {
+	CertPEM       string
+	PrivateKeyPEM string
+	X509Cert      *x509.Certificate
+	PrivateKey    *rsa.PrivateKey
+	TLSCert       tls.Certificate
+}
 
 /*
 	https://bosh.io/jobs/haproxy?source=github.com/cloudfoundry-community/haproxy-boshrelease#p%3dha_proxy.forwarded_client_cert
@@ -47,7 +61,7 @@ var _ = Describe("forwarded_client_cert", func() {
     ssl_pem:
       cert_chain: ((https_frontend.certificate))((https_frontend_ca.certificate))
       private_key: ((https_frontend.private_key))
-    client_ca_file: ((client_cert_ca.certificate))
+    client_ca_file: ((client_ca_pem))
 
 - type: replace
   path: /variables?/-
@@ -66,26 +80,6 @@ var _ = Describe("forwarded_client_cert", func() {
       ca: https_frontend_ca
       common_name: haproxy.internal
       alternative_names: [haproxy.internal]
-
-# Add mTLS cert
-- type: replace
-  path: /variables?/-
-  value:
-    name: client_cert_ca
-    type: certificate
-    options:
-      is_ca: true
-      common_name: bosh
-- type: replace
-  path: /variables?/-
-  value:
-    name: client_cert
-    type: certificate
-    options:
-      ca: client_cert_ca
-      common_name: haproxy.client
-      alternative_names: [haproxy.client]
-      extended_key_usage: [client_auth]
 `
 	var closeLocalServer func()
 	var closeSSHTunnel context.CancelFunc
@@ -101,7 +95,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			CA          string `yaml:"ca"`
 		} `yaml:"client_cert"`
 	}
-	var clientCert tls.Certificate
+	var clientCert *Certificate
 	var haproxyInfo haproxyInfo
 	var deployVars map[string]interface{}
 	var mtlsClient *http.Client
@@ -136,13 +130,21 @@ var _ = Describe("forwarded_client_cert", func() {
 	JustBeforeEach(func() {
 		haproxyBackendPort := 12000
 		var varsStoreReader varsStoreReader
+
+		var err error
+		var clientCA *Certificate
+		clientCA, clientCert, err = generateClientCerts()
+		Expect(err).NotTo(HaveOccurred())
+
+		deployVars["client_ca_pem"] = clientCA.CertPEM
+
 		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        defaultDeploymentName,
 		}, []string{opsfileForwardedClientCert}, deployVars, true)
 
-		err := varsStoreReader(&creds)
+		err = varsStoreReader(&creds)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Starting a local http server to act as a backend")
@@ -156,9 +158,6 @@ var _ = Describe("forwarded_client_cert", func() {
 
 		closeSSHTunnel = setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 
-		clientCert, err = tls.X509KeyPair([]byte(creds.ClientCert.Certificate), []byte(creds.ClientCert.PrivateKey))
-		Expect(err).NotTo(HaveOccurred())
-
 		nonMTLSClient = buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
@@ -168,7 +167,7 @@ var _ = Describe("forwarded_client_cert", func() {
 		mtlsClient = buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
-			[]tls.Certificate{clientCert}, "",
+			[]tls.Certificate{clientCert.TLSCert}, "",
 		)
 
 		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
@@ -199,7 +198,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-			checkXFCCHeadersMatchCert(creds.ClientCert.Certificate, recordedHeaders)
+			checkXFCCHeadersMatchCert(clientCert.X509Cert, recordedHeaders)
 		})
 	})
 
@@ -288,7 +287,7 @@ var _ = Describe("forwarded_client_cert", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-			checkXFCCHeadersMatchCert(creds.ClientCert.Certificate, recordedHeaders)
+			checkXFCCHeadersMatchCert(clientCert.X509Cert, recordedHeaders)
 
 			// X-Cf-Proxy-Signature should be left intact
 			Expect(recordedHeaders.Get("X-Cf-Proxy-Signature")).To(Equal("abc123"))
@@ -296,15 +295,11 @@ var _ = Describe("forwarded_client_cert", func() {
 	})
 })
 
-func checkXFCCHeadersMatchCert(expectedCertPEM string, headers http.Header) {
+func checkXFCCHeadersMatchCert(expectedCert *x509.Certificate, headers http.Header) {
 	derEncodedXFCC, err := base64.StdEncoding.DecodeString(headers.Get("X-Forwarded-Client-Cert"))
 	Expect(err).NotTo(HaveOccurred())
 
 	actualCert, err := x509.ParseCertificate(derEncodedXFCC)
-	Expect(err).NotTo(HaveOccurred())
-
-	expectedCertBlock, _ := pem.Decode([]byte(expectedCertPEM))
-	expectedCert, err := x509.ParseCertificate(expectedCertBlock.Bytes)
 	Expect(err).NotTo(HaveOccurred())
 
 	Expect(*actualCert).To(Equal(*expectedCert))
@@ -321,4 +316,117 @@ func checkXFCCHeadersMatchCert(expectedCertPEM string, headers http.Header) {
 
 	Expect(headers.Get("X-SSL-Client")).To(Equal("1"))
 	Expect(headers.Get("X-SSL-Client-Verify")).To(Equal("0"))
+}
+
+func generateClientCerts() (*Certificate, *Certificate, error) {
+	caKeyPair, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	caKeyPEMBytes, err := pemEncodeRSAKey(caKeyPair)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	certKeyPair, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	certKeyPEMBytes, err := pemEncodeRSAKey(certKeyPair)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	caTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Palau Tech Inc"},
+			Country:      []string{"Palau"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour * 24 * 30),
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+	}
+
+	certTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Tuvalu Tech Inc"},
+			Country:      []string{"Tuvalu"},
+			CommonName:   "haproxy.client",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour * 24 * 30),
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		BasicConstraintsValid: true,
+	}
+
+	caDERBytes, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &caKeyPair.PublicKey, caKeyPair)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	caPEMBytes, err := pemEncodeCert(caDERBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	certDERBytes, err := x509.CreateCertificate(rand.Reader, &certTemplate, &caTemplate, &certKeyPair.PublicKey, caKeyPair)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	certPEMBytes, err := pemEncodeCert(certDERBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	clientTLSCert, err := tls.X509KeyPair(certPEMBytes, certKeyPEMBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &Certificate{
+			X509Cert:      &caTemplate,
+			CertPEM:       string(caPEMBytes),
+			PrivateKey:    caKeyPair,
+			PrivateKeyPEM: string(caKeyPEMBytes),
+		}, &Certificate{
+			X509Cert:      &certTemplate,
+			CertPEM:       string(certPEMBytes),
+			PrivateKey:    certKeyPair,
+			PrivateKeyPEM: string(certKeyPEMBytes),
+			TLSCert:       clientTLSCert,
+		}, nil
+}
+
+func pemEncodeCert(derBytes []byte) ([]byte, error) {
+	pemBytes := new(bytes.Buffer)
+	err := pem.Encode(pemBytes, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: derBytes,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return pemBytes.Bytes(), nil
+}
+
+func pemEncodeRSAKey(key *rsa.PrivateKey) ([]byte, error) {
+	pemBytes := new(bytes.Buffer)
+	err := pem.Encode(pemBytes, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pemBytes.Bytes(), nil
 }
