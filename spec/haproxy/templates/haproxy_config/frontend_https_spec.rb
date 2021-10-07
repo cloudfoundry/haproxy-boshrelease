@@ -291,15 +291,15 @@ describe 'config/haproxy.config HTTPS frontend' do
         end
 
         it 'writes mTLS headers when mTLS is used' do
-          expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]      if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client            %[ssl_c_used]            if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex] if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]          if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]          if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client            %[ssl_c_used]                if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex]     if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]              if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]       if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]        if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }')
         end
       end
     end
@@ -349,15 +349,15 @@ describe 'config/haproxy.config HTTPS frontend' do
         end
 
         it 'overwrites mTLS headers when mTLS is used' do
-          expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]      if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client            %[ssl_c_used]            if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex] if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]          if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]        if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]    if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]        if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]   if { ssl_c_used }')
-          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]    if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-Forwarded-Client-Cert %[ssl_c_der,base64]          if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client            %[ssl_c_used]                if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Session-ID %[ssl_fc_session_id,hex]     if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Verify     %[ssl_c_verify]              if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotBefore  %{+Q}[ssl_c_notbefore]       if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-NotAfter   %{+Q}[ssl_c_notafter]        if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }')
+          expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }')
         end
       end
     end

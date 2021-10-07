@@ -296,21 +296,14 @@ var _ = Describe("forwarded_client_cert", func() {
 })
 
 func checkXFCCHeadersMatchCert(expectedCert *x509.Certificate, headers http.Header) {
-	derEncodedXFCC, err := base64.StdEncoding.DecodeString(headers.Get("X-Forwarded-Client-Cert"))
-	Expect(err).NotTo(HaveOccurred())
-
-	actualCert, err := x509.ParseCertificate(derEncodedXFCC)
+	actualCert, err := x509.ParseCertificate([]byte(base64Decode(headers.Get("X-Forwarded-Client-Cert"))))
 	Expect(err).NotTo(HaveOccurred())
 
 	Expect(*actualCert).To(Equal(*expectedCert))
 
-	Expect(headers.Get("X-SSL-Client-Subject-Dn")).To(ContainSubstring(expectedCert.Subject.Country[0]))
-	Expect(headers.Get("X-SSL-Client-Subject-Dn")).To(ContainSubstring(expectedCert.Subject.Organization[0]))
-	Expect(headers.Get("X-SSL-Client-Subject-Dn")).To(ContainSubstring(expectedCert.Subject.CommonName))
-	Expect(headers.Get("X-SSL-Client-Subject-Cn")).To(Equal(expectedCert.Subject.CommonName))
-	Expect(headers.Get("X-SSL-Client-Issuer-Dn")).To(ContainSubstring(expectedCert.Issuer.Country[0]))
-	Expect(headers.Get("X-SSL-Client-Issuer-Dn")).To(ContainSubstring(expectedCert.Issuer.Organization[0]))
-	Expect(headers.Get("X-SSL-Client-Issuer-Dn")).To(ContainSubstring(expectedCert.Issuer.CommonName))
+	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-Dn"))).To(Equal("/C=Vatican City/O=Víkî's Vergnügungspark/CN=haproxy.client"))
+	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-CN"))).To(Equal("haproxy.client"))
+	Expect(base64Decode(headers.Get("X-SSL-Client-Issuer-Dn"))).To(Equal("/C=Palau/O=Pete's Café"))
 	Expect(headers.Get("X-SSL-Client-Notbefore")).To(Equal(expectedCert.NotBefore.UTC().Format("060102150405Z"))) //YYMMDDhhmmss[Z]
 	Expect(headers.Get("X-SSL-Client-Notafter")).To(Equal(expectedCert.NotAfter.UTC().Format("060102150405Z")))   //YYMMDDhhmmss[Z]
 
@@ -342,7 +335,7 @@ func generateClientCerts() (*Certificate, *Certificate, error) {
 	caTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"Palau Tech Inc"},
+			Organization: []string{"Pete's Café"},
 			Country:      []string{"Palau"},
 		},
 		NotBefore:             time.Now(),
@@ -355,8 +348,8 @@ func generateClientCerts() (*Certificate, *Certificate, error) {
 	certTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"Tuvalu Tech Inc"},
-			Country:      []string{"Tuvalu"},
+			Organization: []string{"Víkî's Vergnügungspark"},
+			Country:      []string{"Vatican City"},
 			CommonName:   "haproxy.client",
 		},
 		NotBefore:             time.Now(),
@@ -370,12 +363,22 @@ func generateClientCerts() (*Certificate, *Certificate, error) {
 		return nil, nil, err
 	}
 
+	ca, err := x509.ParseCertificate(caDERBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	caPEMBytes, err := pemEncodeCert(caDERBytes)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	certDERBytes, err := x509.CreateCertificate(rand.Reader, &certTemplate, &caTemplate, &certKeyPair.PublicKey, caKeyPair)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cert, err := x509.ParseCertificate(certDERBytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -391,12 +394,12 @@ func generateClientCerts() (*Certificate, *Certificate, error) {
 	}
 
 	return &Certificate{
-			X509Cert:      &caTemplate,
+			X509Cert:      ca,
 			CertPEM:       string(caPEMBytes),
 			PrivateKey:    caKeyPair,
 			PrivateKeyPEM: string(caKeyPEMBytes),
 		}, &Certificate{
-			X509Cert:      &certTemplate,
+			X509Cert:      cert,
 			CertPEM:       string(certPEMBytes),
 			PrivateKey:    certKeyPair,
 			PrivateKeyPEM: string(certKeyPEMBytes),
@@ -429,4 +432,10 @@ func pemEncodeRSAKey(key *rsa.PrivateKey) ([]byte, error) {
 	}
 
 	return pemBytes.Bytes(), nil
+}
+
+func base64Decode(input string) string {
+	output, err := base64.StdEncoding.DecodeString(input)
+	Expect(err).NotTo(HaveOccurred())
+	return string(output)
 }
