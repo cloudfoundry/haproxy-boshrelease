@@ -42,4 +42,4 @@ releases:
 - name: haproxy
   version: 11.4.4
   url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v11.4.4/haproxy-11.4.4.tgz
-  sha1: f70bff045923cce809260fdd20d1352f0dce8d5a
+  sha1: 94b2b3570c3e7900c67bb1c30f7eaa1fe6fb11e0
