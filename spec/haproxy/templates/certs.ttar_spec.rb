@@ -413,12 +413,12 @@ describe 'config/certs.ttar' do
     end
   end
 
-  describe 'ha_proxy.crt_list[].alpn' do
+  describe 'ha_proxy.crt_list[].alpn only h2' do
     let(:ttar) do
       template.render({
         'ha_proxy' => {
           'crt_list' => [{
-            'alpn' => 'h2',
+            'alpn' => ['h2'],
             'ssl_pem' => 'ssl_pem contents'
           }]
         }
@@ -435,7 +435,7 @@ describe 'config/certs.ttar' do
     end
   end
 
-  describe 'ha_proxy.crt_list[].alpn as array' do
+  describe 'ha_proxy.crt_list[].alpn h2 and http/1.1' do
     let(:ttar) do
       template.render({
         'ha_proxy' => {
@@ -451,6 +451,28 @@ describe 'config/certs.ttar' do
       expect(ttar_entry(ttar, '/var/vcap/jobs/haproxy/config/ssl/crt-list')).to eq(<<~EXPECTED)
 
         /var/vcap/jobs/haproxy/config/ssl/cert-0.pem [alpn h2,http/1.1]
+
+
+      EXPECTED
+    end
+  end
+
+  describe 'ha_proxy.crt_list[].alpn prefer http/1.1 to h2' do
+    let(:ttar) do
+      template.render({
+        'ha_proxy' => {
+          'crt_list' => [{
+            'alpn' => ['http/1.1', 'h2'],
+            'ssl_pem' => 'ssl_pem contents'
+          }]
+        }
+      })
+    end
+
+    it 'is included in the crt list' do
+      expect(ttar_entry(ttar, '/var/vcap/jobs/haproxy/config/ssl/crt-list')).to eq(<<~EXPECTED)
+
+        /var/vcap/jobs/haproxy/config/ssl/cert-0.pem [alpn http/1.1,h2]
 
 
       EXPECTED

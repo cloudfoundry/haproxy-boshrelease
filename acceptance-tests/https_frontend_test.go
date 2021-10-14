@@ -41,7 +41,17 @@ var _ = Describe("HTTPS Frontend", func() {
     ssl_pem:
       cert_chain: ((https_frontend.certificate))((https_frontend_ca.certificate))
       private_key: ((https_frontend.private_key))
-	alpn: 'h2'
+    alpn: ['h2', 'http/1.1']
+# Configure CA and cert chain
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/crt_list?/-
+  value:
+    snifilter:
+    - haproxy.http11.internal
+    ssl_pem:
+      cert_chain: ((https_frontend.certificate))((https_frontend_ca.certificate))
+      private_key: ((https_frontend.private_key))
+    alpn: ['http/1.1']
 # Declare certs
 - type: replace
   path: /variables?/-
@@ -59,7 +69,7 @@ var _ = Describe("HTTPS Frontend", func() {
     options:
       ca: https_frontend_ca
       common_name: haproxy.internal
-      alternative_names: [haproxy.internal]
+      alternative_names: [haproxy.internal, haproxy.h2.internal, haproxy.http11.internal]
 `
 
 	var creds struct {
@@ -161,7 +171,7 @@ var _ = Describe("HTTPS Frontend", func() {
 		})
 	})
 
-	It("Allows clients to use HTTP2 as well as HTTP1.1", func() {
+	It("ALPN configuration via CRT list entries enables HTTP2 and HTTP/1.1", func() {
 		By("Sending a request to HAProxy using HTTP2")
 		http2Client := buildHTTP2Client(
 			[]string{creds.HTTPSFrontend.CA},
@@ -170,10 +180,49 @@ var _ = Describe("HTTPS Frontend", func() {
 		)
 		resp, err := http2Client.Get("https://haproxy.h2.internal:443")
 		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
 		Expect(resp.ProtoMajor).To(Equal(2))
+        Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+		
+		By("Sending a request to HAProxy using HTTP 1.1")
+		otherhttp1Client := buildHTTPClient(
+			[]string{creds.HTTPSFrontend.CA},
+			map[string]string{"haproxy.http11.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
+			[]tls.Certificate{}, "",
+		)	
+		resp, err = otherhttp1Client.Get("https://haproxy.h2.internal:443")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.ProtoMajor).To(Equal(1))
 
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+
+	})
+
+	It("ALPN configuration via CRT list entries enables HTTP/1.1 only", func() {
+		By("Sending a request to HAProxy using HTTP 1.1")
+	    otherhttp1Client := buildHTTPClient(
+			[]string{creds.HTTPSFrontend.CA},
+			map[string]string{"haproxy.http11.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
+			[]tls.Certificate{}, "",
+		)
+		resp, err := otherhttp1Client.Get("https://haproxy.http11.internal:443")
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(resp.ProtoMajor).To(Equal(1))
+
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
+
+		By("Sending a request to HAProxy using HTTP2 ends with error")
+		http2Client := buildHTTP2Client(
+			[]string{creds.HTTPSFrontend.CA},
+			map[string]string{"haproxy.http11.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
+			[]tls.Certificate{},
+		)
+		resp, _ = http2Client.Get("https://haproxy.http11.internal:443")
+		Expect(resp.StatusCode).NotTo(Equal(http.StatusOK))
+
 	})
 })

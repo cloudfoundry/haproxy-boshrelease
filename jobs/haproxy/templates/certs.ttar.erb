@@ -58,8 +58,6 @@ if_p("ha_proxy.crt_list") do |crt_list|
         sslbindconf += " alpn " 
         list_entry["alpn"].each { |protocol|  sslbindconf += protocol + "," }
         sslbindconf.slice!(-1)
-      else
-        sslbindconf += " alpn " + list_entry["alpn"]
       end
     end
 
