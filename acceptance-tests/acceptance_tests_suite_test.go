@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -33,11 +34,37 @@ var _ = AfterSuite(func() {
 	deleteDeployment(defaultDeploymentName)
 })
 
+var upgrader = websocket.Upgrader{}
+
 // Starts a simple test server that returns 200 OK
 func startDefaultTestServer() (func(), int) {
 	By("Starting a local http server to act as a backend")
 	closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello cloud foundry")
+	})
+	Expect(err).NotTo(HaveOccurred())
+	return closeLocalServer, localPort
+}
+
+// Starts a simple test webocket server that echoes back anything sent
+func startDefaultWebsocketServer() (func(), int) {
+	By("Starting a local websocket server to act as a backend")
+	closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		for {
+			mt, message, err := c.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = c.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
 	})
 	Expect(err).NotTo(HaveOccurred())
 	return closeLocalServer, localPort
