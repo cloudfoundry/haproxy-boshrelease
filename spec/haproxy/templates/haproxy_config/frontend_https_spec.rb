@@ -301,6 +301,18 @@ describe 'config/haproxy.config HTTPS frontend' do
           expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }')
           expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }')
         end
+
+        context 'when ha_proxy.legacy_xfcc_header_mapping is true' do
+          let(:properties) do
+            default_properties.merge({ 'client_cert' => true, 'legacy_xfcc_header_mapping' => true })
+          end
+
+          it 'writes mTLS headers without base64 encoding when mTLS is used' do
+            expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]            if { ssl_c_used }')
+            expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]        if { ssl_c_used }')
+            expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }')
+          end
+        end
       end
     end
 
@@ -358,6 +370,22 @@ describe 'config/haproxy.config HTTPS frontend' do
           expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }')
           expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }')
           expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }')
+        end
+
+        context 'when ha_proxy.legacy_xfcc_header_mapping is true' do
+          let(:properties) do
+            default_properties.merge({
+              'client_cert' => true,
+              'forwarded_client_cert' => 'forward_only_if_route_service',
+              'legacy_xfcc_header_mapping' => true
+            })
+          end
+
+          it 'overwrites mTLS headers without base64-encoding when mTLS is used' do
+            expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]            if { ssl_c_used }')
+            expect(frontend_https).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]        if { ssl_c_used }')
+            expect(frontend_https).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }')
+          end
         end
       end
     end

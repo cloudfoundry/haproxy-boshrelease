@@ -411,6 +411,9 @@ properties:
           This option is only secure if Gorouter is deployed behind Haproxy to validate that X-Cf-Proxy-Signature is coming from a route service.
     default: sanitize_set
 
+  ha_proxy.legacy_xfcc_header_mapping:
+    default: false
+
   ha_proxy.client_ca_file:
     description: "path for CA certs to validate client certificate"
     example: |
