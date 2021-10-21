@@ -358,41 +358,65 @@ properties:
       This option lets you decide how to handle the X-Forwarded-Client-Cert (XFCC) http header on any https frontend.
       On http frontends the `always_forward_only` option is active by default and can't be changed.
       On https frontends your options are:
-      - always_forward_only:
-          Least secure option. Always forward the X-Forwarded-Client-Cert header in the request, regardless of whether the client connection is mTLS. The following headers will also be forwarded if they are present in the original request: X-SSL-Client, X-SSL-Client-Session-ID, X-SSL-Client-Verify, X-SSL-Client-Subject-DN, X-SSL-Client-Subject-CN, X-SSL-Client-Issuer-DN, X-SSL-Client-NotBefore, X-SSL-Client-NotAfter.
+
+      - always_forward_only: Least secure option. Always forward the X-Forwarded-Client-Cert header in the request, regardless of whether the client connection is mTLS. The following headers will also be forwarded if they are present in the original request: X-SSL-Client, X-SSL-Client-Session-ID, X-SSL-Client-Verify, X-SSL-Client-Subject-DN, X-SSL-Client-Subject-CN, X-SSL-Client-Issuer-DN, X-SSL-Client-NotBefore, X-SSL-Client-NotAfter.
           Use this value when your load balancer is forwarding the client certificate and requests are not forwarded to HAProxy over mTLS.
           In the case where the connection between load balancer and HAProxy is mTLS, the client certificate received by HAProxy in the mTLS handshake will not be forwarded.
-      - forward_only:
-          Secure version of `always_forward_only`. Forward the X-Forwarded-Client-Cert header received from the client only when the client connection is mTLS. The following headers will also be forwarded for mTLS connections if they are present in the original request: X-SSL-Client, X-SSL-Client-Session-ID, X-SSL-Client-Verify, X-SSL-Client-Subject-DN, X-SSL-Client-Subject-CN, X-SSL-Client-Issuer-DN, X-SSL-Client-NotBefore, X-SSL-Client-NotAfter.
+
+      - forward_only: Secure version of `always_forward_only`. Forward the X-Forwarded-Client-Cert header received from the client only when the client connection is mTLS. The following headers will also be forwarded for mTLS connections if they are present in the original request: X-SSL-Client, X-SSL-Client-Session-ID, X-SSL-Client-Verify, X-SSL-Client-Subject-DN, X-SSL-Client-Subject-CN, X-SSL-Client-Issuer-DN, X-SSL-Client-NotBefore, X-SSL-Client-NotAfter.
           If the client connection does not use mTLS, these X-Forwarded-Client-Cert and X-SSL-Client-* headers will be removed if they are present.
           In the case where the connection between load balancer and HAProxy is mTLS, the client certificate received by HAProxy in the mTLS handshake will not be forwarded.
-      - sanitize_set:
-          Most secure option. Strip any instances of XFCC headers from the client request.
+
+      - sanitize_set: Most secure option. Strip any instances of XFCC headers from the client request.
+
           When the client connection is mTLS, the following headers will be overwritten in the request
+
             - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded). Backends should use this header to authenticate incoming requests.
+
             - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
+
             - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
+
             - X-SSL-Client-Verify: Contains the number 0 if the client certificate verification was successful. Otherwise it contains the appropriate OpenSSL return code (see https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206)
-            - X-SSL-Client-Subject-DN: Contains the subject distinguished name of the client certificate.
-            - X-SSL-Client-Subject-CN: Contains the subject common name of the client certificate.
-            - X-SSL-Client-Issuer-DN: Contains the issuer distinguished name of the client certificate.
+
+            - X-SSL-Client-Subject-DN: Contains the base64-encoded subject distinguished name of the client certificate
+
+            - X-SSL-Client-Subject-CN: Contains the base64-encoded subject common name of the client certificate
+
+            - X-SSL-Client-Issuer-DN: Contains the base64-encoded issuer distinguished name of the client certificate
+
             - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
+
             - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.
+
       - forward_only_if_route_service:
           This option is useful to support Mutual TLS with CF Route Services.
           When the client connection is not mTLS, the X-Forwarded-Client-Cert and X-SSL-Client-* headers will be removed UNLESS there is an X-Cf-Proxy-Signature header.
           When the client connection is mTLS, the following headers will be overwritten in the request
+
             - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded). Backends should use this header to authenticate incoming requests.
+
             - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
+
             - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
+
             - X-SSL-Client-Verify: Contains the number 0 if the client certificate verification was successful. Otherwise it contains the appropriate OpenSSL return code (see https://github.com/openssl/openssl/blob/master/include/openssl/x509_vfy.h.in#L206)
-            - X-SSL-Client-Subject-DN: Contains the subject distinguished name of the client certificate.
-            - X-SSL-Client-Subject-CN: Contains the subject common name of the client certificate.
-            - X-SSL-Client-Issuer-DN: Contains the issuer distinguished name of the client certificate.
+
+            - X-SSL-Client-Subject-DN: Contains the base64-encoded subject distinguished name of the client certificate
+
+            - X-SSL-Client-Subject-CN: Contains the base64-encoded subject common name of the client certificate
+
+            - X-SSL-Client-Issuer-DN: Contains the base64-encoded issuer distinguished name of the client certificate
+
             - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
+
             - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.
+
           This option is only secure if Gorouter is deployed behind Haproxy to validate that X-Cf-Proxy-Signature is coming from a route service.
     default: sanitize_set
+
+  ha_proxy.legacy_xfcc_header_mapping:
+    default: false
 
   ha_proxy.client_ca_file:
     description: "path for CA certs to validate client certificate"
