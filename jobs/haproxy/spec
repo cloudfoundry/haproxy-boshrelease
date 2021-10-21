@@ -107,6 +107,7 @@ properties:
       Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing at least the field 'ssl_pem'.
       The field 'ssl_pem' itself is either an object containing fields 'cert_chain' and 'private_key', or a single string containing the cert chain and the private key.
       The following fields are optional:
+      - 'alpn' (a optional array of strings). If both HTTP/2 and HTTP/1.1 are expected to be supported, both versions can be advertised, in order of preference
       - 'client_ca_file' (replaces ha_proxy.client_ca_file)
       - 'verify' (allowed values: [none|optional|required])
       - 'ssl_ciphers' (overrides ha_proxy.ssl_ciphers)
@@ -145,6 +146,9 @@ properties:
         ssl_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
         ssl_min_version: TLSv1.2
         ssl_max_version: TLSv1.3
+        alpn: 
+        - h2
+        - http/1.1
         client_revocation_list: |
           -----BEGIN X509 CRL-----
           -----END X509 CRL-----

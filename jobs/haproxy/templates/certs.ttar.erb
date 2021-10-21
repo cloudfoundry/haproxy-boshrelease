@@ -53,6 +53,9 @@ if_p("ha_proxy.crt_list") do |crt_list|
     if list_entry.key?("ssl_max_version")
       sslbindconf += " ssl-max-ver " + list_entry["ssl_max_version"]
     end
+    if list_entry.key?("alpn")
+      sslbindconf += " alpn #{list_entry["alpn"].join(",")} "
+    end
 
     if sslbindconf != ""
       sslbindconf = " ["+sslbindconf.strip+"]"
