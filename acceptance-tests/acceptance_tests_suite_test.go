@@ -7,9 +7,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -33,12 +35,37 @@ var _ = AfterSuite(func() {
 	deleteDeployment(defaultDeploymentName)
 })
 
-// Starts a simple test server that returns 200 OK
+// Starts a simple test server that returns 200 OK or echoes websocket messages back
 func startDefaultTestServer() (func(), int) {
-	By("Starting a local http server to act as a backend")
+	var upgrader = websocket.Upgrader{}
+
+	By("Starting a local websocket server to act as a backend")
 	closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello cloud foundry")
+		// if no upgrade requested, act like a normal HTTP server
+		if strings.ToLower(r.Header.Get("Upgrade")) != "websocket" {
+			fmt.Fprintln(w, "Hello cloud foundry")
+			return
+		}
+
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		for {
+			messageType, message, err := conn.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = conn.WriteMessage(messageType, message)
+			if err != nil {
+				break
+			}
+		}
 	})
+
 	Expect(err).NotTo(HaveOccurred())
 	return closeLocalServer, localPort
 }

@@ -353,6 +353,14 @@ frontend http-in
     acl ssl_redirect hdr(host),lower,map_end(/var/vcap/jobs/haproxy/config/ssl_redirect.map,false) -m str true
     redirect scheme https code 301 if ssl_redirect
   <%- end -%>
+
+  <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
+    # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
+    # https://github.com/cloudfoundry/routing-release/issues/230
+    acl is_websocket hdr(Upgrade) -i WebSocket
+    acl is_websocket hdr_beg(Host) -i ws
+    use_backend http-routers-ws-http1 if is_websocket
+  <%- end -%>
 # }}}
 <% end -%>
 
@@ -487,6 +495,14 @@ frontend https-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
+
+  <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
+    # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
+    # https://github.com/cloudfoundry/routing-release/issues/230
+    acl is_websocket hdr(Upgrade) -i WebSocket
+    acl is_websocket hdr_beg(Host) -i ws
+    use_backend http-routers-ws-http1 if is_websocket
+  <%- end -%>
 # }}}
 <% end -%>
 
@@ -621,24 +637,18 @@ frontend wss-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
+
+  <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
+    # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
+    # https://github.com/cloudfoundry/routing-release/issues/230
+    acl is_websocket hdr(Upgrade) -i WebSocket
+    acl is_websocket hdr_beg(Host) -i ws
+    use_backend http-routers-ws-http1 if is_websocket
+  <%- end -%>
 # }}}
 <% end -%>
 
-# Default Backend {{{
-backend http-routers
-    mode http
-    balance roundrobin
-  <%- if p("ha_proxy.compress_types") != "" -%>
-    compression algo gzip
-    compression type <%= p("ha_proxy.compress_types") %>
-  <%- end -%>
-  <%- if properties.ha_proxy.backend_config -%>
-    <%= p("ha_proxy.backend_config") %>
-  <%- end -%>
-    <%- p('ha_proxy.custom_http_error_files', {}).keys.each do |status_code| -%>
-        errorfile <%= status_code %> /var/vcap/jobs/haproxy/errorfiles/custom<%=status_code%>.http
-    <%- end -%>
-    <%
+<%-
   backend_servers = []
   backend_servers_local = []
   backend_port = nil
@@ -661,27 +671,50 @@ backend http-routers
   if_p("ha_proxy.backend_crt") do
     backend_crt = "crt /var/vcap/jobs/haproxy/config/backend-crt.pem "
   end
-  backend_ssl = ""
 
+  backend_ssl = ""
   if p("ha_proxy.backend_ssl").downcase == "verify"
     backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
     if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname |
       backend_ssl += "verifyhost #{verify_hostname} "
     end
-    backend_ssl += alpn_config
   elsif p("ha_proxy.backend_ssl").downcase == "noverify"
     backend_ssl = "ssl verify none "
-    backend_ssl += alpn_config
   end
+
+  backends = [{ name: "http-routers", backend_ssl: (backend_ssl != "" ? backend_ssl + alpn_config : "") }]
+  if p("ha_proxy.disable_backend_http2_websockets")
+    backends += [{ name: "http-routers-ws-http1", backend_ssl: backend_ssl + "alpn http/1.1 " }]
+  end
+
+  backends.each do |backend|
+-%>
+# Backend <%= backend[:name] %> {{{
+backend <%= backend[:name] %>
+    mode http
+    balance roundrobin
+  <%- if p("ha_proxy.compress_types") != "" -%>
+    compression algo gzip
+    compression type <%= p("ha_proxy.compress_types") %>
+  <%- end -%>
+  <%- if properties.ha_proxy.backend_config -%>
+    <%= p("ha_proxy.backend_config") %>
+  <%- end -%>
+    <%- p('ha_proxy.custom_http_error_files', {}).keys.each do |status_code| -%>
+        errorfile <%= status_code %> /var/vcap/jobs/haproxy/errorfiles/custom<%=status_code%>.http
+    <%- end -%>
+    <%
 -%>
   <%- if p("ha_proxy.backend_use_http_health") == true  -%>
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
   <%- end -%>
   <% backend_servers.each_with_index do |ip, index| %>
-    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend_ssl %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
+    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend[:backend_ssl] %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
   <% end %>
 # }}}
+<%- end %>
+
 
 # Routed Backends {{{
 <% p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
