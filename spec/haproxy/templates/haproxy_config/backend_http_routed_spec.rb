@@ -143,7 +143,7 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
     end
 
-    context 'when ha_proxy.enable_http2 is true' do
+    context 'when ha_proxy.enable_http2 is true and ha_proxy.enable_http2_backend is default' do
       let(:properties) do
         default_properties.deep_merge({
           'routed_backend_servers' => {
@@ -158,6 +158,42 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       it 'enables h2 ALPN negotiation with routed backends' do
         expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
         expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+      end
+    end
+
+    context 'when ha_proxy.enable_http2_backend is true' do
+      let(:properties) do
+        default_properties.deep_merge({
+          'routed_backend_servers' => {
+            '/images' => {
+              'backend_ssl' => 'verify'
+            }
+          },
+          'enable_http2_backend' => true
+        })
+      end
+
+      it 'enables h2 ALPN negotiation with routed backends' do
+        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+      end
+    end
+
+    context 'when ha_proxy.enable_http2_backend is false' do
+      let(:properties) do
+        default_properties.deep_merge({
+          'routed_backend_servers' => {
+            '/images' => {
+              'backend_ssl' => 'verify'
+            }
+          },
+          'enable_http2_backend' => false
+        })
+      end
+
+      it 'does not enable h2 ALPN negotiation with routed backends' do
+        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
+        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
       end
     end
 

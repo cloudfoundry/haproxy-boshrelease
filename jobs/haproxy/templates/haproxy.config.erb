@@ -131,9 +131,19 @@ end
 # }}}
 
 # ALPN Option {{{
-alpn_config = ""
+frontend_alpn_config = ""
 if p("ha_proxy.enable_http2")
-  alpn_config = "alpn h2,http/1.1 "
+  frontend_alpn_config = "alpn h2,http/1.1 "
+end
+
+# for backend, default to enable_http2 unless overridden by enable_http2_backend
+backend_alpn_config = frontend_alpn_config
+if_p("ha_proxy.enable_http2_backend") do |enable_http2_backend|
+  if enable_http2_backend
+    backend_alpn_config = "alpn h2,http/1.1 "
+  else
+    backend_alpn_config = ""
+  end
 end
 # }}}
 
@@ -371,7 +381,7 @@ frontend https-in
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
-    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= alpn_config %>
+    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= frontend_alpn_config %>
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
     # Ensure a host header exists to check against
@@ -682,7 +692,7 @@ frontend wss-in
     backend_ssl = "ssl verify none "
   end
 
-  backends = [{ name: "http-routers", backend_ssl: (backend_ssl != "" ? backend_ssl + alpn_config : "") }]
+  backends = [{ name: "http-routers", backend_ssl: (backend_ssl != "" ? backend_ssl + backend_alpn_config : "") }]
   if p("ha_proxy.disable_backend_http2_websockets")
     backends += [{ name: "http-routers-ws-http1", backend_ssl: backend_ssl + "alpn http/1.1 " }]
   end
@@ -748,10 +758,10 @@ backend http-routed-backend-<%= prefix_hash %>
       if data["backend_verifyhost"]
         backend_ssl += "verifyhost #{data["backend_verifyhost"]} "
       end
-      backend_ssl += alpn_config
+      backend_ssl += backend_alpn_config
     elsif data["backend_ssl"].downcase == "noverify"
       backend_ssl = "ssl verify none "
-      backend_ssl += alpn_config
+      backend_ssl += backend_alpn_config
     end
   end
 -%>

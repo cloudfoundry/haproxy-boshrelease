@@ -663,5 +663,8 @@ properties:
       Prefer backend servers which are located on the same availability zone. Note that this only affects servers provided via the http_backend link property. Servers provided via the tcp backend_link will automatically prefer the local AZ.
     default: false
   ha_proxy.enable_http2:
-    description: Enables ingress and egress HTTP/2 ALPN negotiation
+    description: Enables ingress HTTP/2 ALPN negotiation. Will also set egress HTTP/2 ALPN negotiation unless overriden by ha_proxy.enable_http2_backend.
     default: false
+  ha_proxy.enable_http2_backend:
+    description: Enables egress HTTP/2 ALPN negotiation. If not set, the value of `ha_proxy.enable_http2` is used (which defaults to false)
+    default: ~
