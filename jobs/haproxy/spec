@@ -146,7 +146,7 @@ properties:
         ssl_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
         ssl_min_version: TLSv1.2
         ssl_max_version: TLSv1.3
-        alpn: 
+        alpn:
         - h2
         - http/1.1
         client_revocation_list: |
@@ -248,9 +248,12 @@ properties:
   ha_proxy.disable_tls_13:
     default: false
     description: "Disable TLS 1.3 in HA Proxy"
+  ha_proxy.backend_match_http_protocol:
+    default: false
+    description: Uses the same version of HTTP for backend connections that was used for frontend connections (ie HTTP 1.1 or HTTP 2). Ignores the value of enable_http2. HTTP2 backend connections require that `ha_proxy.backend_ssl` is not `off`.
   ha_proxy.disable_backend_http2_websockets:
     default: false
-    description: "Forward websockets to the backend servers using HTTP/1.1, never HTTP/2. Does not apply to custom routed_backend_servers. Works around https://github.com/cloudfoundry/routing-release/issues/230"
+    description: "Forward websockets to the backend servers using HTTP/1.1, never HTTP/2. Does not apply to custom routed_backend_servers. Works around https://github.com/cloudfoundry/routing-release/issues/230. Overrides backend_match_http_protocol for websockets."
 
   ha_proxy.connect_timeout:
     description: "Timeout (in floating point seconds) used on connections from haproxy to a backend, while waiting for the TCP handshake to complete + connection to establish"
@@ -302,7 +305,7 @@ properties:
     description: "Array of the router IPs acting as the HTTP/TCP backends (should include servers all Availability Zones being used)"
     default: []
   ha_proxy.backend_ssl:
-    description: "Optionally enable SSL verification for backend servers, one of `verify`, `noverify`, any other value assumes no ssl backend.  Setting `verify` requires `ha_proxy.backend_ca_file` key to be set."
+    description: "Optionally enable SSL verification for backend servers, one of `verify`, `noverify`, any other value assumes no ssl backend.  Setting `verify` requires `ha_proxy.backend_ca_file` key to be set. Note that `off` will disable all backend HTTP2 support regardless of other properties."
     default: "off"
   ha_proxy.backend_ssl_verifyhost:
     description: "Optional hostname to verify in the x509 certificate subject for SSL-enabled backend servers.  Requires `ha_proxy.backend_ssl` is set to `verify` when using this."
@@ -663,5 +666,5 @@ properties:
       Prefer backend servers which are located on the same availability zone. Note that this only affects servers provided via the http_backend link property. Servers provided via the tcp backend_link will automatically prefer the local AZ.
     default: false
   ha_proxy.enable_http2:
-    description: Enables ingress and egress HTTP/2 ALPN negotiation
+    description: Enables ingress (frontend) and egress (backend) HTTP/2 ALPN negotiation. Egress (backend) HTTP protocol version may be overriden by `ha_proxy.backend_ssl`, `ha_proxy.disable_backend_http2_websockets` and `ha_proxy.backend_match_http_protocol`.
     default: false

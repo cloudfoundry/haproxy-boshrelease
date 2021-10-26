@@ -131,9 +131,9 @@ end
 # }}}
 
 # ALPN Option {{{
-alpn_config = ""
+default_alpn_config = ""
 if p("ha_proxy.enable_http2")
-  alpn_config = "alpn h2,http/1.1 "
+  default_alpn_config = "alpn h2,http/1.1 "
 end
 # }}}
 
@@ -169,6 +169,53 @@ end
 
   if p("ha_proxy.enable_4443") && !ssl_enabled
     abort "Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list"
+  end
+
+  backend_servers = []
+  backend_servers_local = []
+  backend_port = nil
+  if_link("http_backend") do |backend|
+    backend_servers = backend.instances.map(&:address)
+    backend_port = backend.p("port", p("ha_proxy.backend_port"))
+
+    if p("ha_proxy.backend_prefer_local_az")
+      backend_servers_local = backend.instances.select{ |n| n.az == spec.az }.map(&:address)
+    end
+  end.else_if_p("ha_proxy.backend_servers") do |servers|
+    backend_servers = servers
+    backend_port = p("ha_proxy.backend_port")
+  end
+  resolvers = ""
+  if_p("ha_proxy.resolvers") do
+    resolvers = "resolvers default "
+  end
+  backend_crt = ""
+  if_p("ha_proxy.backend_crt") do
+    backend_crt = "crt /var/vcap/jobs/haproxy/config/backend-crt.pem "
+  end
+
+  backend_ssl = ""
+  if p("ha_proxy.backend_ssl").downcase == "verify"
+    backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
+    if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname |
+      backend_ssl += "verifyhost #{verify_hostname} "
+    end
+  elsif p("ha_proxy.backend_ssl").downcase == "noverify"
+    backend_ssl = "ssl verify none "
+  end
+
+  backends = []
+  disable_backend_http2_websockets = p("ha_proxy.disable_backend_http2_websockets")
+  enable_http2 = p("ha_proxy.enable_http2")
+  backend_match_http_protocol = p("ha_proxy.backend_match_http_protocol")
+
+  if disable_backend_http2_websockets || (!enable_http2) || backend_match_http_protocol || backend_ssl == ""
+    alpn = backend_ssl != "" ? "alpn http/1.1 " : ""
+    backends += [{ name: "http-routers-http1", backend_ssl: backend_ssl, alpn: alpn }]
+  end
+
+  if backend_ssl != "" && (enable_http2 || backend_match_http_protocol)
+    backends += [{ name: "http-routers-http2", backend_ssl: backend_ssl, alpn: "alpn h2,http/1.1 " }]
   end
 -%>
 
@@ -223,6 +270,9 @@ global
   <%- if_p("ha_proxy.ssl_ciphersuites") do -%>
     ssl-default-server-ciphersuites <%= p("ha_proxy.ssl_ciphersuites") %>
   <%- end -%>
+  <%- if backend_match_http_protocol && backends.length == 2 -%>
+    set-var proc.h2_alpn_tag str(h2)
+  <%- end -%>
 
 defaults
     log global
@@ -270,7 +320,7 @@ listen health_check_http_url
     bind :<%= p("ha_proxy.health_check_port") %>
     mode http
     monitor-uri /health
-    acl http-routers_down nbsrv(http-routers) eq 0
+    acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
 <% end -%>
 
@@ -307,7 +357,7 @@ frontend http-in
     tcp-request content reject
   <%- end -%>
     capture request header Host len 256
-    default_backend http-routers
+    default_backend <%= backends.last[:name] %>
   <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
     <%- conditions.each do |condition| -%>
       <%- acl_names="" -%>
@@ -357,9 +407,10 @@ frontend http-in
   <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
     # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
     # https://github.com/cloudfoundry/routing-release/issues/230
+    # Note: first matching backend will be used when there are multiple use_backend directives
     acl is_websocket hdr(Upgrade) -i WebSocket
     acl is_websocket hdr_beg(Host) -i ws
-    use_backend http-routers-ws-http1 if is_websocket
+    use_backend http-routers-http1 if is_websocket
   <%- end -%>
 # }}}
 <% end -%>
@@ -371,7 +422,7 @@ frontend https-in
   <% if p("ha_proxy.drain_enable") -%>
     grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
   <%- end -%>
-    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= alpn_config %>
+    bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= default_alpn_config %>
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
     # Ensure a host header exists to check against
@@ -456,7 +507,7 @@ frontend https-in
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
   <%- end -%>
     capture request header Host len 256
-    default_backend http-routers
+    default_backend <%= backends.last[:name] %>
   <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
     <%- conditions.each do |condition| -%>
       <%- acl_names="" -%>
@@ -499,9 +550,18 @@ frontend https-in
   <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
     # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
     # https://github.com/cloudfoundry/routing-release/issues/230
+    # Note: first matching backend will be used when there are multiple use_backend directives
     acl is_websocket hdr(Upgrade) -i WebSocket
     acl is_websocket hdr_beg(Host) -i ws
-    use_backend http-routers-ws-http1 if is_websocket
+    use_backend http-routers-http1 if is_websocket
+  <%- end -%>
+
+  <%- if backend_match_http_protocol && backends.length == 2 -%>
+    # Ensure that backend protocol matches frontend protocol
+    # Note: first matching backend will be used when there are multiple use_backend directives
+    acl is_http2 ssl_fc_alpn,lower,strcmp(proc.h2_alpn_tag) eq 0
+    use_backend http-routers-http1 if ! is_http2
+    use_backend http-routers-http2 if is_http2
   <%- end -%>
 # }}}
 <% end -%>
@@ -598,7 +658,7 @@ frontend wss-in
     http-response set-header Strict-Transport-Security max-age=<%= p("ha_proxy.hsts_max_age").to_i %>;<% if p("ha_proxy.hsts_include_subdomains") %>\ includeSubDomains;<% end %><% if p("ha_proxy.hsts_preload") %>\ preload;<% end %>
   <%- end -%>
     capture request header Host len 256
-    default_backend http-routers
+    default_backend <%= backends.last[:name] %>
   <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
     <%- conditions.each do |condition| -%>
       <%- acl_names="" -%>
@@ -643,50 +703,20 @@ frontend wss-in
     # https://github.com/cloudfoundry/routing-release/issues/230
     acl is_websocket hdr(Upgrade) -i WebSocket
     acl is_websocket hdr_beg(Host) -i ws
-    use_backend http-routers-ws-http1 if is_websocket
+    use_backend http-routers-http1 if is_websocket
+  <%- end -%>
+
+  <%- if backend_match_http_protocol && backends.length == 2 -%>
+    # Ensure that backend protocol matches frontend protocol
+    # Note: first matching backend will be used when there are multiple use_backend directives
+    acl is_http2 ssl_fc_alpn,lower,strcmp(proc.h2_alpn_tag) eq 0
+    use_backend http-routers-http1 if ! is_http2
+    use_backend http-routers-http2 if is_http2
   <%- end -%>
 # }}}
 <% end -%>
 
 <%-
-  backend_servers = []
-  backend_servers_local = []
-  backend_port = nil
-  if_link("http_backend") do |backend|
-    backend_servers = backend.instances.map(&:address)
-    backend_port = backend.p("port", p("ha_proxy.backend_port"))
-
-    if p("ha_proxy.backend_prefer_local_az")
-      backend_servers_local = backend.instances.select{ |n| n.az == spec.az }.map(&:address)
-    end
-  end.else_if_p("ha_proxy.backend_servers") do |servers|
-    backend_servers = servers
-    backend_port = p("ha_proxy.backend_port")
-  end
-  resolvers = ""
-  if_p("ha_proxy.resolvers") do
-    resolvers = "resolvers default "
-  end
-  backend_crt = ""
-  if_p("ha_proxy.backend_crt") do
-    backend_crt = "crt /var/vcap/jobs/haproxy/config/backend-crt.pem "
-  end
-
-  backend_ssl = ""
-  if p("ha_proxy.backend_ssl").downcase == "verify"
-    backend_ssl = "ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem "
-    if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname |
-      backend_ssl += "verifyhost #{verify_hostname} "
-    end
-  elsif p("ha_proxy.backend_ssl").downcase == "noverify"
-    backend_ssl = "ssl verify none "
-  end
-
-  backends = [{ name: "http-routers", backend_ssl: (backend_ssl != "" ? backend_ssl + alpn_config : "") }]
-  if p("ha_proxy.disable_backend_http2_websockets")
-    backends += [{ name: "http-routers-ws-http1", backend_ssl: backend_ssl + "alpn http/1.1 " }]
-  end
-
   backends.each do |backend|
 -%>
 # Backend <%= backend[:name] %> {{{
@@ -710,7 +740,7 @@ backend <%= backend[:name] %>
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
   <%- end -%>
   <% backend_servers.each_with_index do |ip, index| %>
-    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend[:backend_ssl] %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
+    server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend[:backend_ssl] %><%= backend[:alpn] %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
   <% end %>
 # }}}
 <%- end %>
@@ -748,10 +778,10 @@ backend http-routed-backend-<%= prefix_hash %>
       if data["backend_verifyhost"]
         backend_ssl += "verifyhost #{data["backend_verifyhost"]} "
       end
-      backend_ssl += alpn_config
+      backend_ssl += default_alpn_config
     elsif data["backend_ssl"].downcase == "noverify"
       backend_ssl = "ssl verify none "
-      backend_ssl += alpn_config
+      backend_ssl += default_alpn_config
     end
   end
 -%>

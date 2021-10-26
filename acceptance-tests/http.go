@@ -18,8 +18,15 @@ import (
 
 // starts a local http server handling the provided handler
 // returns a close function to stop the server and the port the server is listening on
-func startLocalHTTPServer(handler func(http.ResponseWriter, *http.Request)) (func(), int, error) {
-	server := httptest.NewServer(http.HandlerFunc(handler))
+func startLocalHTTPServer(tlsConfig *tls.Config, handler func(http.ResponseWriter, *http.Request)) (func(), int, error) {
+	server := httptest.NewUnstartedServer(http.HandlerFunc(handler))
+	if tlsConfig != nil {
+		server.TLS = tlsConfig
+		server.StartTLS()
+	} else {
+		server.Start()
+	}
+
 	serverURL, err := url.Parse(server.URL)
 	if err != nil {
 		return nil, 0, err
@@ -78,6 +85,7 @@ func buildHTTP2Client(caCerts []string, addressMap map[string]string, clientCert
 
 	httpClient := buildHTTPClient(caCerts, addressMap, clientCerts, "")
 	transport := httpClient.Transport.(*http.Transport)
+
 	http2.ConfigureTransport(transport)
 
 	// force HTTP2-only

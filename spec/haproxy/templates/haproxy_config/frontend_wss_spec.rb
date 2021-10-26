@@ -457,8 +457,67 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     expect(frontend_wss).to include('capture request header Host len 256')
   end
 
-  it 'has the correct default backend' do
-    expect(frontend_wss).to include('default_backend http-routers')
+  context 'when only HTTP1 backend servers are available' do
+    it 'has the uses the HTTP1 backend default backend' do
+      expect(frontend_wss).to include('default_backend http-routers-http1')
+    end
+  end
+
+  context 'when HTTP1 and HTTP2 backend servers are available' do
+    let(:properties) do
+      default_properties.merge({
+        'disable_backend_http2_websockets' => true,
+        'enable_http2' => true,
+        'backend_ssl' => 'verify'
+      })
+    end
+
+    it 'uses the HTTP2 backend default backend' do
+      expect(frontend_wss).to include('default_backend http-routers-http2')
+    end
+  end
+
+  context 'when only HTTP2 backend servers are available' do
+    let(:properties) do
+      default_properties.merge({
+        'disable_backend_http2_websockets' => false,
+        'enable_http2' => true,
+        'backend_match_http_protocol' => false,
+        'backend_ssl' => 'verify'
+      })
+    end
+
+    it 'uses the HTTP2 backend default backend' do
+      expect(frontend_wss).to include('default_backend http-routers-http2')
+    end
+  end
+
+  context 'when backend_match_http_protocol is true' do
+    let(:properties) do
+      default_properties.merge({
+        'backend_match_http_protocol' => true,
+        'backend_ssl' => 'verify'
+      })
+    end
+
+    it 'enables config to match the protocol' do
+      expect(frontend_wss).to include('acl is_http2 ssl_fc_alpn,lower,strcmp(proc.h2_alpn_tag) eq 0')
+      expect(frontend_wss).to include('use_backend http-routers-http1 if ! is_http2')
+      expect(frontend_wss).to include('use_backend http-routers-http2 if is_http2')
+    end
+
+    context('when backend_ssl is off') do
+      let(:properties) do
+        default_properties.merge({
+          'backend_match_http_protocol' => true,
+          'backend_ssl' => 'off'
+        })
+      end
+
+      it 'does not override the default backend' do
+        expect(frontend_wss).not_to include(/use_backend/)
+      end
+    end
   end
 
   context 'when ha_proxy.http_request_deny_conditions are provided' do
