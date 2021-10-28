@@ -9,6 +9,8 @@ builds:
     version: 11.5.0
   20941ee7-2a87-42c3-9df7-1ae233c1d002:
     version: 8.0.10
+  24c968f2-54a2-4411-4f33-adef01ff5cf4:
+    version: 11.7.0
   24fa66cb-3141-45e7-9dc0-84c9067582d5:
     version: 8.2.0
   2c765105-da0a-4e82-8db5-0e95805af095:
