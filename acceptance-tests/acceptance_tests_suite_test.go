@@ -40,7 +40,7 @@ func startDefaultTestServer() (func(), int) {
 	var upgrader = websocket.Upgrader{}
 
 	By("Starting a local websocket server to act as a backend")
-	closeLocalServer, localPort, err := startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
+	closeLocalServer, localPort, err := startLocalHTTPServer(nil, func(w http.ResponseWriter, r *http.Request) {
 		// if no upgrade requested, act like a normal HTTP server
 		if strings.ToLower(r.Header.Get("Upgrade")) != "websocket" {
 			fmt.Fprintln(w, "Hello cloud foundry")

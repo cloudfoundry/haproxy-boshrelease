@@ -159,6 +159,12 @@ var _ = Describe("HTTPS Frontend", func() {
 		})
 
 		It("Allows clients to use HTTP2 as well as HTTP1.1", func() {
+			By("Negotiating the correct ALPN protocol")
+			// H2 endpoint should negotiate H2 if the client supports it
+			alpnProto, err := connectTLSALPNNegotiatedProtocol([]string{"http/1.1", "h2"}, haproxyInfo.PublicIP, creds.HTTPSFrontend.CA, "haproxy.internal")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(alpnProto).To(Equal("h2"))
+
 			By("Sending a request to HAProxy using HTTP 1.1")
 			resp, err := http1Client.Get("https://haproxy.internal:443")
 			Expect(err).NotTo(HaveOccurred())

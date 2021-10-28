@@ -149,7 +149,7 @@ var _ = Describe("forwarded_client_cert", func() {
 
 		By("Starting a local http server to act as a backend")
 		var localPort int
-		closeLocalServer, localPort, err = startLocalHTTPServer(func(w http.ResponseWriter, r *http.Request) {
+		closeLocalServer, localPort, err = startLocalHTTPServer(nil, func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Backend server handling incoming request")
 			recordedHeaders = r.Header
 			_, _ = w.Write([]byte("OK"))
