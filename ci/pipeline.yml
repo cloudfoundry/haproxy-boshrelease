@@ -353,7 +353,7 @@ jobs:
             REPO_OUT:     pushme
             NOTIFICATION_OUT: notifications
             BRANCH:        master
-            GITHUB_OWNER:  cloudfoundry-incubator
+            GITHUB_OWNER:  cloudfoundry
 
             AWS_ACCESS_KEY: ((aws.access_key))
             AWS_SECRET_KEY: ((aws.secret_key))
@@ -412,7 +412,7 @@ resources:
   - name: git
     type: git
     source:
-      uri:         git@github.com:cloudfoundry-incubator/haproxy-boshrelease.git
+      uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
       branch:      master
       private_key: ((github.private_key))
 
@@ -420,7 +420,7 @@ resources:
     type: pull-request
     source:
       access_token: ((github.access_token))
-      repository:   cloudfoundry-incubator/haproxy-boshrelease
+      repository:   cloudfoundry/haproxy-boshrelease
       base_branch:  master
       labels:       [approved]
 
@@ -458,7 +458,7 @@ resources:
   - name: github
     type: github-release-alt
     source:
-      user:         cloudfoundry-incubator
+      user:         cloudfoundry
       repository:   haproxy-boshrelease
       access_token: ((github.access_token))
 
