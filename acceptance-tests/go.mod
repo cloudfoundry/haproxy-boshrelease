@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/haproxy-boshrelease/acceptance-tests
+module github.com/cloudfoundry/haproxy-boshrelease/acceptance-tests
 
 go 1.16
 
