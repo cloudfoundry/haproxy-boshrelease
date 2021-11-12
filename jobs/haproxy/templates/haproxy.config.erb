@@ -738,6 +738,8 @@ backend <%= backend[:name] %>
   <%- if p("ha_proxy.backend_use_http_health") == true  -%>
     option httpchk GET <%= p("ha_proxy.backend_http_health_uri") %>
     <%- health_check_options = "port " + p("ha_proxy.backend_http_health_port").to_s -%>
+    <%- health_check_options += " fall " + p("ha_proxy.backend_health_fall").to_s -%>
+    <%- health_check_options += " rise " + p("ha_proxy.backend_health_rise").to_s -%>
   <%- end -%>
   <% backend_servers.each_with_index do |ip, index| %>
     server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend[:backend_ssl] %><%= backend[:alpn] %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
