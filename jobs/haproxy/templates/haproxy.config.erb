@@ -791,10 +791,16 @@ backend http-routed-backend-<%= prefix_hash %>
     <%- data["backend_http_health_port"] ||= data["port"] -%>
     <%- data["backend_http_health_uri"] ||= "/health" -%>
     option httpchk GET <%= data["backend_http_health_uri"] %>
-    <%- routed_health_check_options = "port " + data["backend_http_health_port"].to_s -%>
+    <%- routed_health_check_options = " port " + data["backend_http_health_port"].to_s -%>
+    <%- if data["backend_health_fall"] -%>
+      <%- routed_health_check_options += " fall " + data["backend_health_fall"].to_s -%>
+    <%- end -%>
+    <%- if data["backend_health_rise"] -%>
+      <%- routed_health_check_options += " rise " + data["backend_health_rise"].to_s -%>
+    <%- end -%>
   <%- end -%>
   <% data["servers"].each_with_index do |ip, index| %>
-    server node<%= index %> <%= ip %>:<%= data["port"] %> <%= resolvers -%>check inter 1000 <%= routed_health_check_options %> <%= backend_ssl %>
+    server node<%= index %> <%= ip %>:<%= data["port"] %> <%= resolvers -%>check inter 1000<%= routed_health_check_options %> <%= backend_ssl %>
   <% end %>
 <% end -%>
 # }}}

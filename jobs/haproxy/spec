@@ -330,6 +330,8 @@ properties:
           backend_use_http_health:  true    # optional, defaults to false. enables http based health checks for the backend
           backend_http_health_port: 80      # optional, defaults to the port of the backend server. sets the port for the http backend health check
           backend_http_health_uri:  /health # optional, defaults to /health. sets the URI for backend http health checks
+          backend_health_fall: 3  # optional, defaults to 3 if not set. Number of consecutive unsuccessful health checks required before the server is considered unhealthy from a healthy state.
+          backend_health_rise: 2  # optional, defaults to 2 if not set. Number of consecutive successful health checks required before the server is considered healthy from an unhealthy state.
 
   ha_proxy.headers:
     description: "Hash of custom headers you wish you have set on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
@@ -608,10 +610,10 @@ properties:
     description: Port to check the backend health on
     default: 8080
   ha_proxy.backend_health_fall:
-    description: Number of consecutive unsuccessful health checks required before the server is considered unhealthy from a  healthy state. The default value of 3 matches the default if the parameter is undefined.
+    description: Number of consecutive unsuccessful health checks required before the server is considered unhealthy from a healthy state. The default value of 3 matches the default if the parameter is undefined.
     default: 3
   ha_proxy.backend_health_rise:
-    description: Number of consecutive sucessful health checks required before the server is considered healthy from an unhealthy state. The default value of 2 matches the default if the parameter is undefined.
+    description: Number of consecutive successful health checks required before the server is considered healthy from an unhealthy state. The default value of 2 matches the default if the parameter is undefined.
     default: 2
 
   ha_proxy.global_config:

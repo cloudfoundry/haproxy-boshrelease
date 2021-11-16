@@ -109,6 +109,25 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       end
     end
 
+    context 'when backend_health_fall and backend_health_rise is provided' do
+      let(:properties) do
+        default_properties.deep_merge({
+          'routed_backend_servers' => {
+            '/images' => {
+              'backend_use_http_health' => true,
+              'backend_health_fall' => 3,
+              'backend_health_rise' => 2
+            }
+          }
+        })
+      end
+
+      it 'configures the correct check rise and fall on the servers' do
+        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 port 443 fall 3 rise 2')
+        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 port 443 fall 3 rise 2')
+      end
+    end
+
     context 'when backend_http_health_uri is provided' do
       let(:properties) do
         default_properties.deep_merge({
@@ -139,8 +158,8 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
     end
 
     it 'configures the server to use ssl: verify' do
-      expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
-      expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
+      expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
+      expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem')
     end
 
     context 'when ha_proxy.enable_http2 is true' do
@@ -156,8 +175,8 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       end
 
       it 'enables h2 ALPN negotiation with routed backends' do
-        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
-        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
+        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem alpn h2,http/1.1')
       end
     end
 
@@ -174,8 +193,8 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       end
 
       it 'configures the server to use ssl: verify with verifyhost for the provided host name' do
-        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
-        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
+        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
+        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem verifyhost backend.com')
       end
 
       context 'when backend_ssl is not verify' do
@@ -211,8 +230,8 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
     end
 
     it 'configures the server to use ssl: verify none' do
-      expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify none')
-      expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify none')
+      expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 ssl verify none')
+      expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 ssl verify none')
     end
 
     context 'when ha_proxy.enable_http2 is true' do
@@ -228,8 +247,8 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
       end
 
       it 'enables h2 ALPN negotiation with routed backends' do
-        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000  ssl verify none alpn h2,http/1.1')
-        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000  ssl verify none alpn h2,http/1.1')
+        expect(backend_images).to include('server node0 10.0.0.2:443 check inter 1000 ssl verify none alpn h2,http/1.1')
+        expect(backend_images).to include('server node1 10.0.0.3:443 check inter 1000 ssl verify none alpn h2,http/1.1')
       end
     end
   end
