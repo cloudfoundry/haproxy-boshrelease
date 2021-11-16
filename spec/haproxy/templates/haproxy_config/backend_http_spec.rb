@@ -58,7 +58,7 @@ describe 'config/haproxy.config backend http-routers' do
     let(:properties) do
       {
         'backend_use_http_health' => true,
-        'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+        'backend_servers' => ['10.0.0.1', '10.0.0.2']
       }
     end
 
