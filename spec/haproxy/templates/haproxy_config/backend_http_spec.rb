@@ -67,8 +67,8 @@ describe 'config/haproxy.config backend http-routers' do
     end
 
     it 'adds the healthcheck to the server config' do
-      expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8080')
-      expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080')
+      expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8080 fall 3 rise 2')
+      expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080 fall 3 rise 2')
     end
 
     context 'when backend_http_health_uri is provided' do
@@ -85,8 +85,8 @@ describe 'config/haproxy.config backend http-routers' do
       end
 
       it 'adds the healthcheck to the server config' do
-        expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8080')
-        expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080')
+        expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8080 fall 3 rise 2')
+        expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080 fall 3 rise 2')
       end
     end
 
@@ -104,8 +104,46 @@ describe 'config/haproxy.config backend http-routers' do
       end
 
       it 'adds the healthcheck to the server config' do
-        expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8081')
-        expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8081')
+        expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8081 fall 3 rise 2')
+        expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8081 fall 3 rise 2')
+      end
+    end
+
+    context 'when backend_health_fall is provided' do
+      let(:properties) do
+        {
+          'backend_use_http_health' => true,
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'backend_health_fall' => 42
+        }
+      end
+
+      it 'configures the healthcheck' do
+        expect(backend_http1).to include('option httpchk GET /health')
+      end
+
+      it 'configures the servers' do
+        expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8080 fall 42 rise 2')
+        expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080 fall 42 rise 2')
+      end
+    end
+
+    context 'when backend_health_rise is provided' do
+      let(:properties) do
+        {
+          'backend_use_http_health' => true,
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'backend_health_rise' => 99
+        }
+      end
+
+      it 'configures the healthcheck' do
+        expect(backend_http1).to include('option httpchk GET /health')
+      end
+
+      it 'configures the servers' do
+        expect(backend_http1).to include('server node0 10.0.0.1:80 check inter 1000 port 8080 fall 3 rise 99')
+        expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080 fall 3 rise 99')
       end
     end
   end
