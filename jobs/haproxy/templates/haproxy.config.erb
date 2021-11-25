@@ -389,10 +389,14 @@ frontend http-in
     <%- end -%>
     http-request deny if internal !private
   <%- end -%>
-  <%- p('ha_proxy.routed_backend_servers').keys.each do |prefix| -%>
+  <%- p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
     <%- prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] -%>
     acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
-    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+    <%- data.fetch("additional_acls", []).each_with_index do |acl, i| -%>
+    acl routed_backend_<%= prefix_hash %>_<%= i %> <%= acl %>
+    <%- end -%>
+    <%- additional_acls = data.fetch("additional_acls", []).count.times.map {|i| "routed_backend_#{prefix_hash}_#{i}"} %>
+    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %> <%= additional_acls.join " " %>
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "http" if ! xfp_exists
@@ -539,10 +543,14 @@ frontend https-in
     <%- end -%>
     http-request deny if internal !private
   <%- end -%>
-  <%- p('ha_proxy.routed_backend_servers').keys.each do |prefix| -%>
+  <%- p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
     <%- prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] -%>
     acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
-    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+    <%- data.fetch("additional_acls", []).each_with_index do |acl, i| -%>
+    acl routed_backend_<%= prefix_hash %>_<%= i %> <%= acl %>
+    <%- end -%>
+    <%- additional_acls = data.fetch("additional_acls", []).count.times.map {|i| "routed_backend_#{prefix_hash}_#{i}"} %>
+    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %> <%= additional_acls.join " " %>
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
@@ -690,10 +698,14 @@ frontend wss-in
     <%- end -%>
     http-request deny if internal !private
   <%- end -%>
-  <%- p('ha_proxy.routed_backend_servers').keys.each do |prefix| -%>
+  <%- p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
     <%- prefix_hash = (Digest::SHA256.hexdigest prefix.to_s)[0..5] -%>
     acl routed_backend_<%= prefix_hash %> path_beg <%= prefix %>
-    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %>
+    <%- data.fetch("additional_acls", []).each_with_index do |acl, i| -%>
+    acl routed_backend_<%= prefix_hash %>_<%= i %> <%= acl %>
+    <%- end -%>
+    <%- additional_acls = data.fetch("additional_acls", []).count.times.map {|i| "routed_backend_#{prefix_hash}_#{i}"} %>
+    use_backend http-routed-backend-<%= prefix_hash %> if routed_backend_<%= prefix_hash %> <%= additional_acls.join " " %>
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists

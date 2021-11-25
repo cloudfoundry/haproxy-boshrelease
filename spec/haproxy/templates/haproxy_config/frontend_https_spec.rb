@@ -610,6 +610,24 @@ describe 'config/haproxy.config HTTPS frontend' do
       expect(frontend_https).to include('acl routed_backend_9c1bb7 path_beg /images')
       expect(frontend_https).to include('use_backend http-routed-backend-9c1bb7 if routed_backend_9c1bb7')
     end
+
+    context 'when a routed_backend_server contains additional_acls' do
+      let(:properties) do
+        super().deep_merge({
+          'routed_backend_servers' => {
+            '/images' => {
+              'additional_acls' => ['method GET', 'path_end /foo']
+            }
+          }
+        })
+      end
+
+      it 'includes additional acls' do
+        expect(frontend_https).to include('acl routed_backend_9c1bb7_0 method GET')
+        expect(frontend_https).to include('acl routed_backend_9c1bb7_1 path_end /foo')
+        expect(frontend_https).to include('use_backend http-routed-backend-9c1bb7 if routed_backend_9c1bb7 routed_backend_9c1bb7_0 routed_backend_9c1bb7_1')
+      end
+    end
   end
 
   it 'adds the X-Forwarded-Proto header' do
