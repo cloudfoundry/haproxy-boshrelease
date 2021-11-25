@@ -633,8 +633,8 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
 
     it 'grants access to the backend servers' do
-      expect(frontend_wss).to include('acl routed_backend_9c1bb7 path_beg /images')
-      expect(frontend_wss).to include('use_backend http-routed-backend-9c1bb7 if routed_backend_9c1bb7')
+      expect(frontend_wss).to include('acl routed_backend_9c1bb7_0 path_beg /images')
+      expect(frontend_wss).to include('use_backend http-routed-backend-9c1bb7 if routed_backend_9c1bb7_0')
     end
 
     context 'when a routed_backend_server contains additional_acls' do
@@ -649,9 +649,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       end
 
       it 'includes additional acls' do
-        expect(frontend_wss).to include('acl routed_backend_9c1bb7_0 method GET')
-        expect(frontend_wss).to include('acl routed_backend_9c1bb7_1 path_end /foo')
-        expect(frontend_wss).to include('use_backend http-routed-backend-9c1bb7 if routed_backend_9c1bb7 routed_backend_9c1bb7_0 routed_backend_9c1bb7_1')
+        expect(frontend_wss).to include('acl routed_backend_9c1bb7_1 method GET')
+        expect(frontend_wss).to include('acl routed_backend_9c1bb7_2 path_end /foo')
+        expect(frontend_wss).to include('use_backend http-routed-backend-9c1bb7 if routed_backend_9c1bb7_0 routed_backend_9c1bb7_1 routed_backend_9c1bb7_2')
       end
     end
   end
