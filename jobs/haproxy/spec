@@ -382,8 +382,6 @@ properties:
 
             - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded). Backends should use this header to authenticate incoming requests.
 
-            - X-Forwarded-Client-Chain: Contains the CA certificate chain sent by the client in binary DER format (Base64 encoded). Note that multiple DER-encoded certificates are concatenated before being base64-encoded.
-
             - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
 
             - X-SSL-Client-Session-ID: The SSL session ID of the client connection. Useful for debugging purposes.
@@ -406,8 +404,6 @@ properties:
           When the client connection is mTLS, the following headers will be overwritten in the request
 
             - X-Forwarded-Client-Cert: Contains the client certificate in binary DER format (Base64 encoded). Backends should use this header to authenticate incoming requests.
-
-            - X-Forwarded-Client-Chain: Contains the CA certificate chain sent by the client in binary DER format (Base64 encoded). Note that multiple DER-encoded certificates are concatenated before being base64-encoded.
 
             - X-SSL-Client: Contains the number 1 if the request was made using a client certificate, 0 otherwise. For easy checks on the backend.
 
