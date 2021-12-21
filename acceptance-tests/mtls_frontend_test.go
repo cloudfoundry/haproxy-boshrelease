@@ -113,7 +113,7 @@ var _ = Describe("mTLS", func() {
 		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileMTLS}, map[string]interface{}{}, true)
 
 		err := varsStoreReader(&creds)

@@ -6,6 +6,8 @@ import (
 	"os/exec"
 )
 
+var config Config
+
 type Config struct {
 	ReleaseRepoPath  string `json:"releaseRepoPath"`
 	ReleaseVersion   string `json:"releaseVersion"`
@@ -17,8 +19,6 @@ type Config struct {
 	BaseManifestPath string `json:"baseManifestPath"`
 	HomePath         string `json:"homePath"`
 }
-
-var config Config
 
 func loadConfig() (Config, error) {
 	releaseRepoPath, err := getEnvOrFail("REPO_ROOT")

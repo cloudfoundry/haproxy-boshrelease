@@ -23,7 +23,7 @@ var _ = Describe("Master CLI", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileMasterCLI}, map[string]interface{}{}, true)
 
 		By("The master CLI 'show proc' command works")

@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("keepalived", func() {
 	It("Deploys haproxy with keepalived", func() {
-		opsfileBufferSize := `---
+		opsfileKeepalived := `---
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=keepalived?/release?
   value: haproxy
@@ -22,8 +22,8 @@ var _ = Describe("keepalived", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
-		}, []string{opsfileBufferSize}, map[string]interface{}{}, true)
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileKeepalived}, map[string]interface{}{}, true)
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
 

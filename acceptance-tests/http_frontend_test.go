@@ -13,7 +13,7 @@ var _ = Describe("HTTP Frontend", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()

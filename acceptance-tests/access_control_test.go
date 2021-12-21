@@ -40,7 +40,7 @@ var _ = Describe("Access Control", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileWhitelist}, map[string]interface{}{
 			"cidr_whitelist": []string{"127.0.0.1/32"},
 		}, true)
@@ -72,7 +72,7 @@ var _ = Describe("Access Control", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileBlacklist}, map[string]interface{}{
 			// traffic from test runner appears to come from this CIDR block
 			"cidr_blacklist": []string{"10.0.0.0/8"},

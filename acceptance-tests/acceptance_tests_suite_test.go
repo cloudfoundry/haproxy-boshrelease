@@ -2,6 +2,7 @@ package acceptance_tests
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -13,27 +14,53 @@ import (
 
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
+	ginkgoConfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 )
 
-// This deployment is reused between tests to speed up test execution
-var defaultDeploymentName = "haproxy"
+// This deployment is reused between tests in the same thread to speed up test execution
+func deploymentNameForTestNode() string {
+	return fmt.Sprintf("haproxy%d", ginkgoConfig.GinkgoConfig.ParallelNode)
+}
 
 func TestAcceptanceTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "AcceptanceTests Suite")
 }
 
-var _ = BeforeSuite(func() {
+var _ = SynchronizedBeforeSuite(func() []byte {
+	// Load config once, and pass to other
+	// threads as JSON-encoded byte array
 	var err error
 	config, err = loadConfig()
 	Expect(err).NotTo(HaveOccurred())
+
+	// Deploy HAProxy at least once in a single thread to
+	// ensure that deployments in multi-threaded tests
+	// have access to precompiled releases and don't
+	// all start compiling the same releases.
+
+	deployHAProxy(baseManifestVars{
+		haproxyBackendPort:    12000,
+		haproxyBackendServers: []string{"127.0.0.1"},
+		deploymentName:        deploymentNameForTestNode(),
+	}, []string{}, map[string]interface{}{}, true)
+
+	configBytes, err := json.Marshal(&config)
+	Expect(err).NotTo(HaveOccurred())
+
+	return configBytes
+}, func(configBytes []byte) {
+	// populate thread-local variable `config` in each thread
+	err := json.Unmarshal(configBytes, &config)
+	Expect(err).NotTo(HaveOccurred())
 })
 
-var _ = AfterSuite(func() {
-	deleteDeployment(defaultDeploymentName)
-})
+var _ = SynchronizedAfterSuite(func() {
+	// Clean up deployments on each thread
+	deleteDeployment(deploymentNameForTestNode())
+}, func() {})
 
 // Starts a simple test server that returns 200 OK or echoes websocket messages back
 func startDefaultTestServer() (func(), int) {
@@ -141,4 +168,10 @@ func checkTLSErr(err error, expectString string) {
 	var opErr *net.OpError
 	Expect(errors.As(tlsErr, &opErr)).To(BeTrue())
 	Expect(opErr.Err.Error()).To(ContainSubstring(expectString))
+}
+
+func writeLog(s string) {
+	for _, line := range strings.Split(s, "\n") {
+		fmt.Printf("node %d/%d: %s\n", ginkgoConfig.GinkgoConfig.ParallelNode, ginkgoConfig.GinkgoConfig.ParallelTotal, line)
+	}
 }

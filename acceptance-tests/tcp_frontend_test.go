@@ -25,7 +25,7 @@ var _ = Describe("TCP Frontend", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileTCP}, map[string]interface{}{
 			"tcp_frontend_port": tcpFrontendPort,
 			"tcp_backend_port":  tcpBackendPort,

@@ -23,11 +23,11 @@ var _ = Describe("HTTP Health Check", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileHTTPHealthcheck}, map[string]interface{}{}, false)
 
 		// Verify that is in a failing state
-		Expect(boshInstances(defaultDeploymentName)[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
+		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -40,7 +40,7 @@ var _ = Describe("HTTP Health Check", func() {
 		// and monit should in turn start reporting a healthy process
 		// We will up to wait one minute for the status to stabilise
 		Eventually(func() string {
-			return boshInstances(defaultDeploymentName)[0].ProcessState
+			return boshInstances(deploymentNameForTestNode())[0].ProcessState
 		}, time.Minute, time.Second).Should(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
@@ -71,11 +71,11 @@ var _ = Describe("HTTP Health Check", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    80,
 			haproxyBackendServers: []string{backendHaproxyInfo.PublicIP},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileHTTPHealthcheck}, map[string]interface{}{}, true)
 
 		// Verify that instance is in a running state
-		Expect(boshInstances(defaultDeploymentName)[0].ProcessState).To(Equal("running"))
+		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
 		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))

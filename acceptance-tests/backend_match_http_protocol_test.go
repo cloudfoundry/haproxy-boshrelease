@@ -84,7 +84,7 @@ var _ = Describe("Backend match HTTP protocol", func() {
 		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileHTTPS}, map[string]interface{}{}, true)
 
 		err := varsStoreReader(&creds)
@@ -103,7 +103,7 @@ var _ = Describe("Backend match HTTP protocol", func() {
 
 		var localPort int
 		closeLocalServer, localPort, err = startLocalHTTPServer(backendTLSConfig, func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("Backend server handling incoming request")
+			writeLog("Backend server handling incoming request")
 			protocolHeaderValue := "none"
 			if r.TLS != nil {
 				protocolHeaderValue = r.TLS.NegotiatedProtocol

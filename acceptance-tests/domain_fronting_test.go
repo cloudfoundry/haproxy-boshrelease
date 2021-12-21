@@ -105,7 +105,7 @@ var _ = Describe("Domain fronting", func() {
 		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfile}, map[string]interface{}{
 			"disable_domain_fronting": disableDomainFronting,
 			"cert_common_name":        "haproxy.internal",

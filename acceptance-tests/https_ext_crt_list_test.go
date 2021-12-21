@@ -98,7 +98,7 @@ var _ = Describe("External Certificate Lists", func() {
 		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileSSLCertificate}, map[string]interface{}{
 			"ext_crt_list_path": extCrtListPath,
 		}, true)
@@ -237,7 +237,7 @@ var _ = Describe("External Certificate Lists", func() {
 				deployHAProxy(baseManifestVars{
 					haproxyBackendPort:    haproxyBackendPort,
 					haproxyBackendServers: []string{"127.0.0.1"},
-					deploymentName:        defaultDeploymentName,
+					deploymentName:        deploymentNameForTestNode(),
 				}, []string{opfileExternalCertificatePolicyFail}, map[string]interface{}{}, true)
 			})
 		})
@@ -289,7 +289,7 @@ var _ = Describe("External Certificate Lists", func() {
 				haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 					haproxyBackendPort:    haproxyBackendPort,
 					haproxyBackendServers: []string{"127.0.0.1"},
-					deploymentName:        defaultDeploymentName,
+					deploymentName:        deploymentNameForTestNode(),
 				}, []string{opfileExternalCertificatePolicyFail, opsfileOSConfProvidedCertificate, opsfileSSLCertVariable}, map[string]interface{}{}, true)
 
 				// Ensure file written by os-conf is cleaned up for next test
@@ -330,7 +330,7 @@ var _ = Describe("External Certificate Lists", func() {
 					haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 						haproxyBackendPort:    haproxyBackendPort,
 						haproxyBackendServers: []string{"127.0.0.1"},
-						deploymentName:        defaultDeploymentName,
+						deploymentName:        deploymentNameForTestNode(),
 					}, []string{opfileExternalCertificatePolicyFail, opsfileSSLCertVariable}, map[string]interface{}{}, true)
 
 					var creds struct {
@@ -347,8 +347,9 @@ var _ = Describe("External Certificate Lists", func() {
 					baseManifestVars := baseManifestVars{
 						haproxyBackendPort:    haproxyBackendPort,
 						haproxyBackendServers: []string{"127.0.0.1"},
-						deploymentName:        defaultDeploymentName,
+						deploymentName:        deploymentNameForTestNode(),
 					}
+
 					// Override SSH key and certificate with existing values to avoid re-generating
 					manifestVars := buildManifestVars(baseManifestVars, map[string]interface{}{
 						"ssh_key": map[string]string{
@@ -359,7 +360,7 @@ var _ = Describe("External Certificate Lists", func() {
 						"cert": creds.Cert,
 					})
 					opsfiles := append(defaultOpsfiles, opfileExternalCertificatePolicyFail, opsfileSSLCertVariable)
-					deployCmd, _ := deployBaseManifestCmd(defaultDeploymentName, opsfiles, manifestVars)
+					deployCmd, _ := deployBaseManifestCmd(deploymentNameForTestNode(), opsfiles, manifestVars)
 					// Recreate VM to ensure that HAProxy process is restarted
 					deployCmd.Args = append(deployCmd.Args, "--recreate")
 					buffer := gbytes.NewBuffer()
