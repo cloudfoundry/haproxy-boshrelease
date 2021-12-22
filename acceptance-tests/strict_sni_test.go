@@ -78,7 +78,7 @@ var _ = Describe("Strict SNI", func() {
 		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfile}, map[string]interface{}{
 			"cert_common_name": "haproxy.internal",
 			"cert_sans":        []string{"haproxy.internal"},

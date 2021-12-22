@@ -56,7 +56,7 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 		return err
 	}
 
-	fmt.Printf("Listening on 127.0.0.1:%d on local machine\n", remotePort)
+	writeLog(fmt.Sprintf("Listening on 127.0.0.1:%d on local machine\n", remotePort))
 	localListener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
 	if err != nil {
 		return err
@@ -67,9 +67,9 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 			localClient, err := localListener.Accept()
 			if err != nil {
 				if err == io.EOF {
-					fmt.Println("Local connection closed")
+					writeLog("Local connection closed")
 				} else {
-					fmt.Printf("Error accepting connection on local listener: %s\n", err.Error())
+					writeLog(fmt.Sprintf("Error accepting connection on local listener: %s\n", err.Error()))
 				}
 
 				return
@@ -77,7 +77,7 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 
 			remoteConn, err := remoteConn.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", remotePort))
 			if err != nil {
-				fmt.Printf("Error dialing local port %d: %s\n", remotePort, err.Error())
+				writeLog(fmt.Sprintf("Error dialing local port %d: %s\n", remotePort, err.Error()))
 				return
 			}
 
@@ -88,7 +88,7 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 
 	go func() {
 		<-ctx.Done()
-		fmt.Println("Closing local listener")
+		writeLog("Closing local listener")
 		localListener.Close()
 	}()
 
@@ -103,7 +103,7 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 		return err
 	}
 
-	fmt.Printf("Listening on 127.0.0.1:%d on remote machine\n", remotePort)
+	writeLog(fmt.Sprintf("Listening on 127.0.0.1:%d on remote machine\n", remotePort))
 	remoteListener, err := remoteConn.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", remotePort))
 	if err != nil {
 		return err
@@ -114,9 +114,9 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 			remoteClient, err := remoteListener.Accept()
 			if err != nil {
 				if err == io.EOF {
-					fmt.Println("Remote connection closed")
+					writeLog("Remote connection closed")
 				} else {
-					fmt.Printf("Error accepting connection on remote listener: %s\n", err.Error())
+					writeLog(fmt.Sprintf("Error accepting connection on remote listener: %s\n", err.Error()))
 				}
 
 				return
@@ -124,7 +124,7 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 
 			localConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
 			if err != nil {
-				fmt.Printf("Error dialing local port %d: %s\n", localPort, err.Error())
+				writeLog(fmt.Sprintf("Error dialing local port %d: %s\n", localPort, err.Error()))
 				return
 			}
 
@@ -135,7 +135,7 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 
 	go func() {
 		<-ctx.Done()
-		fmt.Println("Closing remote listener")
+		writeLog("Closing remote listener")
 		remoteListener.Close()
 	}()
 
@@ -188,7 +188,7 @@ func buildSSHClient(user string, addr string, privateKey string) (*ssh.Client, e
 		return nil, err
 	}
 
-	fmt.Printf("Connecting to %s:%d as user %s using private key\n", addr, 22, user)
+	writeLog(fmt.Sprintf("Connecting to %s:%d as user %s using private key\n", addr, 22, user))
 	return ssh.Dial("tcp", net.JoinHostPort(addr, "22"), config)
 }
 

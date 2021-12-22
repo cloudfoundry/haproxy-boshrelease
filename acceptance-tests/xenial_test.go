@@ -21,7 +21,7 @@ var _ = Describe("Xenial", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        defaultDeploymentName,
+			deploymentName:        deploymentNameForTestNode(),
 		}, []string{opsfileXenial}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()

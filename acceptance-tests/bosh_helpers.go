@@ -52,9 +52,7 @@ var opsfileAddSSHUser string = `---
   path: /releases/-
   value:
     name: os-conf
-    version: "22.1.1"
-    url: https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.1
-    sha1: "4f653168954749992a541d228dd4f936f2eff2d6"
+    version: latest
 
 # Add an SSH user
 - type: replace
@@ -151,18 +149,18 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 }
 
 func dumpCmd(cmd *exec.Cmd) {
-	fmt.Println("---------- Command to run ----------")
-	fmt.Println(cmd.String())
-	fmt.Println("------------------------------------")
+	writeLog("---------- Command to run ----------")
+	writeLog(cmd.String())
+	writeLog("------------------------------------")
 }
 
 func dumpHAProxyConfig(haproxyInfo haproxyInfo) {
 	By("Checking /var/vcap/jobs/haproxy/config/haproxy.config")
 	haProxyConfig, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "cat /var/vcap/jobs/haproxy/config/haproxy.config")
 	Expect(err).NotTo(HaveOccurred())
-	fmt.Println("---------- HAProxy Config ----------")
-	fmt.Println(haProxyConfig)
-	fmt.Println("------------------------------------")
+	writeLog("---------- HAProxy Config ----------")
+	writeLog(haProxyConfig)
+	writeLog("------------------------------------")
 }
 
 // Takes bosh deployment name, ops files and vars.
@@ -176,10 +174,10 @@ func deployBaseManifestCmd(boshDeployment string, opsFilesContents []string, var
 		opsFile, err := ioutil.TempFile("", "haproxy-tests-ops-file-*.yml")
 		Expect(err).NotTo(HaveOccurred())
 
-		fmt.Printf("Writing ops file to %s\n", opsFile.Name())
-		fmt.Println("------------------------------------")
-		fmt.Println(opsFileContents)
-		fmt.Println("------------------------------------")
+		writeLog(fmt.Sprintf("Writing ops file to %s\n", opsFile.Name()))
+		writeLog("------------------------------------")
+		writeLog(opsFileContents)
+		writeLog("------------------------------------")
 
 		_, err = opsFile.WriteString(opsFileContents)
 		Expect(err).NotTo(HaveOccurred())
@@ -197,10 +195,10 @@ func deployBaseManifestCmd(boshDeployment string, opsFilesContents []string, var
 		bytes, err := json.Marshal(vars)
 		Expect(err).NotTo(HaveOccurred())
 
-		fmt.Printf("Writing vars file to %s\n", varsFile.Name())
-		fmt.Println("------------------------------------")
-		fmt.Println(string(bytes))
-		fmt.Println("------------------------------------")
+		writeLog(fmt.Sprintf("Writing vars file to %s\n", varsFile.Name()))
+		writeLog("------------------------------------")
+		writeLog(string(bytes))
+		writeLog("------------------------------------")
 
 		_, err = varsFile.Write(bytes)
 		Expect(err).NotTo(HaveOccurred())
@@ -255,7 +253,7 @@ func (instance boshInstance) ParseIPs() []string {
 }
 
 func boshInstances(boshDeployment string) []boshInstance {
-	fmt.Printf("Fetching Bosh instances")
+	writeLog("Fetching Bosh instances")
 	cmd := config.boshCmd(boshDeployment, "--json", "instances", "--details")
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
