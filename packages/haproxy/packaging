@@ -24,7 +24,9 @@ popd
 echo "Extracting pcre..."
 tar xzf haproxy/pcre2-${PCRE_VERSION}.tar.gz
 pushd pcre2-${PCRE_VERSION}
-  ./configure --prefix ${BOSH_INSTALL_TARGET}
+  ./configure \
+    --enable-jit \
+    --prefix ${BOSH_INSTALL_TARGET}
   make
   make install
 popd
