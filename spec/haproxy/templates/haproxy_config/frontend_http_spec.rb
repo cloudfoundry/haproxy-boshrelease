@@ -10,38 +10,6 @@ describe 'config/haproxy.config HTTP frontend' do
   let(:frontend_http) { haproxy_conf['frontend http-in'] }
   let(:properties) { {} }
 
-  context 'when ha_proxy.drain_enable is true' do
-    let(:properties) do
-      { 'drain_enable' => true }
-    end
-
-    it 'has a default grace period of 0 milliseconds' do
-      expect(frontend_http).to include('grace 0')
-    end
-
-    context('when ha_proxy.drain_frontend_grace_time is provided') do
-      let(:properties) do
-        { 'drain_enable' => true, 'drain_frontend_grace_time' => 12 }
-      end
-
-      it 'overrides the grace period' do
-        expect(frontend_http).to include('grace 12000')
-      end
-
-      context 'when ha_proxy.drain_enable is false' do
-        let(:properties) do
-          { 'drain_enable' => false, 'drain_frontend_grace_time' => 12 }
-        end
-
-        it 'aborts with a meaningful error message' do
-          expect do
-            frontend_http
-          end.to raise_error /Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/
-        end
-      end
-    end
-  end
-
   it 'binds to all interfaces by default' do
     expect(frontend_http).to include('bind :80')
   end
