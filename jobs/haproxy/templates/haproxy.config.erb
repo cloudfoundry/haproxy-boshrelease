@@ -138,9 +138,6 @@ end
 # }}}
 
 # Error checking
-  if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
-    abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
-  end
 
   if !p("ha_proxy.hsts_enable", false)
     if p("ha_proxy.hsts_include_subdomains")
@@ -338,9 +335,6 @@ resolvers default
 # HTTP Frontend {{{
 frontend http-in
     mode http
-  <% if p("ha_proxy.drain_enable") -%>
-    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
-  <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %> <%= v4v6 %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
@@ -425,9 +419,6 @@ frontend http-in
 # HTTPS Frontend {{{
 frontend https-in
     mode http
-  <% if p("ha_proxy.drain_enable") -%>
-    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
-  <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= default_alpn_config %>
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
@@ -582,9 +573,6 @@ frontend https-in
 # HTTPS Websockets Frontend {{{
 frontend wss-in
     mode http
-  <% if p("ha_proxy.drain_enable") -%>
-    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
-  <%- end -%>
     bind <%= p("ha_proxy.binding_ip") %>:4443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
@@ -830,9 +818,6 @@ frontend cf_tcp_routing
     mode tcp
     bind <%= p("ha_proxy.binding_ip") %>:<%= p("ha_proxy.tcp_routing.port_range") %> <%= v4v6 %>
     default_backend cf_tcp_routers
-  <% if p("ha_proxy.drain_enable") -%>
-    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
-  <%- end -%>
 
 backend cf_tcp_routers
     mode tcp
@@ -867,9 +852,6 @@ frontend tcp-frontend_<%= tcp_proxy["name"]%>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= v4v6 %>
   <%- end -%>
     default_backend tcp-<%= tcp_proxy["name"] %>
-  <% if p("ha_proxy.drain_enable") -%>
-    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f    * 1000).to_i %>
-  <%- end -%>
 
 backend tcp-<%= tcp_proxy["name"] %>
     mode tcp
