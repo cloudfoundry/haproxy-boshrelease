@@ -68,6 +68,8 @@ bosh -n create-release releases/$RELEASE_NAME/$RELEASE_NAME-$VERSION.yml \
 cd -
 
 RELEASE_TGZ=$REPO_ROOT/releases/$RELEASE_NAME/$RELEASE_NAME-$VERSION.tgz
+export SHA1=$(sha1sum $RELEASE_TGZ | head -n1 | awk '{print $1}')
+echo "SHA1=$SHA1"
 export SHA256=$(sha256sum $RELEASE_TGZ | head -n1 | awk '{print $1}')
 echo "SHA256=$SHA256"
 
@@ -84,7 +86,10 @@ releases:
 - name: "$RELEASE_NAME"
   version: "$VERSION"
   url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}.tgz"
-  sha256: "sha256:$SHA256"
+  sha1: "$SHA1"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:$SHA256"
 \`\`\`
 EOF
 cat > ${RELEASE_ROOT}/notification <<EOF
@@ -102,7 +107,7 @@ fi
 
 pushd ${REPO_ROOT}
   for MANIFEST_PATH in $(ls manifests/*.yml); do
-    $DIR/update-manifest "$GITHUB_OWNER" "$RELEASE_NAME" "$VERSION" "$SHA256" "$MANIFEST_PATH"
+    $DIR/update-manifest $GITHUB_OWNER $RELEASE_NAME $VERSION $SHA1 $MANIFEST_PATH
   done
   git merge --no-edit ${BRANCH}
   git add -A
