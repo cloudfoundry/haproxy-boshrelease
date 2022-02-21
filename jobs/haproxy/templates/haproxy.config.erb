@@ -219,6 +219,9 @@ end
 global
     log <%= p('ha_proxy.syslog_server') %> len <%= p('ha_proxy.log_max_length') %> format <%= p('ha_proxy.log_format') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
+  <%- if p("ha_proxy.drain_enable") -%>
+    grace <%= (p("ha_proxy.drain_frontend_grace_time").to_f * 1000).to_i %>
+  <%- end -%>
   <%- if properties.ha_proxy.global_config -%>
     <%= p("ha_proxy.global_config") %>
   <%- end -%>
