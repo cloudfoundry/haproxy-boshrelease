@@ -138,6 +138,9 @@ end
 # }}}
 
 # Error checking
+  if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
+    abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
+  end
 
   if !p("ha_proxy.hsts_enable", false)
     if p("ha_proxy.hsts_include_subdomains")
@@ -322,6 +325,9 @@ listen health_check_http_url
     monitor-uri /health
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
+    <% if p("ha_proxy.drain_enable") %>
+    monitor fail if { stopping }
+    <% end -%>
 <% end -%>
 
 <% if_p("ha_proxy.resolvers") do |resolvers| -%>

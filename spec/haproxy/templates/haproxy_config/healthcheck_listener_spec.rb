@@ -22,6 +22,25 @@ describe 'config/haproxy.config healthcheck listeners' do
       expect(healthcheck_listener).to include('monitor-uri /health')
       expect(healthcheck_listener).to include('acl http-routers_down nbsrv(http-routers-http1) eq 0')
       expect(healthcheck_listener).to include('monitor fail if http-routers_down')
+      expect(healthcheck_listener).not_to include('monitor fail if { stopping }')
+    end
+
+    context 'when ha_proxy.drain_enable is true' do
+      let(:properties) do
+        {
+          'enable_health_check_http' => true,
+          'drain_enable' => true
+        }
+      end
+
+      it 'adds a health check listener for the http-routers-http1' do
+        expect(healthcheck_listener).to include('bind :8080')
+        expect(healthcheck_listener).to include('mode http')
+        expect(healthcheck_listener).to include('monitor-uri /health')
+        expect(healthcheck_listener).to include('acl http-routers_down nbsrv(http-routers-http1) eq 0')
+        expect(healthcheck_listener).to include('monitor fail if http-routers_down')
+        expect(healthcheck_listener).to include('monitor fail if { stopping }')
+      end
     end
 
     context 'when only http2 backend servers are available' do
