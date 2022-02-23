@@ -325,7 +325,7 @@ listen health_check_http_url
     monitor-uri /health
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
-    <% if p("ha_proxy.drain_enable") %>
+    <% if p("ha_proxy.drain_enable") -%>
     monitor fail if { stopping }
     <% end -%>
 <% end -%>
