@@ -381,8 +381,6 @@ describe 'config/haproxy.config global and default options' do
           expect { global }.to raise_error(/Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/)
         end
       end
-
-
     end
   end
 
