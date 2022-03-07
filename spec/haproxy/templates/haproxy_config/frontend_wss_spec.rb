@@ -18,38 +18,6 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
 
   let(:properties) { default_properties }
 
-  context 'when ha_proxy.drain_enable is true' do
-    let(:properties) do
-      default_properties.merge({ 'drain_enable' => true })
-    end
-
-    it 'has a default grace period of 0 milliseconds' do
-      expect(frontend_wss).to include('grace 0')
-    end
-
-    context('when ha_proxy.drain_frontend_grace_time is provided') do
-      let(:properties) do
-        default_properties.merge({ 'drain_enable' => true, 'drain_frontend_grace_time' => 12 })
-      end
-
-      it 'overrides the grace period' do
-        expect(frontend_wss).to include('grace 12000')
-      end
-
-      context 'when ha_proxy.drain_enable is false' do
-        let(:properties) do
-          default_properties.merge({ 'drain_enable' => false, 'drain_frontend_grace_time' => 12 })
-        end
-
-        it 'aborts with a meaningful error message' do
-          expect do
-            frontend_wss
-          end.to raise_error /Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/
-        end
-      end
-    end
-  end
-
   it 'binds to all interfaces by default' do
     expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
   end
