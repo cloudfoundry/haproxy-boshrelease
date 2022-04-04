@@ -101,7 +101,7 @@ trap reload_daemon USR2
 
 # Start up
 echo "$(date): Starting HAProxy"
-haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %>
+haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> | cat -
 
 <%- if !run_in_foreground -%>
 # Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
