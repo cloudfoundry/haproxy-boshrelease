@@ -105,6 +105,7 @@ haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %>
 
 <%- if !run_in_foreground -%>
 # Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
-# to work properly, and BPM requires the process to stay running, sleep infinitely here
-sleep infinity
+# to work properly, and BPM requires the process to stay running, wait for the 
+# HAProxy main process to terminate
+while kill -0 $(cat ${PID_FILE}) 2>/dev/null; do sleep 1; done;
 <%- end -%>
