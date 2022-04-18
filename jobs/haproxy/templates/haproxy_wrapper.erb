@@ -84,12 +84,14 @@ trap reload_daemon USR2
 
 <%-
   flags=[]
+  cat_pipe=''
 
   # Enable background mode only if syslog is not configured to output to stdout/stderr
   run_in_foreground = p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr"
 
   if run_in_foreground
     flags += ['-V', '-db']
+    cat_pipe='| cat -'
   else
     flags += ['-D']
   end
@@ -101,7 +103,7 @@ trap reload_daemon USR2
 
 # Start up
 echo "$(date): Starting HAProxy"
-haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> | cat -
+haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> <%= cat_pipe %>
 
 <%- if !run_in_foreground -%>
 # Since HAProxy requires Daemonized mode for its `nbproc` multi-process feature
