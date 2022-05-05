@@ -157,6 +157,8 @@ builds:
     version: 9.2.0
   f0b063d7-de76-4eba-4542-c66e86ccc026:
     version: 9.5.1
+  f0c984e4-6fb9-4621-46af-e0188a8be714:
+    version: 11.10.3
   fa4778ed-7e7a-4ea1-819c-94ca28a9b867:
     version: "2"
   fe9502ef-471d-47d4-5384-8143fde631f3:
