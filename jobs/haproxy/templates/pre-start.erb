@@ -16,3 +16,7 @@ fi
 if [ ! -e /usr/local/bin/hatop ]; then
   sudo ln -s /var/vcap/packages/haproxy/hatop-wrapper /usr/local/bin/hatop
 fi
+
+if [ ! -e /usr/local/bin/socat ]; then
+  sudo ln -s /var/vcap/packages/haproxy/bin/socat /usr/local/bin/socat
+fi
