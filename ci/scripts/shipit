@@ -80,21 +80,24 @@ mv ${REPO_ROOT}/releases/*/*-${VERSION}.tgz  ${RELEASE_ROOT}/artifacts
 mv ${REPO_ROOT}/ci/release_notes.md          ${RELEASE_ROOT}/notes.md
 
 HAPROXY_VERSION=$(sed -n 's/HAPROXY_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
-SOCAT_VERSION=$(sed -n 's/SOCAT_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
 LUA_VERSION=$(sed -n 's/LUA_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
+SOCAT_VERSION=$(sed -n 's/SOCAT_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
 PCRE_VERSION=$(sed -n 's/PCRE_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
+
+KEEPALIVED_VERSION=$(sed -n 's/KEEPALIVED_VERSION=//p' "${REPO_ROOT}/packages/keepalived/packaging")
 
 cat >> ${RELEASE_ROOT}/notes.md <<EOF
 ### Versions
 
 The following versions of upstream components are included in this haproxy-boshrelease:
 
-| Component | Version |
-| ----------| ------- |
-| HAProxy   | \`${HAPROXY_VERSION}\` |
-| PCRE      | \`${PCRE_VERSION}\` |
-| Lua       | \`${LUA_VERSION}\` |
-| socat     | \`${SOCAT_VERSION}\` |
+| Component   | Version |
+| ----------- | ------- |
+| HAProxy     | \`${HAPROXY_VERSION}\` |
+| keepalived  | \`${KEEPALIVED_VERSION}\` |
+| Lua         | \`${LUA_VERSION}\` |
+| PCRE        | \`${PCRE_VERSION}\` |
+| socat       | \`${SOCAT_VERSION}\` |
 
 ### Deployment
 \`\`\`yaml
