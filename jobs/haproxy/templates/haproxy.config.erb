@@ -822,7 +822,12 @@ backend http-routed-backend-<%= prefix_hash %>
 
 # TCP Routing  {{{
 <% if_link("tcp_router") do |tcp_router| -%>
-
+  <%-
+  resolvers = ""
+  if_p("ha_proxy.resolvers") do
+    resolvers = "resolvers default "
+  end 
+  -%>
 frontend cf_tcp_routing
     mode tcp
     bind <%= p("ha_proxy.binding_ip") %>:<%= p("ha_proxy.tcp_routing.port_range") %> <%= v4v6 %>
@@ -835,7 +840,7 @@ backend cf_tcp_routers
   <%- end -%>
     option httpchk GET /health
   <% tcp_router.instances.each_with_index do |instance, index| %>
-    server node<%= index %> <%= instance.address %> check port 80 inter 1000
+    server node<%= index %> <%= instance.address %> <%= resolvers -%>check port 80 inter 1000
   <% end %>
 <% end -%>
 
