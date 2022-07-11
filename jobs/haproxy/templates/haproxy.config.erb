@@ -178,7 +178,7 @@ end
     backend_servers = backend.instances.map(&:address)
     backend_port = backend.p("port", p("ha_proxy.backend_port"))
 
-    if p("ha_proxy.backend_prefer_local_az")
+    if p("ha_proxy.backend_prefer_local_az") || p("ha_proxy.backend_only_local_az")
       backend_servers_local = backend.instances.select{ |n| n.az == spec.az }.map(&:address)
     end
   end.else_if_p("ha_proxy.backend_servers") do |servers|
@@ -757,6 +757,7 @@ backend <%= backend[:name] %>
     <%- health_check_options += " rise " + p("ha_proxy.backend_health_rise").to_s -%>
   <%- end -%>
   <% backend_servers.each_with_index do |ip, index| %>
+    <% next if !backend_servers_local.include?(ip) && p("ha_proxy.backend_only_local_az") %>
     server node<%= index %> <%= ip %>:<%= backend_port -%> <%= resolvers -%><%= backend_crt -%>check inter 1000 <%= health_check_options %> <%= backend[:backend_ssl] %><%= backend[:alpn] %><%- if !backend_servers_local.empty? && !backend_servers_local.include?(ip)  -%> backup<%- end -%>
   <% end %>
 # }}}

@@ -391,5 +391,16 @@ describe 'config/haproxy.config backend http-routers' do
         expect(backend_http1).to include('server node1 backend.az2.internal:80 check inter 1000   backup')
       end
     end
+
+    context 'when ha_proxy.backend_only_local_az is true' do
+      let(:properties) do
+        { 'backend_only_local_az' => true }
+      end
+
+      it 'configures servers only in local az' do
+        expect(backend_http1).to include('server node0 backend.az1.internal:80 check inter 1000')
+        expect(backend_http1).not_to include('server node1 backend.az2.internal:80 check inter 1000')
+      end
+    end
   end
 end

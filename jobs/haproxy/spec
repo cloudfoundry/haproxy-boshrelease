@@ -677,3 +677,6 @@ properties:
   ha_proxy.enable_http2:
     description: Enables ingress (frontend) and egress (backend) HTTP/2 ALPN negotiation. Egress (backend) HTTP protocol version may be overriden by `ha_proxy.backend_ssl`, `ha_proxy.disable_backend_http2_websockets` and `ha_proxy.backend_match_http_protocol`.
     default: false
+  ha_proxy.backend_only_local_az:
+    description: Unly use backend in loacl az
+    default: false
