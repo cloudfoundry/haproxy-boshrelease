@@ -10,8 +10,8 @@ PCRE_VERSION=10.40
 # http://www.dest-unreach.org/socat/download/socat-1.7.4.1.tar.gz
 SOCAT_VERSION=1.7.4.1
 
-# http://www.haproxy.org/download/2.5/src/haproxy-2.5.4.tar.gz
-HAPROXY_VERSION=2.5.4
+# https://www.haproxy.org/download/2.5/src/haproxy-2.5.7.tar.gz
+HAPROXY_VERSION=2.5.7
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 

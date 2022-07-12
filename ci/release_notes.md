@@ -5,7 +5,7 @@
 - socat is directly executable due to a symlink
 
 # Upgrades
-- None
+- HAProxy 2.5.4 -> 2.5.7
 
 # Acknowledgements
 
