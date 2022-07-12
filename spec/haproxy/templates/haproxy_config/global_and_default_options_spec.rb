@@ -491,4 +491,16 @@ describe 'config/haproxy.config global and default options' do
       expect(defaults).to include('option allbackups')
     end
   end
+
+  context 'when ha_proxy.always_allow_body_http10 is true' do
+    let(:properties) do
+      {
+        'always_allow_body_http10' => true
+      }
+    end
+
+    it 'sets the global option' do
+      expect(global).to include('h1-accept-payload-with-any-method')
+    end
+  end
 end
