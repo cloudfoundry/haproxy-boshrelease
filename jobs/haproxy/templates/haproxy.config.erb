@@ -276,6 +276,9 @@ global
   <%- if backend_match_http_protocol && backends.length == 2 -%>
     set-var proc.h2_alpn_tag str(h2)
   <%- end -%>
+  <%- if p("ha_proxy.always_allow_body_http10") %>
+    h1-accept-payload-with-any-method
+  <%- end %>
 
 defaults
     log global
