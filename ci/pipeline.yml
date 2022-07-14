@@ -388,6 +388,72 @@ jobs:
           icon_url: "((slack.icon))"
           text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
 
+  - name: check-update-dependencies
+    public: true
+    serial: true
+    plan:
+    - do:
+      - get: 24-h
+        trigger: true
+      - task: check-update-dependencies
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          outputs:  # TODO
+            - name: gh
+            - name: pushme
+            - name: notifications
+          run:
+            path: python3 ./git/ci/scripts/check_update_dependencies.py  # TODO: rename script?
+            args: []
+          params:  # TODO
+            REPO_ROOT:    git
+            VERSION_FROM: version/number
+            RELEASE_ROOT: gh
+            REPO_OUT:     pushme
+            NOTIFICATION_OUT: notifications
+            BRANCH:        master
+            GITHUB_OWNER:  cloudfoundry
+
+            AWS_ACCESS_KEY: ((aws.access_key))
+            AWS_SECRET_KEY: ((aws.secret_key))
+
+      - put: git
+        params:
+          rebase: true
+          repository: pushme/git
+      - put: s3
+        params:
+          file:  "gh/artifacts/haproxy-*.tgz"
+      - put: github
+        params:
+          name:   gh/name
+          tag:    gh/tag
+          body:   gh/notes.md
+          globs: [gh/artifacts/*]
+      - put: version
+        params:
+          bump: patch
+      - put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text_file: notifications/message
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
+
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -470,3 +536,8 @@ resources:
       regexp:            haproxy-([0-9\.]+).tgz
       access_key_id:     ((aws.access_key))
       secret_access_key: ((aws.secret_key))
+
+  - name: 24-h
+    type: time
+    source:
+      interval: 24h
