@@ -27,7 +27,7 @@ DRY_RUN = "DRY_RUN" in os.environ
 
 # Other Global Variables
 BLOBS_PATH = "config/blobs.yml"
-PACKAGING_PATH = "packages/haproxy/packaging"
+PACKAGING_PATH = "packages/{}/packaging"
 
 
 class BoshHelper:
@@ -53,11 +53,17 @@ class BoshHelper:
         print(f"Running '{' '.join(cmd_params)}' ...")
 
         # run as subprocess and handle errors
-        process = subprocess.Popen(cmd_params, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        process = subprocess.Popen(
+            cmd_params, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        )
         stdout, stderr = process.communicate()
         if stdout:
-            print(stdout.decode("utf-8"), file=sys.stdout)  # we don't expect any stdout under normal behaviour, might be useful for debugging though
-        response = stderr.decode("utf-8")  # bosh writes success info to stderr for some reason
+            print(
+                stdout.decode("utf-8"), file=sys.stdout
+            )  # we don't expect any stdout under normal behaviour, might be useful for debugging though
+        response = stderr.decode(
+            "utf-8"
+        )  # bosh writes success info to stderr for some reason
         if process.returncode != 0:
             raise Exception(f"bosh {cmd} failed. Aborting: {response}")
         # TODO: optional: bosh upload-blobs prints out the s3 URL for the uploaded blobs (captured in response here). Might be a nice addition to the PR description.
@@ -79,9 +85,8 @@ class Release:
         print(f"[{self.name}] download '{self.url}' to '{self.file}'")
         wget(self.url, self.file)
 
-    def add_blob(self):
-        # TODO: there's also keepalived/keepalived-2.2.7.tar.gz in blobs.yml do we need to auto-bump that as well? if so we need to extract the "haproxy/" path prefix into a variable
-        target_path = "haproxy/" + self.file
+    def add_blob(self, package):
+        target_path = f"{package}/{self.file}"
         BoshHelper.add_blob(self.file, target_path)
 
 
@@ -96,6 +101,7 @@ class Dependency:
     version_var_name: str
     pinned_version: str
     root_url: str
+    package: str = "haproxy"
 
     _latest_release: Optional[Release] = None
     _current_version: version.Version = None
@@ -108,7 +114,7 @@ class Dependency:
         """
         if self._current_version:
             return self._current_version
-        with open(PACKAGING_PATH, "r") as packaging_file:  # TODO: extract filename to var?
+        with open(PACKAGING_PATH.format(self.package), "r") as packaging_file:
             for line in packaging_file.readlines():
                 if line.startswith(self.version_var_name):
                     # Regex: expecting e.g. "RELEASE_VERSION=1.2.3  # http://release.org/download". extracting Semver Group
@@ -136,11 +142,11 @@ class Dependency:
         raise NotImplementedError
 
     def remove_current_blob(self):
-        current_blob_path = f"haproxy/{self.name}-{self.current_version}.tar.gz"
+        current_blob_path = f"{self.package}/{self.name}-{self.current_version}.tar.gz"
         if self._check_blob_exists(current_blob_path):
             BoshHelper.remove_blob(current_blob_path)
         else:
-            raise Exception(f"Current Blob not found: {current_blob_path}")
+            print(f"Current Blob not found: {current_blob_path}")
 
     def _check_blob_exists(self, blob_path) -> bool:
         """
@@ -154,14 +160,14 @@ class Dependency:
         """
         Writes the new dependency version and download-url into packages/haproxy/packaging
         """
-        with open(PACKAGING_PATH, "r") as packaging_file:
+        with open(PACKAGING_PATH.format(self.package), "r") as packaging_file:
             replacement = ""
             for line in packaging_file.readlines():
                 if line.startswith(self.version_var_name):
                     line = f"{self.version_var_name}={self.latest_release.version}  # {self.latest_release.url}\n"
                 replacement += line
 
-        with open(PACKAGING_PATH, "w") as packaging_file_write:
+        with open(PACKAGING_PATH.format(self.package), "w") as packaging_file_write:
             packaging_file_write.write(replacement)
 
     def create_pr(self):
@@ -171,7 +177,7 @@ class Dependency:
 
         # Create commit
         print(f"[{self.name}] Creating git commit...")
-        local_git.add(PACKAGING_PATH)
+        local_git.add(PACKAGING_PATH.format(self.package))
         local_git.add(BLOBS_PATH)
         local_git.commit("-m", f"Bump {self.name} to {self.latest_release.version}")
         if not DRY_RUN:
@@ -198,10 +204,11 @@ class Dependency:
 
 @dataclass
 class GithubDependency(Dependency):
+
     tagname_prefix: str = None
 
     def fetch_latest_release(self) -> Release:
-        repo_org_and_name = self.root_url.lstrip("https://github.com/")  # TODO: linter very much not happy with that
+        repo_org_and_name = self.root_url.lstrip("https://github.com/")
         repo = gh.get_repo(repo_org_and_name)
         releases = repo.get_releases()
 
@@ -211,9 +218,16 @@ class GithubDependency(Dependency):
         for rel in releases:
             current_raw = rel.tag_name.lstrip(self.tagname_prefix)
             current_version = version.parse(current_raw)
-            if latest_version < current_version and current_raw.startswith(self.pinned_version):
+            if latest_version < current_version and current_raw.startswith(
+                self.pinned_version
+            ):
                 latest_version = current_version
-                latest_release = Release(rel.body, rel.tarball_url, f"{self.name}-{str(current_version)}.tar.gz", current_version)
+                latest_release = Release(
+                    rel.body,
+                    rel.tarball_url,
+                    f"{self.name}-{str(current_version)}.tar.gz",
+                    current_version,
+                )
 
         if latest_version == version.parse("0.0.0"):
             raise Exception(f"No release found for '{repo}'")
@@ -222,49 +236,38 @@ class GithubDependency(Dependency):
 
 
 @dataclass
-class SocatDependency(Dependency):
-    def fetch_latest_release(self) -> Release:
-        releases = []
+class WebLinkDependency(Dependency):
 
+    selector: str = "a"
+    pattern: str = "({name}-({pinned_version}" + r"(?:\.[0-9])+))\.tar\.gz"
+
+    def fetch_latest_release(self) -> Release:
         data = requests.get(self.root_url)
         html = BeautifulSoup(data.text, "html.parser")
-        source_code_table = html.find("table")
-        rows = source_code_table.find_all("tr")
 
-        # read HTML table
-        for row in rows:
-            cols = row.find_all("td")
-            cols = [ele.text.strip() for ele in cols]
-            if len(cols) > 0:  # Get rid of empty header row
-                releases.append([ele for ele in cols if ele])  # Get rid of empty values
+        versions = []
 
-        if len(releases) == 0:
-            raise Exception(f"Failed to parse Socat Releases from {self.root_url}")
-
-        # Regex: Match only releases beginning with pinned version
-        rgx = fr"socat-(" + self.pinned_version + r"(?:\.[0-9]){2})\.tar\.gz"
-        # Iterate over found releases, pick latest version
-        latest_version = version.parse("0.0.0")
-        latest_release = None
-        for release in releases:
-            release_file_name = release[0]
-            # Ignore Table Headers/irrelevant Rows
-            if release_file_name in ["Parent Directory", "Archive/"]:
-                continue
-
-            match = re.match(rgx, release_file_name)
+        for link in html.select(self.selector):
+            match = re.search(
+                self.pattern.format(name=self.name, pinned_version=self.pinned_version),
+                link.attrs["href"],
+            )
             if match:
-                current_version = version.parse(match.groups()[0])  # TODO: cleaner possible?
-                if current_version > latest_version:
-                    latest_release = Release(
-                        release_file_name.rstrip(".tar.gz"), f"{self.root_url}/{release_file_name}", release_file_name, current_version
+                versions.append(
+                    Release(
+                        match.group(1),
+                        requests.compat.urljoin(self.root_url, link.attrs["href"]),
+                        match.group(0),
+                        version.parse(match.group(2)),
                     )
-                    latest_version = current_version
+                )
 
-        if latest_version == version.parse("0.0.0"):
-            raise Exception(f"Failed to get latest socat version from {self.root_url}")
+        if versions:
+            return sorted(versions, key=lambda r: r.version, reverse=True)[0]
 
-        return latest_release
+        raise Exception(
+            f"Failed to get latest {self.name} version from {self.root_url}"
+        )
 
 
 @dataclass
@@ -283,7 +286,12 @@ class HaproxyDependency(Dependency):
         latest_release = releases_json["releases"][latest_version]
 
         download_url = f"{self.root_url}/{latest_release['file']}"
-        return Release(latest_release["file"].rstrip(".tar.gz"), download_url, latest_release["file"], version.parse(latest_version))
+        return Release(
+            latest_release["file"].rstrip(".tar.gz"),
+            download_url,
+            latest_release["file"],
+            version.parse(latest_version),
+        )
 
 
 def wget(url: str, path: str, auth: Optional[Tuple[str, str]] = None):
@@ -323,11 +331,41 @@ def cleanup_local_changes():
 
 def main() -> None:
     dependencies: List[Dependency] = [
-        HaproxyDependency("haproxy", "HAPROXY_VERSION", "2.5", "http://www.haproxy.org/download/{}/src"),
-        SocatDependency("socat", "SOCAT_VERSION", "1.7", "http://www.dest-unreach.org/socat/download"),
-        GithubDependency("lua", "LUA_VERSION", "5.4", "https://github.com/lua/lua", tagname_prefix="v"),
-        GithubDependency("pcre2", "PCRE_VERSION", "10", "https://github.com/PCRE2Project/pcre2", tagname_prefix="pcre2-"),
-        # TODO: What about keepalived/keepalived-2.2.7.tar.gz?
+        WebLinkDependency(
+            "keepalived",
+            "KEEPALIVED_VERSION",
+            "2.2",
+            "https://keepalived.org/download.html",
+            package="keepalived",
+            selector="div.content a",
+        ),
+        WebLinkDependency(
+            "socat",
+            "SOCAT_VERSION",
+            "1.7",
+            "http://www.dest-unreach.org/socat/download/",
+        ),
+        HaproxyDependency(
+            "haproxy",
+            "HAPROXY_VERSION",
+            "2.5",
+            "http://www.haproxy.org/download/{}/src",
+        ),
+        GithubDependency(
+            "lua",
+            "LUA_VERSION",
+            "5.4",
+            "https://github.com/lua/lua",
+            tagname_prefix="v",
+        ),
+        GithubDependency(
+            "pcre2",
+            "PCRE_VERSION",
+            "10",
+            "https://github.com/PCRE2Project/pcre2",
+            tagname_prefix="pcre2-",
+        ),
+        # ttar (currently a submodule to https://github.com/jhunt/ttar, no new releases. Manual bump only.)
     ]
 
     write_private_yaml()
@@ -338,10 +376,12 @@ def main() -> None:
         latest_version = latest_release.version
 
         if latest_version > current_version:
-            print(f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version}")
+            print(
+                f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version}"
+            )
             latest_release.download()
             dependency.remove_current_blob()
-            latest_release.add_blob()
+            latest_release.add_blob(dependency.package)
             dependency.update_packaging_file()
             if not DRY_RUN:
                 BoshHelper.upload_blobs()
