@@ -422,7 +422,7 @@ resources:
       access_token: ((github.access_token))
       repository:   cloudfoundry/haproxy-boshrelease
       base_branch:  master
-      labels:       [approved]
+      labels:       [approved, run-ci]
 
   - name: stemcell-xenial
     type: bosh-io-stemcell
