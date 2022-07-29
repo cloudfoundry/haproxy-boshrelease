@@ -306,22 +306,6 @@ describe 'config/haproxy.config global and default options' do
       }
     end
 
-    it 'has a default grace period of 0 milliseconds' do
-      expect(global).to include('grace 0')
-    end
-
-    context('when ha_proxy.drain_frontend_grace_time is provided') do
-      let(:properties) do
-        {
-          'drain_enable' => true,
-          'drain_frontend_grace_time' => 12
-        }
-      end
-
-      it 'overrides the default grace period' do
-        expect(global).to include('grace 12000')
-      end
-
       context 'when ha_proxy.drain_enable is false' do
         let(:properties) do
           {

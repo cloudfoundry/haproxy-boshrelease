@@ -4,6 +4,7 @@
 set -e
 
 pidfile=/var/vcap/sys/run/bpm/haproxy/haproxy.pid
+sockfile=/var/vcap/sys/run/haproxy/stats.sock
 logfile=/var/vcap/sys/log/haproxy/drain.log
 
 <% if not p("ha_proxy.drain_enable") -%>
@@ -22,6 +23,12 @@ fi
 pid="$(cat ${pidfile})"
 
 haproxy_pids=$(pgrep -P $pid -l | grep 'haproxy$' | awk '{print $1}')
+
+<% if p("ha_proxy.enable_health_check_http") %>
+echo "disable frontend health_check_http_url" | socat stdio unix-connect:${sockfile}
+echo "$(date): triggering grace period for process ${haproxy_pid}" >> ${logfile}
+sleep <%= p("ha_proxy.drain_frontend_grace_time") -%>
+<% end -%>
 
 for haproxy_pid in $haproxy_pids; do
   kill -USR1 "${haproxy_pid}"
