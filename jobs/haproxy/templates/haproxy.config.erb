@@ -228,12 +228,6 @@ global
   <%- if properties.ha_proxy.global_config -%>
     <%= p("ha_proxy.global_config") %>
   <%- end -%>
-  <%- if p("ha_proxy.nbproc") > 1  -%>
-    <%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr"
-			raise("ha_proxy.syslog_server cannot be stdout or stderr when ha_proxy.nbproc > 1. Try /dev/log instead")
-		end -%>
-    nbproc <%= p("ha_proxy.nbproc") %>
-  <%- end -%>
   <%- if p("ha_proxy.nbthread") > 1 -%>
     nbthread <%= p("ha_proxy.nbthread") %>
   <%- end -%>
@@ -255,13 +249,7 @@ global
   <%- if_p("ha_proxy.max_rewrite") do -%>
     tune.maxrewrite <%= p("ha_proxy.max_rewrite") %>
   <%- end -%>
-  <%- if p("ha_proxy.nbproc") > 1 -%>
-    <%- 1.upto(p("ha_proxy.nbproc")) do |proc| -%>
-    stats socket /var/vcap/sys/run/haproxy/stats<%= proc%>.sock mode 600 expose-fd listeners level admin process <%= proc%>
-    <%- end -%>
-  <%- else -%>
     stats socket /var/vcap/sys/run/haproxy/stats.sock mode 600 expose-fd listeners level admin
-  <%- end -%>
     stats timeout 2m
     ssl-default-bind-options <%= ssl_flags %>
     ssl-default-bind-ciphers <%= p("ha_proxy.ssl_ciphers") %>
@@ -304,12 +292,8 @@ defaults
     <%- end -%>
 
 <% if p("ha_proxy.stats_enable") -%>
-  <%- 1.upto(p("ha_proxy.nbproc")) do |proc| %>
-listen stats_<%= proc %>
-    bind <%= stat_prefix %><%= stat_port + (proc - 1) %>
-    <%- if p("ha_proxy.nbproc") > 1 -%>
-    bind-process <%= proc %>
-    <%- end -%>
+listen stats
+    bind <%= stat_prefix %><%= stat_port %>
     acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
     http-request deny unless private
     mode http
@@ -318,7 +302,6 @@ listen stats_<%= proc %>
     stats realm "Haproxy Statistics"
     stats uri /<%= p("ha_proxy.stats_uri") %>
     stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
-  <%- end -%>
 <% end -%>
 
 <% if p("ha_proxy.enable_health_check_http") %>
