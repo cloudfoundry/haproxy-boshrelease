@@ -22,18 +22,21 @@ fi
 
 pid="$(cat ${pidfile})"
 
-haproxy_pids=$(pgrep -P $pid -l | grep 'haproxy$' | awk '{print $1}')
+haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
+<%- if p('ha_proxy.syslog_server') == "stdout" || p('ha_proxy.syslog_server') == "stderr" -%>
+haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
+<%- else -%>
+haproxy_master_pid=$(pgrep -P "$pid" -x haproxy)
+<%- end -%>
 
 <% if p("ha_proxy.enable_health_check_http") %>
-echo "disable frontend health_check_http_url" | socat stdio unix-connect:${sockfile}
-echo "$(date): triggering grace period for process ${haproxy_pid}" >> ${logfile}
+echo "disable frontend health_check_http_url" | /usr/local/bin/socat stdio unix-connect:${sockfile}
+echo "$(date): triggering grace period for process ${haproxy_master_pid}" >> ${logfile}
 sleep <%= p("ha_proxy.drain_frontend_grace_time") -%>
 <% end -%>
 
-for haproxy_pid in $haproxy_pids; do
-  kill -USR1 "${haproxy_pid}"
-  echo "$(date): triggering drain for process ${haproxy_pid}" >> ${logfile}
-done
+kill -USR1 "${haproxy_master_pid}"
+echo "$(date): triggering drain for process ${haproxy_master_pid}" >> ${logfile}
 
 echo <%= p("ha_proxy.drain_timeout") -%>
 
