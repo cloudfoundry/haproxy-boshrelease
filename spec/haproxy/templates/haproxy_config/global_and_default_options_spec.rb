@@ -299,25 +299,16 @@ describe 'config/haproxy.config global and default options' do
     end
   end
 
-  context 'when ha_proxy.drain_enable is true' do
+  context 'when ha_proxy.drain_enable is false' do
     let(:properties) do
       {
-        'drain_enable' => true
+        'drain_enable' => false,
+        'drain_frontend_grace_time' => 12
       }
     end
 
-      context 'when ha_proxy.drain_enable is false' do
-        let(:properties) do
-          {
-            'drain_enable' => false,
-            'drain_frontend_grace_time' => 12
-          }
-        end
-
-        it 'aborts with a meaningful error message' do
-          expect { global }.to raise_error(/Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/)
-        end
-      end
+    it 'aborts with a meaningful error message' do
+      expect { global }.to raise_error(/Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time/)
     end
   end
 

@@ -28,31 +28,30 @@ var _ = Describe("Drain Test", func() {
   value: 10
 `
 	It("Honors grace and drain periods", func() {
-		backendDeploymentName := "haproxy-backend"
-		// For this test we will use a second HAProxy as pre-existing healthy 'backend'
 		haproxyBackendPort := 12000
-		backendHaproxyInfo, _ := deployHAProxy(baseManifestVars{
+		// Expect initial deployment to be failing due to lack of healthy backends
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        backendDeploymentName,
-		}, []string{}, map[string]interface{}{}, true)
-		defer deleteDeployment(backendDeploymentName)
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileDrainTimeout}, map[string]interface{}{}, false)
 
-		closeLocalServer, backendLocalPort := startDefaultTestServer()
+		// Verify that is in a failing state
+		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
+
+		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
 
-		closeTunnel := setupTunnelFromHaproxyToTestServer(backendHaproxyInfo, haproxyBackendPort, backendLocalPort)
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 		defer closeTunnel()
 
-		// Now deploy test HAProxy with 'haproxy-backend' configured as backend
-		haproxyInfo, _ := deployHAProxy(baseManifestVars{
-			haproxyBackendPort:    80,
-			haproxyBackendServers: []string{backendHaproxyInfo.PublicIP},
-			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileDrainTimeout}, map[string]interface{}{}, true)
-
-		// Verify that instance is in a running state
-		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Equal("running"))
+		By("Waiting monit to report HAProxy is now healthy (due to having a healthy backend instance)")
+		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
+		// and monit should in turn start reporting a healthy process
+		// We will up to wait one minute for the status to stabilise
+		Eventually(func() string {
+			return boshInstances(deploymentNameForTestNode())[0].ProcessState
+		}, time.Minute, time.Second).Should(Equal("running"))
 
 		By("The healthcheck health endpoint should report a 200 status code")
 		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
