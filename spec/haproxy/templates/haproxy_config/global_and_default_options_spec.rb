@@ -107,53 +107,6 @@ describe 'config/haproxy.config global and default options' do
     end
   end
 
-  context 'when ha_proxy.nbproc is provided' do
-    let(:properties) do
-      {
-        'nbproc' => 3,
-        'syslog_server' => '/dev/log'
-      }
-    end
-
-    it 'configures the number of processes' do
-      expect(global).to include('nbproc 3')
-    end
-
-    context 'when nbproc is more than 1' do
-      it 'configures a stats socket per process' do
-        expect(global).to include('stats socket /var/vcap/sys/run/haproxy/stats1.sock mode 600 expose-fd listeners level admin process 1')
-        expect(global).to include('stats socket /var/vcap/sys/run/haproxy/stats2.sock mode 600 expose-fd listeners level admin process 2')
-        expect(global).to include('stats socket /var/vcap/sys/run/haproxy/stats3.sock mode 600 expose-fd listeners level admin process 3')
-      end
-    end
-
-    context 'when nbproc is 1' do
-      let(:properties) do
-        {
-          'nbproc' => 1
-        }
-      end
-
-      it 'configures a single stats socket' do
-        expect(global).to include('stats socket /var/vcap/sys/run/haproxy/stats.sock mode 600 expose-fd listeners level admin')
-      end
-    end
-
-    context 'when the syslog_server is the default and there is more than one process' do
-      let(:properties) do
-        {
-          'nbproc' => 3
-        }
-      end
-
-      it 'returns a meaningful error message' do
-        expect do
-          global
-        end.to raise_error /ha_proxy.syslog_server cannot be stdout or stderr when ha_proxy.nbproc > 1/
-      end
-    end
-  end
-
   context 'when ha_proxy.nbthread is provided' do
     let(:properties) do
       {
