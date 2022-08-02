@@ -10,6 +10,7 @@ import subprocess
 import sys
 import textwrap
 from typing import List, Optional, Tuple
+from unicodedata import name
 import yaml
 
 import github  # PyGithub
@@ -30,7 +31,7 @@ DRY_RUN = "DRY_RUN" in os.environ
 BLOBS_PATH = "config/blobs.yml"
 PACKAGING_PATH = "packages/{}/packaging"
 
-PR_ORG = "peanball"
+PR_ORG = "cloudfoundry"
 PR_BASE = "master"
 
 
@@ -52,27 +53,19 @@ class BoshHelper:
         cls._run_bosh_cmd("upload-blobs")
 
     @classmethod
-    def _run_bosh_cmd(cls, cmd, *args) -> str:
+    def _run_bosh_cmd(cls, cmd, *args):
         cmd_params = ["bosh", cmd, *args]
         print(f"Running '{' '.join(cmd_params)}' ...")
 
         # run as subprocess and handle errors
-        process = subprocess.Popen(
-            cmd_params, stderr=subprocess.PIPE, stdout=subprocess.PIPE
-        )
+        process = subprocess.Popen(cmd_params, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if stdout:
-            print(
-                stdout.decode("utf-8"), file=sys.stdout
-            )  # we don't expect any stdout under normal behaviour, might be useful for debugging though
-        response = stderr.decode(
-            "utf-8"
-        )  # bosh writes success info to stderr for some reason
+            print(stdout.decode("utf-8"), file=sys.stdout)  # we don't expect any stdout under normal behaviour, might be useful for debugging though
+        if stderr:
+            print(stderr.decode("utf-8"), file=sys.stdout)
         if process.returncode != 0:
-            raise Exception(f"bosh {cmd} failed. Aborting: {response}")
-        
-        # TODO: optional: bosh upload-blobs prints out the s3 URL for the uploaded blobs (captured in response here). Might be a nice addition to the PR description.
-        return response
+            raise Exception(f"Command {' '.join(cmd_params)} failed. Aborting.")
 
 
 @dataclass
@@ -108,9 +101,14 @@ class Dependency:
     pinned_version: str
     root_url: str
     package: str = "haproxy"
+    remote_repo = gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
 
     _latest_release: Optional[Release] = None
     _current_version: version.Version = None
+
+    @property
+    def pr_branch(self):
+        return f"{self.name}-auto-bump"
 
     @property
     def current_version(self) -> version.Version:
@@ -176,11 +174,18 @@ class Dependency:
         with open(PACKAGING_PATH.format(self.package), "w") as packaging_file_write:
             packaging_file_write.write(replacement)
 
-    def create_pr(self):
-        remote_repo = gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
-        pr_branch = f"{self.name}-auto-bump"
+    def open_pr_exists(self) -> bool:
+        prs_exist = False
 
-        print(f"[{self.name}] Creating bump branch {PR_BASE}:{pr_branch} and PR...")
+        for pr in self.remote_repo.get_pulls(
+            state="open", base=PR_BASE, head=f"{PR_ORG}:{self.pr_branch}"
+        ):  # theoretically there shold never be more than one open PR, print them anyways
+            print(f"Open {self.pr_branch} PR exists: {pr.html_url}")
+            prs_exist = True
+        return prs_exist
+
+    def create_pr(self):
+        print(f"[{self.name}] Creating bump branch {PR_ORG}:{self.pr_branch} and PR...")
         pr_body = textwrap.dedent(
             f"""
             Automatic bump from version {self.current_version} to version {self.latest_release.version}, downloaded from {self.latest_release.url}.
@@ -189,26 +194,26 @@ class Dependency:
         """
         )
         if not DRY_RUN:
-            self._create_branch(remote_repo, pr_branch)
+            self._create_branch(self.remote_repo, self.pr_branch)
 
             self._update_file(
-                remote_repo,
+                self.remote_repo,
                 PACKAGING_PATH.format(self.package),
-                pr_branch,
+                self.pr_branch,
                 f"Bump {self.name} version to {self.latest_release.version}",
             )
             self._update_file(
-                remote_repo,
+                self.remote_repo,
                 BLOBS_PATH,
-                pr_branch,
+                self.pr_branch,
                 f"Update blob reference for {self.name} to version {self.latest_release.version}",
             )
 
-            remote_repo.create_pull(
+            self.remote_repo.create_pull(
                 title=f"Bump {self.name} version to {self.latest_release.version}",
                 body=pr_body,
                 base=PR_BASE,
-                head=f"{PR_ORG}:{pr_branch}",
+                head=f"{PR_ORG}:{self.pr_branch}",
             )
 
     def _create_branch(self, repo, branch):
@@ -229,9 +234,7 @@ class Dependency:
         with open(path, "rb") as f:
             content = f.read()
             github_file = repo.get_contents(path, ref=branch)
-            repo.update_file(
-                path=path, message=message, content=content, sha=github_file.sha, branch=branch
-            )
+            repo.update_file(path=path, message=message, content=content, sha=github_file.sha, branch=branch)
 
 
 @dataclass
@@ -250,9 +253,7 @@ class GithubDependency(Dependency):
         for rel in releases:
             current_raw = rel.tag_name.lstrip(self.tagname_prefix)
             current_version = version.parse(current_raw)
-            if latest_version < current_version and current_raw.startswith(
-                self.pinned_version
-            ):
+            if latest_version < current_version and current_raw.startswith(self.pinned_version):
                 latest_version = current_version
                 latest_release = Release(
                     rel.body,
@@ -288,9 +289,7 @@ class WebLinkDependency(Dependency):
                 versions.append(
                     Release(
                         match.group(1),  # full name without extension
-                        requests.compat.urljoin(
-                            self.root_url, link.attrs["href"]
-                        ),  # absolute URL based on relative link href
+                        requests.compat.urljoin(self.root_url, link.attrs["href"]),  # absolute URL based on relative link href
                         match.group(0),  # full file name with extension
                         version.parse(match.group(2)),  # version
                     )
@@ -300,9 +299,7 @@ class WebLinkDependency(Dependency):
             # sort found versions with highest first, return first entry, i.e. highest applicable version number.
             return sorted(versions, key=lambda r: r.version, reverse=True)[0]
 
-        raise Exception(
-            f"Failed to get latest {self.name} version from {self.root_url}"
-        )
+        raise Exception(f"Failed to get latest {self.name} version from {self.root_url}")
 
 
 @dataclass
@@ -362,7 +359,7 @@ def cleanup_local_changes():
     local_git = Repo(os.curdir).git
     local_git.reset("--hard")
     local_git.clean("-fx")
-    
+
 
 def main() -> None:
     dependencies: List[Dependency] = [
@@ -410,25 +407,24 @@ def main() -> None:
         latest_release = dependency.latest_release
         latest_version = latest_release.version
 
-        if latest_version > current_version:
-            print(
-                f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version}"
-            )
-            latest_release.download()
-            dependency.remove_current_blob()
-            latest_release.add_blob(dependency.package)
-            dependency.update_packaging_file()
-            if not DRY_RUN:
-                BoshHelper.upload_blobs()
-            dependency.create_pr()
+        if latest_version <= current_version:
+            print(f"[{dependency.name}] already on the latest version: {latest_version} " f"(pinned: {dependency.pinned_version}.*)")
+            continue
 
-            # clear the working directory for the next dependency bump.
-            cleanup_local_changes()
-        else:
-            print(
-                f"[{dependency.name}] already on the latest version: {latest_version} "
-                f"(pinned: {dependency.pinned_version}.*)"
-            )
+        if dependency.open_pr_exists():
+            print(f"[{dependency.name}] Open bump PR exists (for branch: {dependency.pr_branch})")
+            continue
+        print(f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version}")
+        latest_release.download()
+        dependency.remove_current_blob()
+        latest_release.add_blob(dependency.package)
+        dependency.update_packaging_file()
+        if not DRY_RUN:
+            BoshHelper.upload_blobs()
+        dependency.create_pr()
+
+        # clear the working directory for the next dependency bump.
+        cleanup_local_changes()
 
 
 if __name__ == "__main__":
