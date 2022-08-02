@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import functools
+from hashlib import sha1
 import json
 import os
 import re
@@ -29,6 +30,9 @@ DRY_RUN = "DRY_RUN" in os.environ
 BLOBS_PATH = "config/blobs.yml"
 PACKAGING_PATH = "packages/{}/packaging"
 
+PR_ORG = "peanball"
+PR_BASE = "master"
+
 
 class BoshHelper:
     """
@@ -48,7 +52,7 @@ class BoshHelper:
         cls._run_bosh_cmd("upload-blobs")
 
     @classmethod
-    def _run_bosh_cmd(cls, cmd, *args):
+    def _run_bosh_cmd(cls, cmd, *args) -> str:
         cmd_params = ["bosh", cmd, *args]
         print(f"Running '{' '.join(cmd_params)}' ...")
 
@@ -66,7 +70,9 @@ class BoshHelper:
         )  # bosh writes success info to stderr for some reason
         if process.returncode != 0:
             raise Exception(f"bosh {cmd} failed. Aborting: {response}")
+        
         # TODO: optional: bosh upload-blobs prints out the s3 URL for the uploaded blobs (captured in response here). Might be a nice addition to the PR description.
+        return response
 
 
 @dataclass
@@ -171,20 +177,10 @@ class Dependency:
             packaging_file_write.write(replacement)
 
     def create_pr(self):
-        local_git = Repo(os.curdir).git
-        remote_repo = gh.get_repo("cloudfoundry/haproxy-boshrelease")
+        remote_repo = gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
         pr_branch = f"{self.name}-auto-bump"
 
-        # Create commit
-        print(f"[{self.name}] Creating git commit...")
-        local_git.add(PACKAGING_PATH.format(self.package))
-        local_git.add(BLOBS_PATH)
-        local_git.commit("-m", f"Bump {self.name} to {self.latest_release.version}")
-        if not DRY_RUN:
-            local_git.push("origin", pr_branch)
-
-        # create PR
-        print("Creating pull request...")
+        print(f"[{self.name}] Creating bump branch {PR_BASE}:{pr_branch} and PR...")
         pr_body = textwrap.dedent(
             f"""
             Automatic bump from version {self.current_version} to version {self.latest_release.version}, downloaded from {self.latest_release.url}.
@@ -192,20 +188,56 @@ class Dependency:
             After merge, consider releasing a new version of haproxy-boshrelease.
         """
         )
-
         if not DRY_RUN:
+            self._create_branch(remote_repo, pr_branch)
+
+            self._update_file(
+                remote_repo,
+                PACKAGING_PATH.format(self.package),
+                pr_branch,
+                f"Bump {self.name} version to {self.latest_release.version}",
+            )
+            self._update_file(
+                remote_repo,
+                BLOBS_PATH,
+                pr_branch,
+                f"Update blob reference for {self.name} to version {self.latest_release.version}",
+            )
+
             remote_repo.create_pull(
                 title=f"Bump {self.name} version to {self.latest_release.version}",
                 body=pr_body,
-                base="master",
-                head="cloudfoundry:" + pr_branch,
+                base=PR_BASE,
+                head=f"{PR_ORG}:{pr_branch}",
+            )
+
+    def _create_branch(self, repo, branch):
+        """
+        Creates the branch with the given name.
+        If it exists, deletes the existing branch and creates a new one.
+        """
+        try:
+            ref = repo.get_git_ref(f"heads/{branch}")
+            ref.delete()
+        except github.UnknownObjectException:
+            print(f"Branch {branch} didn't exist. We'll create it.")
+        finally:
+            master = repo.get_git_ref("heads/master")
+            repo.create_git_ref(f"refs/heads/{branch}", master.object.sha)
+
+    def _update_file(self, repo, path, branch, message):
+        with open(path, "rb") as f:
+            content = f.read()
+            github_file = repo.get_contents(path, ref=branch)
+            repo.update_file(
+                path=path, message=message, content=content, sha=github_file.sha, branch=branch
             )
 
 
 @dataclass
 class GithubDependency(Dependency):
 
-    tagname_prefix: str = None
+    tagname_prefix: str = ""
 
     def fetch_latest_release(self) -> Release:
         repo_org_and_name = self.root_url.lstrip("https://github.com/")
@@ -255,14 +287,17 @@ class WebLinkDependency(Dependency):
             if match:
                 versions.append(
                     Release(
-                        match.group(1),
-                        requests.compat.urljoin(self.root_url, link.attrs["href"]),
-                        match.group(0),
-                        version.parse(match.group(2)),
+                        match.group(1),  # full name without extension
+                        requests.compat.urljoin(
+                            self.root_url, link.attrs["href"]
+                        ),  # absolute URL based on relative link href
+                        match.group(0),  # full file name with extension
+                        version.parse(match.group(2)),  # version
                     )
                 )
 
         if versions:
+            # sort found versions with highest first, return first entry, i.e. highest applicable version number.
             return sorted(versions, key=lambda r: r.version, reverse=True)[0]
 
         raise Exception(
@@ -324,10 +359,10 @@ def write_private_yaml():
 
 
 def cleanup_local_changes():
-    # TODO: switch to master (force if necessary)
-    # TODO: clean untracked files (e.g. release tarballs). Keep config/private.yml!
-    pass
-
+    local_git = Repo(os.curdir).git
+    local_git.reset("--hard")
+    local_git.clean("-fx")
+    
 
 def main() -> None:
     dependencies: List[Dependency] = [
@@ -385,10 +420,15 @@ def main() -> None:
             dependency.update_packaging_file()
             if not DRY_RUN:
                 BoshHelper.upload_blobs()
-            dependency.create_pr()  # TODO: untested
+            dependency.create_pr()
 
-            # in case more deps need to be bumped
-            cleanup_local_changes()  # TODO: not implemented
+            # clear the working directory for the next dependency bump.
+            cleanup_local_changes()
+        else:
+            print(
+                f"[{dependency.name}] already on the latest version: {latest_version} "
+                f"(pinned: {dependency.pinned_version}.*)"
+            )
 
 
 if __name__ == "__main__":
