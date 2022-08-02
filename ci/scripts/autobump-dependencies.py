@@ -10,7 +10,6 @@ import subprocess
 import sys
 import textwrap
 from typing import List, Optional, Tuple
-from unicodedata import name
 import yaml
 
 import github  # PyGithub
@@ -21,18 +20,17 @@ from git import Repo
 
 
 # Required Environment Vars
-BLOBSTORE_ACCESS_KEY_ID = os.environ["ACCESS_KEY_ID"]
-BLOBSTORE_SECRET_ACCESS_KEY = os.environ["SECRET_ACCESS_KEY"]
+BLOBSTORE_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY"]
+BLOBSTORE_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_KEY"]
 gh = github.Github(login_or_token=os.environ["GITHUB_COM_TOKEN"])
+PR_ORG = os.environ["PR_ORG"]
+PR_BASE = os.environ["PR_BASE"]
 # if DRY_RUN is set, blobs will not be uploaded and no PR created (downloads and local changes are still performed)
 DRY_RUN = "DRY_RUN" in os.environ
 
 # Other Global Variables
 BLOBS_PATH = "config/blobs.yml"
 PACKAGING_PATH = "packages/{}/packaging"
-
-PR_ORG = "cloudfoundry"
-PR_BASE = "master"
 
 
 class BoshHelper:
