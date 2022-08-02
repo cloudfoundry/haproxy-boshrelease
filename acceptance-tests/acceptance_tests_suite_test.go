@@ -145,22 +145,26 @@ func expect421(resp *http.Response, err error) {
 }
 
 func expectTLSUnknownCertificateAuthorityErr(err error) {
-	checkTLSErr(err, "tls: unknown certificate authority")
+	checkNetOpErr(err, "tls: unknown certificate authority")
 }
 
 func expectTLSHandshakeFailureErr(err error) {
-	checkTLSErr(err, "tls: handshake failure")
+	checkNetOpErr(err, "tls: handshake failure")
 }
 
 func expectTLSCertificateRequiredErr(err error) {
-	checkTLSErr(err, "tls: certificate required")
+	checkNetOpErr(err, "tls: certificate required")
 }
 
 func expectTLSUnrecognizedNameErr(err error) {
-	checkTLSErr(err, "tls: unrecognized name")
+	checkNetOpErr(err, "tls: unrecognized name")
 }
 
-func checkTLSErr(err error, expectString string) {
+func expectConnectionRefusedErr(err error) {
+	checkNetOpErr(err, "connect: connection refused")
+}
+
+func checkNetOpErr(err error, expectString string) {
 	Expect(err).To(HaveOccurred())
 	urlErr, ok := err.(*url.Error)
 	Expect(ok).To(BeTrue())
