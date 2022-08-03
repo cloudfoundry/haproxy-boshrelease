@@ -399,11 +399,11 @@ jobs:
       - do:
           - get: daily
             trigger: true
-          - get: git-autobump-dependencies # TODO: switch back to git after merge
+          - get: git
           - task: autobump-dependencies
             config:
               inputs:
-                - name: git-autobump-dependencies # TODO: switch back to git after merge
+                - name: git
               platform: linux
               image_resource:
                 type: docker-image
@@ -413,7 +413,7 @@ jobs:
                   username: ((docker.username))
                   password: ((docker.password))
               run:
-                dir: git-autobump-dependencies
+                dir: git
                 path: /usr/bin/python3
                 args: ["ci/scripts/autobump-dependencies.py"]
               params:
@@ -453,14 +453,6 @@ resources:
       uri: git@github.com:cloudfoundry/haproxy-boshrelease.git
       branch: master
       private_key: ((github.private_key))
-
-  - name: git-autobump-dependencies # TODO: remove after merge
-    type: git
-    source:
-      uri: git@github.com:cloudfoundry/haproxy-boshrelease.git
-      branch: autobump-dependencies
-      private_key: ((github.private_key))
-
   - name: git-pull-requests
     type: pull-request
     source:
