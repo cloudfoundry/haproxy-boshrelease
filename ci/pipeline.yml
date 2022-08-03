@@ -408,17 +408,14 @@ jobs:
               image_resource:
                 type: docker-image
                 source:
-                  repository: python
-                  tag: 3.9
+                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+                  tag: "2022-08-03"
+                  username: ((docker.username))
+                  password: ((docker.password))
               run:
-                path: sh
-                args:
-                  - -ce
-                  - |
-                    cd ./git-autobump-dependencies/  # TODO: switch back to git after merge
-                    apt update && apt install python3-pip -y
-                    /usr/bin/python3 -m pip install -r ci/scripts/requirements.txt
-                    /usr/bin/python3 "ci/scripts/autobump-dependencies.py"
+                dir: git-autobump-dependencies
+                path: /usr/bin/python3
+                args: ["ci/scripts/autobump-dependencies.py"]
               params:
                 REPO_ROOT: git
                 PR_BASE: master
