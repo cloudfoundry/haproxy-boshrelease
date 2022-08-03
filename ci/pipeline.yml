@@ -12,6 +12,7 @@ groups:
       - shipit
       - major
       - minor
+      - autobump-dependencies
 
 jobs:
   - name: unit-tests
@@ -387,6 +388,35 @@ jobs:
           username: ci-bot
           icon_url: "((slack.icon))"
           text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
+  - name: autobump-dependencies
+    public: true
+    serial: true
+    plan:
+      - do:
+          - get: daily
+            trigger: true
+          - get: git
+          - task: autobump-dependencies
+            config:
+              inputs:
+                - name: git
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+                  tag: "2022-08-03"
+                  username: ((docker.username))
+                  password: ((docker.password))
+              run:
+                dir: git
+                path: /usr/bin/python3
+                args: ["ci/scripts/autobump-dependencies.py"]
+              params:
+                REPO_ROOT: git
+                PR_BASE: master
+                PR_ORG: cloudfoundry
+                PR_LABEL: run-ci
 
 resource_types:
   - name: slack-notification
@@ -422,7 +452,7 @@ resources:
       access_token: ((github.access_token))
       repository:   cloudfoundry/haproxy-boshrelease
       base_branch:  master
-      labels:       [approved, run-ci]
+      labels:       [run-ci]
 
   - name: stemcell-xenial
     type: bosh-io-stemcell
@@ -470,3 +500,11 @@ resources:
       regexp:            haproxy-([0-9\.]+).tgz
       access_key_id:     ((aws.access_key))
       secret_access_key: ((aws.secret_key))
+
+  - name: daily
+    type: time
+    source:
+      start: 7:00 AM
+      stop: 8:00 AM
+      location: Europe/Berlin
+      interval: 24h

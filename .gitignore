@@ -23,3 +23,5 @@ tmp
 my*.yml
 .bundle
 vendor
+.vscode/launch.json
+.vscode/settings.json
