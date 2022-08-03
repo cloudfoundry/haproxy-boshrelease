@@ -6,9 +6,9 @@ LUA_VERSION=5.4.4  # https://www.lua.org/ftp/lua-5.4.4.tar.gz
 
 PCRE_VERSION=10.40  # https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.40/pcre2-10.40.tar.gz
 
-SOCAT_VERSION=1.7.4.1  # http://www.dest-unreach.org/socat/download/socat-1.7.4.1.tar.gz
+SOCAT_VERSION=1.7.4.3  # http://www.dest-unreach.org/socat/download/socat-1.7.4.3.tar.gz
 
-HAPROXY_VERSION=2.5.8  # http://www.haproxy.org/download/2.5/src/haproxy-2.5.8.tar.gz
+HAPROXY_VERSION=2.5.7  # https://www.haproxy.org/download/2.5/src/haproxy-2.5.7.tar.gz
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
