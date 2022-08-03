@@ -277,8 +277,9 @@ class WebLinkDependency(Dependency):
         html = BeautifulSoup(data.text, "html.parser")
 
         versions = []
+        links = [link for link in html.select(self.selector) if "href" in link.attrs]
 
-        for link in html.select(self.selector):
+        for link in links:
             match = re.search(
                 self.pattern.format(name=self.name, pinned_version=self.pinned_version),
                 link.attrs["href"],
@@ -378,15 +379,14 @@ def main() -> None:
         HaproxyDependency(
             "haproxy",
             "HAPROXY_VERSION",
-            "2.5",
+            "2.6",
             "http://www.haproxy.org/download/{}/src",
         ),
-        GithubDependency(
+        WebLinkDependency(
             "lua",
             "LUA_VERSION",
             "5.4",
-            "https://github.com/lua/lua",
-            tagname_prefix="v",
+            "https://www.lua.org/versions.html",
         ),
         GithubDependency(
             "pcre2",
