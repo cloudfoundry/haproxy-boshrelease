@@ -384,7 +384,7 @@ def main() -> None:
             "haproxy",
             "HAPROXY_VERSION",
             "2.5",
-            "http://www.haproxy.org/download/{}/src",
+            "https://www.haproxy.org/download/{}/src",
         ),
         WebLinkDependency(
             "lua",
