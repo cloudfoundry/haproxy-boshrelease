@@ -420,6 +420,7 @@ jobs:
                 REPO_ROOT: git
                 PR_BASE: master
                 PR_ORG: cloudfoundry
+                PR_LABEL: run-ci
 
                 AWS_ACCESS_KEY: ((aws.access_key))
                 AWS_SECRET_KEY: ((aws.secret_key))

@@ -25,6 +25,7 @@ BLOBSTORE_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_KEY"]
 gh = github.Github(login_or_token=os.environ["GITHUB_COM_TOKEN"])
 PR_ORG = os.environ["PR_ORG"]
 PR_BASE = os.environ["PR_BASE"]
+PR_LABEL = os.environ["PR_LABEL"]
 # if DRY_RUN is set, blobs will not be uploaded and no PR created (downloads and local changes are still performed)
 DRY_RUN = "DRY_RUN" in os.environ
 
@@ -213,7 +214,9 @@ class Dependency:
                 base=PR_BASE,
                 head=f"{PR_ORG}:{self.pr_branch}",
             )
-            print(f"[{self.name}] Created Pull Request: {pr.url}")
+            pr.add_to_labels(PR_LABEL)
+            print(f"[{self.name}] Created Pull Request: {pr.html_url}")
+            
 
     def _create_branch(self, repo, branch):
         """
@@ -380,7 +383,7 @@ def main() -> None:
         HaproxyDependency(
             "haproxy",
             "HAPROXY_VERSION",
-            "2.6",
+            "2.5",
             "http://www.haproxy.org/download/{}/src",
         ),
         WebLinkDependency(
