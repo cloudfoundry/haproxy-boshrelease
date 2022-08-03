@@ -207,12 +207,13 @@ class Dependency:
                 f"Update blob reference for {self.name} to version {self.latest_release.version}",
             )
 
-            self.remote_repo.create_pull(
+            pr = self.remote_repo.create_pull(
                 title=f"Bump {self.name} version to {self.latest_release.version}",
                 body=pr_body,
                 base=PR_BASE,
                 head=f"{PR_ORG}:{self.pr_branch}",
             )
+            print(f"[{self.name}] Created Pull Request: {pr.url}")
 
     def _create_branch(self, repo, branch):
         """
