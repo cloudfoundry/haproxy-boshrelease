@@ -1,4 +1,5 @@
 ---
+
 groups:
   - name: haproxy-boshrelease
     jobs:
@@ -18,109 +19,109 @@ jobs:
     public: true
     serial: true
     plan:
-      - do:
-          - get: git
-            trigger: true
-          - task: lint
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - { name: git }
-              caches:
-                - path: git/vendor/cache
-                - path: git/.bundle
-              run:
-                path: ./git/ci/scripts/lint
-                args: []
-              params:
-                REPO_ROOT: git
-          - task: unit-tests
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - { name: git }
-
-              caches:
-                - path: git/vendor/cache
-                - path: git/.bundle
-              run:
-                path: ./git/ci/scripts/unit-tests
-                args: []
-              params:
-                REPO_ROOT: git
-        on_failure:
-          put: notify
+    - do:
+      - get: git
+        trigger: true
+      - task: lint
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - { name: git }
+          caches:
+          - path: git/vendor/cache
+          - path: git/.bundle
+          run:
+            path: ./git/ci/scripts/lint
+            args: []
           params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: "((slack.fail_url)) haproxy-boshrelease : unit-tests job failed"
+            REPO_ROOT: git
+      - task: unit-tests
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - { name: git }
+
+          caches:
+          - path: git/vendor/cache
+          - path: git/.bundle
+          run:
+            path: ./git/ci/scripts/unit-tests
+            args: []
+          params:
+            REPO_ROOT: git
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : unit-tests job failed"
 
   - name: unit-tests-pr
     public: true
     serial: true
     plan:
-      - do:
-          - { get: git-pull-requests, trigger: true, version: every }
-          - put: git-pull-requests
-            params:
-              path: git-pull-requests
-              status: pending
-              context: unit-tests
-          - task: lint
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - { name: git-pull-requests }
-              caches:
-                - path: git-pull-requests/vendor/cache
-                - path: git-pull-requests/.bundle
-              run:
-                path: ./git-pull-requests/ci/scripts/lint
-                args: []
-              params:
-                REPO_ROOT: git-pull-requests
-          - task: unit-tests
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - { name: git-pull-requests }
-              caches:
-                - path: git-pull-requests/vendor/cache
-                - path: git-pull-requests/.bundle
-              run:
-                path: ./git-pull-requests/ci/scripts/unit-tests
-                args: []
-              params:
-                REPO_ROOT: git-pull-requests
+    - do:
+      - { get: git-pull-requests, trigger: true, version: every }
+      - put: git-pull-requests
+        params:
+          path: git-pull-requests
+          status: pending
+          context: unit-tests
+      - task: lint
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - { name: git-pull-requests }
+          caches:
+          - path: git-pull-requests/vendor/cache
+          - path: git-pull-requests/.bundle
+          run:
+            path: ./git-pull-requests/ci/scripts/lint
+            args: []
+          params:
+            REPO_ROOT: git-pull-requests
+      - task: unit-tests
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - { name: git-pull-requests }
+          caches:
+          - path: git-pull-requests/vendor/cache
+          - path: git-pull-requests/.bundle
+          run:
+            path: ./git-pull-requests/ci/scripts/unit-tests
+            args: []
+          params:
+            REPO_ROOT: git-pull-requests
     on_success:
       put: git-pull-requests
       params:
@@ -134,85 +135,81 @@ jobs:
         status: failure
         context: unit-tests
 
+
   - name: acceptance-tests
     public: true
     serial: true
     plan:
-      - do:
-          - in_parallel:
-              - { get: git, trigger: true, passed: [unit-tests] }
-              - { get: stemcell }
-              - { get: stemcell-xenial }
-              - { get: bpm }
-          - task: acceptance-tests
-            privileged: true
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - { name: git }
-                - { name: stemcell }
-                - { name: stemcell-xenial }
-                - { name: bpm }
-              run:
-                path: ./git/ci/scripts/acceptance-tests
-                args: []
-              params:
-                REPO_ROOT: git
-        on_failure:
-          put: notify
+    - do:
+      - in_parallel:
+        - { get: git, trigger: true, passed: [unit-tests] }
+        - { get: stemcell }
+        - { get: stemcell-xenial }
+        - { get: bpm }
+      - task: acceptance-tests
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - { name: git }
+            - { name: stemcell }
+            - { name: stemcell-xenial }
+            - { name: bpm }
+          run:
+            path: ./git/ci/scripts/acceptance-tests
+            args: []
           params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: "((slack.fail_url)) haproxy-boshrelease : acceptance tests failed"
+            REPO_ROOT:            git
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : acceptance tests failed"
 
   - name: acceptance-tests-pr
     public: true
     serial: true
     plan:
-      - do:
-          - {
-              get: git-pull-requests,
-              trigger: true,
-              version: every,
-              passed: [unit-tests-pr],
-            }
-          - { get: stemcell }
-          - { get: stemcell-xenial }
-          - { get: bpm }
-          - put: git-pull-requests
-            params:
-              path: git-pull-requests
-              status: pending
-              context: acceptance-tests
-          - task: acceptance-tests
-            privileged: true
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - { name: git-pull-requests }
-                - { name: stemcell }
-                - { name: stemcell-xenial }
-                - { name: bpm }
-              run:
-                path: ./git-pull-requests/ci/scripts/acceptance-tests
-                args: []
-              params:
-                REPO_ROOT: git-pull-requests
+    - do:
+      - { get: git-pull-requests, trigger: true, version: every, passed: [unit-tests-pr] }
+      - { get: stemcell }
+      - { get: stemcell-xenial }
+      - { get: bpm }
+      - put: git-pull-requests
+        params:
+          path: git-pull-requests
+          status: pending
+          context: acceptance-tests
+      - task: acceptance-tests
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - { name: git-pull-requests }
+            - { name: stemcell }
+            - { name: stemcell-xenial }
+            - { name: bpm }
+          run:
+            path: ./git-pull-requests/ci/scripts/acceptance-tests
+            args: []
+          params:
+            REPO_ROOT:            git-pull-requests
     on_success:
       put: git-pull-requests
       params:
@@ -230,168 +227,167 @@ jobs:
     public: true
     serial: true
     plan:
-      - do:
-          - get: git
-            passed:
-              - acceptance-tests
-            trigger: true
-          - get: version
-            trigger: true
-          - task: release-notes
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              run:
-                path: sh
-                args:
-                  - -ce
-                  - |
-                    cd git
-                    if [ -f ci/release_notes.md ]; then
-                      echo "######   RELEASE NOTES   ###############"
-                      echo
-                      cat ci/release_notes.md
-                      echo
-                      echo "########################################"
-                      echo
-                    else
-                      echo "NO RELEASE NOTES HAVE BEEN WRITTEN"
-                      echo "You *might* want to do that before"
-                      echo "hitting (+) on that shipit job..."
-                      echo
-                    fi
-              inputs:
-                - name: git
-        on_failure:
-          put: notify
-          params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: release candidate job 'pre' failed (which is unusual).
-            ok: false
+    - do:
+      - get: git
+        passed:
+        - acceptance-tests
+        trigger: true
+      - get: version
+        trigger: true
+      - task: release-notes
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          run:
+            path: sh
+            args:
+            - -ce
+            - |
+              cd git
+              if [ -f ci/release_notes.md ]; then
+                echo "######   RELEASE NOTES   ###############"
+                echo
+                cat ci/release_notes.md
+                echo
+                echo "########################################"
+                echo
+              else
+                echo "NO RELEASE NOTES HAVE BEEN WRITTEN"
+                echo "You *might* want to do that before"
+                echo "hitting (+) on that shipit job..."
+                echo
+              fi
+          inputs:
+          - name: git
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text: release candidate job 'pre' failed (which is unusual).
+          ok: false
 
   - name: rc
     public: true
     plan:
-      - do:
-          - in_parallel:
-              - { get: git, trigger: true, passed: [pre] }
-              - { get: version, trigger: false, params: { pre: rc } }
-          - put: version
-            params: { file: version/number }
-        on_failure:
-          put: notify
-          params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: "((slack.fail_url)) haproxy-boshrelease : rc job failed"
+    - do:
+      - in_parallel:
+          - { get: git,     trigger: true,  passed: [pre] }
+          - { get: version, trigger: false, params: {pre: rc} }
+      - put: version
+        params: {file: version/number}
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : rc job failed"
 
   - name: minor
     public: true
     plan:
-      - do:
-          - { get: version, trigger: false, params: { bump: minor } }
-          - { put: version, params: { file: version/number } }
-        on_failure:
-          put: notify
-          params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: "((slack.fail_url)) haproxy-boshrelease : minor job failed"
+    - do:
+      - { get: version, trigger: false, params: {bump: minor} }
+      - { put: version,                 params: {file: version/number} }
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : minor job failed"
 
   - name: major
     public: true
     plan:
-      - do:
-          - { get: version, trigger: false, params: { bump: major } }
-          - { put: version, params: { file: version/number } }
-        on_failure:
-          put: notify
-          params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: "((slack.fail_url)) haproxy-boshrelease : major job failed"
+    - do:
+      - { get: version, trigger: false, params: {bump: major} }
+      - { put: version,                 params: {file: version/number} }
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : major job failed"
 
   - name: shipit
     public: true
     serial: true
     plan:
-      - do:
-          - in_parallel:
-              - { get: version, passed: [rc], params: { bump: final } }
-              - { get: git, passed: [rc] }
-          - task: release
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
-              inputs:
-                - name: version
-                - name: git
-              outputs:
-                - name: gh
-                - name: pushme
-                - name: notifications
-              run:
-                path: ./git/ci/scripts/shipit
-                args: []
-              params:
-                REPO_ROOT: git
-                VERSION_FROM: version/number
-                RELEASE_ROOT: gh
-                REPO_OUT: pushme
-                NOTIFICATION_OUT: notifications
-                BRANCH: master
-                GITHUB_OWNER: cloudfoundry
-
-                AWS_ACCESS_KEY: ((aws.access_key))
-                AWS_SECRET_KEY: ((aws.secret_key))
-
-          - put: git
-            params:
-              rebase: true
-              repository: pushme/git
-          - put: s3
-            params:
-              file: "gh/artifacts/haproxy-*.tgz"
-          - put: github
-            params:
-              name: gh/name
-              tag: gh/tag
-              body: gh/notes.md
-              globs: [gh/artifacts/*]
-          - put: version
-            params:
-              bump: patch
-          - put: notify
-            params:
-              channel: "#haproxy-boshrelease"
-              username: ci-bot
-              icon_url: "((slack.icon))"
-              text_file: notifications/message
-        on_failure:
-          put: notify
+    - do:
+      - in_parallel:
+          - { get: version, passed: [rc], params: {bump: final} }
+          - { get: git,     passed: [rc] }
+      - task: release
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+              tag:        latest
+              username:   ((docker.username))
+              password:   ((docker.password))
+          inputs:
+            - name: version
+            - name: git
+          outputs:
+            - name: gh
+            - name: pushme
+            - name: notifications
+          run:
+            path: ./git/ci/scripts/shipit
+            args: []
           params:
-            channel: "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text: "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
+            REPO_ROOT:    git
+            VERSION_FROM: version/number
+            RELEASE_ROOT: gh
+            REPO_OUT:     pushme
+            NOTIFICATION_OUT: notifications
+            BRANCH:        master
+            GITHUB_OWNER:  cloudfoundry
 
+            AWS_ACCESS_KEY: ((aws.access_key))
+            AWS_SECRET_KEY: ((aws.secret_key))
+
+      - put: git
+        params:
+          rebase: true
+          repository: pushme/git
+      - put: s3
+        params:
+          file:  "gh/artifacts/haproxy-*.tgz"
+      - put: github
+        params:
+          name:   gh/name
+          tag:    gh/tag
+          body:   gh/notes.md
+          globs: [gh/artifacts/*]
+      - put: version
+        params:
+          bump: patch
+      - put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text_file: notifications/message
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
   - name: autobump-dependencies
     public: true
     serial: true
@@ -422,10 +418,6 @@ jobs:
                 PR_ORG: cloudfoundry
                 PR_LABEL: run-ci
 
-                AWS_ACCESS_KEY: ((aws.access_key))
-                AWS_SECRET_KEY: ((aws.secret_key))
-                GITHUB_COM_TOKEN: ((github.access_token))
-
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -450,16 +442,17 @@ resources:
   - name: git
     type: git
     source:
-      uri: git@github.com:cloudfoundry/haproxy-boshrelease.git
-      branch: master
+      uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
+      branch:      master
       private_key: ((github.private_key))
+
   - name: git-pull-requests
     type: pull-request
     source:
       access_token: ((github.access_token))
-      repository: cloudfoundry/haproxy-boshrelease
-      base_branch: master
-      labels: [run-ci]
+      repository:   cloudfoundry/haproxy-boshrelease
+      base_branch:  master
+      labels:       [run-ci]
 
   - name: stemcell-xenial
     type: bosh-io-stemcell
@@ -478,14 +471,14 @@ resources:
 
   - name: version
     type: semver
-    source:
-      driver: s3
-      bucket: cf-haproxy-boshrelease-pipeline
-      region_name: us-east-1
-      key: version
-      access_key_id: ((aws.access_key))
+    source :
+      driver:            s3
+      bucket:            cf-haproxy-boshrelease-pipeline
+      region_name:       us-east-1
+      key:               version
+      access_key_id:     ((aws.access_key))
       secret_access_key: ((aws.secret_key))
-      initial_version: "0.0.1"
+      initial_version:   "0.0.1"
 
   - name: notify
     type: slack-notification
@@ -495,17 +488,17 @@ resources:
   - name: github
     type: github-release-alt
     source:
-      user: cloudfoundry
-      repository: haproxy-boshrelease
+      user:         cloudfoundry
+      repository:   haproxy-boshrelease
       access_token: ((github.access_token))
 
   - name: s3
     type: s3
     source:
-      bucket: cf-haproxy-boshrelease-pipeline
-      region_name: us-east-1
-      regexp: haproxy-([0-9\.]+).tgz
-      access_key_id: ((aws.access_key))
+      bucket:            cf-haproxy-boshrelease-pipeline
+      region_name:       us-east-1
+      regexp:            haproxy-([0-9\.]+).tgz
+      access_key_id:     ((aws.access_key))
       secret_access_key: ((aws.secret_key))
 
   - name: daily
