@@ -12,15 +12,16 @@ var _ = FDescribe("Lua scripting", func() {
 	It("Deploys haproxy with lua script", func() {
 		replyLuaTargetPath := "/var/vcap/packages/haproxy/lua_test.lua"
 		opsfileLua := fmt.Sprintf(`---
-		# Enable Lua scripting
-		- type: replace
-			path:  /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/lua_scripts?
-			value: %s
-		- type: replace
-		  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/frontend_config?
-		  value: |-
-			http-request use-service lua.lua_test if { path /lua_test }
-			`, replyLuaTargetPath)
+# Enable Lua scripting
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/lua_scripts?
+  value: 
+  - %s
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/frontend_config?
+  value: |-
+    http-request use-service lua.lua_test if { path /lua_test }
+`, replyLuaTargetPath)
 
 		replyLuaContent := `
 local function lua_test(applet)
@@ -36,7 +37,7 @@ local function lua_test(applet)
     applet:set_status(200)
     applet:add_header("content-length", string.len(response))
     applet:add_header("content-type", "text/html")
-	applet:add_header("lua-version", _VERSION)
+    applet:add_header("lua-version", _VERSION)
     applet:start_response()
     applet:send(response)
 end
@@ -49,7 +50,7 @@ core.register_service("lua_test", "http", lua_test)
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileLua}, map[string]interface{}{}, true)
+		}, []string{opsfileLua}, map[string]interface{}{}, false)
 
 		// upload Lua script file
 		uploadFile(haproxyInfo, strings.NewReader(replyLuaContent), replyLuaTargetPath)
