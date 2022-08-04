@@ -129,6 +129,15 @@ func expectTestServer200(resp *http.Response, err error) {
 	Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Hello cloud foundry"))
 }
 
+func expectLuaServer200(resp *http.Response, err error) {
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Eventually(gbytes.BufferReader(resp.Body)).Should(gbytes.Say("Lua"))
+	Eventually(resp.Header["lua-version"]).Should(HaveOccurred())
+
+	fmt.Printf("Server has Lua version %s", resp.Header["lua-version"])
+}
+
 func expect200(resp *http.Response, err error) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
