@@ -8,10 +8,10 @@
 
 # Upgrades
 
-- `HAproxy` has been upgraded to v2.5.8 from v2.5.7
-- `socat` has been upgraded to v1.7.4.3 from v1.7.4.1
-- `hatop` has been upgraded to v0.8.2 from v0.8.0
-- `lua` has been upgraded to v5.4.4 from v5.4.3
+- `HAproxy` has been upgraded from `v2.5.7` to `v2.5.8`
+- `socat` has been upgraded from `v1.7.4.1` to `v1.7.4.3`
+- `hatop` has been upgraded from `v0.8.0` to `v0.8.2`
+- `lua` has been upgraded from `v5.4.3` to `v5.4.4`
 
 
 # Acknowledgements
