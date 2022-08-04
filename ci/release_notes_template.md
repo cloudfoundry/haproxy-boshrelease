@@ -8,7 +8,7 @@
 
 # Upgrades
 
-- `component` has been upgraded to v1.2.3 from v1.0.0
+- `component` has been upgraded from v1.0.0 to v1.2.3
 
 # Acknowledgements
 
