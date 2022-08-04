@@ -258,7 +258,7 @@ class GithubDependency(Dependency):
             if latest_version < current_version and current_raw.startswith(self.pinned_version):
                 latest_version = current_version
                 latest_release = Release(
-                    rel.body,
+                    rel.title,
                     rel.tarball_url,
                     f"{self.name}-{str(current_version)}.tar.gz",
                     current_version,
@@ -398,6 +398,13 @@ def main() -> None:
             "10",
             "https://github.com/PCRE2Project/pcre2",
             tagname_prefix="pcre2-",
+        ),
+        GithubDependency(
+            "hatop",
+            "HATOP_VERSION",
+            "0",
+            "https://github.com/jhunt/hatop",
+            tagname_prefix="v",
         ),
         # ttar (currently a submodule to https://github.com/jhunt/ttar, no new releases. Manual bump only.)
     ]
