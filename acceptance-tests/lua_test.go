@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("Lua scripting", func() {
+var _ = FDescribe("Lua scripting", func() {
 	It("Deploys haproxy with lua script", func() {
 		replyLuaTargetPath := "/var/vcap/packages/haproxy/lua_test.lua"
 		opsfileLua := fmt.Sprintf(`---
