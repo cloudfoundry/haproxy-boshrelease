@@ -10,6 +10,8 @@ SOCAT_VERSION=1.7.4.3  # http://www.dest-unreach.org/socat/download/socat-1.7.4.
 
 HAPROXY_VERSION=2.5.8  # http://www.haproxy.org/download/2.5/src/haproxy-2.5.8.tar.gz
 
+HATOP_VERSION=0.8.2  # https://api.github.com/repos/jhunt/hatop/tarball/v0.8.2
+
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
 echo "Extracting lua..."
@@ -63,8 +65,10 @@ pushd haproxy-${HAPROXY_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd
 
-echo "Installing hatop..."
-cp haproxy/hatop ${BOSH_INSTALL_TARGET}/bin/hatop
+echo "Unpackaging and installing hatop..."
+mkdir hatop
+tar xzf haproxy/hatop-${HATOP_VERSION}.tar.gz -C hatop --strip-components=1 
+cp hatop/bin/hatop ${BOSH_INSTALL_TARGET}/bin/hatop
 chmod 755 ${BOSH_INSTALL_TARGET}/bin/hatop
 cp hatop-wrapper ${BOSH_INSTALL_TARGET}/
 chmod 755 ${BOSH_INSTALL_TARGET}/hatop-wrapper
