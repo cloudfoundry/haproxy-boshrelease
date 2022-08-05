@@ -50,10 +50,16 @@ core.register_service("lua_test", "http", lua_test)
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileLua}, map[string]interface{}{}, false)
+		}, []string{opsfileLua}, map[string]interface{}{}, true)
 
 		// upload Lua script file
 		uploadFile(haproxyInfo, strings.NewReader(replyLuaContent), replyLuaTargetPath)
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
 
 		By("Sending a request to HAProxy with Lua endpoint")
 		resp, err := http.Get(fmt.Sprintf("http://%s/lua_test", haproxyInfo.PublicIP))
