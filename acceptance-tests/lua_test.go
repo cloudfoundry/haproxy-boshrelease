@@ -19,7 +19,8 @@ var _ = FDescribe("Lua scripting", func() {
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/frontend_config?
   value: |-
-    http-request use-service lua.lua_test if { path /lua_test }
+    acl lua_path path /lua_test
+    http-request use-service lua.lua_test if lua_path
 `, replyLuaTargetPath)
 
 		replyLuaContent := `
@@ -27,11 +28,9 @@ local function lua_test(applet)
     -- If client is POSTing request, receive body
     -- local request = applet:receive()
 
-    local response = string.format([[
-        <html>
-            <body>Running %s</body>
-        </html>
-    ]], _VERSION)
+    local response = string.format([[<html>
+    <body>Running %s</body>
+</html>]], _VERSION)
 
     applet:set_status(200)
     applet:add_header("content-length", string.len(response))
