@@ -14,9 +14,8 @@ var _ = FDescribe("Lua scripting", func() {
 		opsfileLua := fmt.Sprintf(`---
 # Enable Lua scripting
 - type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/lua_scripts?
-  value: 
-  - %s
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/lua_scripts?/-
+  value: "%s"
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/frontend_config?
   value: |-
@@ -30,7 +29,7 @@ local function lua_test(applet)
 
     local response = string.format([[
         <html>
-            <body>Running Lua %s</body>
+            <body>Running %s</body>
         </html>
     ]], _VERSION)
 
