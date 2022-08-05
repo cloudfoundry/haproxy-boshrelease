@@ -132,7 +132,7 @@ func expectTestServer200(resp *http.Response, err error) {
 func expectLuaServer200(resp *http.Response, err error) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(resp.Header["lua-version"]).Should(HaveOccurred())
+	Expect(resp.Header.Get("Lua-Version")).Should(ContainSubstring("Lua"))
 }
 
 func expect200(resp *http.Response, err error) {

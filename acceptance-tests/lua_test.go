@@ -10,8 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// FIXME: remove F
-var _ = FDescribe("Lua scripting", func() {
+var _ = Describe("Lua scripting", func() {
 	It("Deploys haproxy with lua script", func() {
 		opsfileLua := `---
 # Enable Lua scripting
@@ -72,12 +71,9 @@ core.register_service("lua_test", "http", lua_test)
 
 		By("Sending a request to HAProxy with Lua endpoint")
 		resp, err := http.Get(fmt.Sprintf("http://%s/lua_test", haproxyInfo.PublicIP))
-		// FIXME: Remove
-		if err == nil {
-			fmt.Printf("response: %v", resp)
-		}
+		
 		expectLuaServer200(resp, err)
-		fmt.Printf("Server has Lua version %s", resp.Header["lua-version"][0])
+		fmt.Printf("Server has Lua version %s", resp.Header.Get("Lua-Version"))
 
 	})
 })
