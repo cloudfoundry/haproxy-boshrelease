@@ -2,6 +2,7 @@
 
 The CI environment is maintained by the SAP Business Technology Platform on Cloud Foundry team for Routing and Networking (CFN).
 
+All secrets used in the pipeline and surrounding tools are kept in the team's Vault. Those secrets are only necessary for [modifying the pipeline](#updating-or-modifying-the-pipeline).
 ## Contact
 
 Credentials and admin access lie with that team. If you have questions or issues, please reach out via the [#haproxy-boshrelease](https://cloudfoundry.slack.com/archives/C0XRT9L22) channel on Slack.
@@ -75,3 +76,35 @@ New upstream releases that fit the pinned version will create PRs automatically 
 Autobumping is executed daily, currently in a time slot between 7:00 - 8:00 AM central european time.
 
 A new PR is created for each updated dependency. You may need to rebase still open autobump PRs if they were not merged before larger other changes.
+
+## Updating or Modifying the Pipeline
+
+A concourse pipeline is stored on the Concourse server's database. The `pipeline.yml` file is versioned in Git but needs to be uploaded explicitly to the server. It is kept in Git for version control and reference, but will not be automatically loaded into concourse when changed in the Git repository.
+
+The pipeline `haproxy-boshrelease` is used to build, verify and release this BOSH release. It should remain working at all times.
+
+New pipeline steps should be added without modifying existing steps or resources, or in a separate pipeline altogether.
+
+A pipeline can be uploaded to concourse via the [`upload-to-concourse.sh`](upload-to-concourse.sh) script. This script requires the data in `source.me`, which can be found in the CFN Vault.
+
+### Testing new Pipeline Steps in a Branch
+
+While developing new scripts or pipeline steps, these steps will not be in the Git `master` branch. In order to access them, _copy_ the resource `git` and defined this separate resource to check out the particular branch you are working on.
+
+Please note that the name of a git resource influences the directory name in the workspace, i.e. the directory will not be called `git` but whatever you called your copied git resource.
+
+Note that you can use the `dir` parameter in `run` to define the working directory for the command to be called:
+
+```yaml
+    [...]
+    run:
+        # `dir` defines the working directory for the executed command
+        dir: git-resource-and-directory-name
+        path: /path/to/your/command
+        args:
+         - arg1
+         - arg2
+    [...]
+```
+
+Don't forget to remove separate pipelines that were created for testing.
