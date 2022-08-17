@@ -656,7 +656,7 @@ properties:
     description: The number of file descriptors HAProxy can have open at one time
     default: 256000
   ha_proxy.max_connections:
-    description: Number of simultanous connections HAProxy supports handling
+    description: Number of simultaneous connections HAProxy supports handling
     default: 64000
   ha_proxy.drain_enable:
     description: Send SIGUSR1 signal to all haproxy processes in a drain script in order to gracefully shutdown
@@ -672,8 +672,27 @@ properties:
       Prefer backend servers which are located on the same availability zone. Note that this only affects servers provided via the http_backend link property. Servers provided via the tcp backend_link will automatically prefer the local AZ.
     default: false
   ha_proxy.enable_http2:
-    description: Enables ingress (frontend) and egress (backend) HTTP/2 ALPN negotiation. Egress (backend) HTTP protocol version may be overriden by `ha_proxy.backend_ssl`, `ha_proxy.disable_backend_http2_websockets` and `ha_proxy.backend_match_http_protocol`.
+    description: Enables ingress (frontend) and egress (backend) HTTP/2 ALPN negotiation. Egress (backend) HTTP protocol version may be overridden by `ha_proxy.backend_ssl`, `ha_proxy.disable_backend_http2_websockets` and `ha_proxy.backend_match_http_protocol`.
     default: false
   ha_proxy.always_allow_body_http10:
     description: Always allow a body to be sent when using HTTP/1.0. By default HAProxy denies GET/HEAD/DELETE requests with a body when using HTTP/1.0 due to potential request smuggling attacks. See https://github.com/haproxy/haproxy/commit/e136bd12a32970bc90d862d5fe09ea1952b62974
+    default: false
+  
+  ha_proxy.requests_rate_limit.requests:
+    description: How many requests are allowed in the given time window from one IP address.
+  ha_proxy.requests_rate_limit.window_size:
+    description: Window size for counting requests.
+  ha_proxy.requests_rate_limit.table_size:
+    description: Size of the stick table in which the IPs and counters are stored.
+  ha_proxy.requests_rate_limit.block:
+    description: Whether or not to block requests.
+    default: false
+  ha_proxy.connections_rate_limit.connections:
+    description: How many connections are allowed in the given time window from one IP address.
+  ha_proxy.connections_rate_limit.window_size:
+    description: Window size for counting connections.
+  ha_proxy.connections_rate_limit.table_size:
+    description: Size of the stick table in which the IPs and counters are stored.
+  ha_proxy.connections_rate_limit.block:
+    description: Whether or not to block connections.
     default: false

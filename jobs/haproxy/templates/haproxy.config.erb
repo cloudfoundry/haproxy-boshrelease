@@ -1,3 +1,4 @@
+<%- # see https://bosh.io/docs/jobs/#properties for documentation of bosh ERB templates -%>
 <% if properties.ha_proxy.raw_config -%>
 <%= p("ha_proxy.raw_config") %>
 <%- else -%>
@@ -320,6 +321,16 @@ resolvers default
   <%- end -%>
 <% end -%>
 
+<% if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do %>
+backend sc_http_req_rate
+    stick-table type ip size <%= p("ha_proxy.requests_rate_limit.table_size") %> expire <%= p("ha_proxy.requests_rate_limit.window_size") %> store http_req_rate(<%= p("ha_proxy.requests_rate_limit.window_size") %>)
+<% end %>
+
+<% if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do %>
+backend sc_tcp_conn_rate
+    stick-table type ip size <%= p("ha_proxy.connections_rate_limit.table_size") %> expire <%= p("ha_proxy.connections_rate_limit.window_size") %> store conn_rate(<%= p("ha_proxy.connections_rate_limit.window_size") %>)
+<% end %>
+
 <% unless p("ha_proxy.disable_http") -%>
 # HTTP Frontend {{{
 frontend http-in
@@ -328,13 +339,25 @@ frontend http-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
-  <%- if_p("ha_proxy.cidr_whitelist") do -%>
-    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
-    tcp-request content accept if whitelist
-  <%- end -%>
   <%- if_p("ha_proxy.cidr_blacklist") do -%>
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
+  <%- end -%>
+  <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size", "ha_proxy.connections_rate_limit.connections") do -%>
+    <%- if p("ha_proxy.connections_rate_limit.block") -%>
+      tcp-request connection reject if { sc0_conn_rate gt <%= p("ha_proxy.connections_rate_limit.connections") %> }
+    <%- end -%>
+    tcp-request connection track-sc0 src table sc_tcp_conn_rate
+  <%- end -%>
+  <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size", "ha_proxy.requests_rate_limit.requests") do -%>
+    <%- if p("ha_proxy.requests_rate_limit.block") -%>
+    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
+    <%- end -%>
+    tcp-request content track-sc1 src table sc_http_req_rate
+  <%- end -%>
+  <%- if_p("ha_proxy.cidr_whitelist") do -%>
+    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
+    tcp-request content accept if whitelist
   <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
@@ -425,13 +448,25 @@ frontend https-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
-  <%- if_p("ha_proxy.cidr_whitelist") do -%>
-    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
-    tcp-request content accept if whitelist
-  <%- end -%>
   <%- if_p("ha_proxy.cidr_blacklist") do -%>
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
+  <%- end -%>
+  <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size", "ha_proxy.connections_rate_limit.connections") do -%>
+    <%- if p("ha_proxy.connections_rate_limit.block") -%>
+    tcp-request connection reject if { sc0_conn_rate gt <%= p("ha_proxy.connections_rate_limit.connections") %> }
+    <%- end -%>
+    tcp-request connection track-sc0 src table sc_tcp_conn_rate
+  <%- end -%>
+  <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size", "ha_proxy.requests_rate_limit.requests") do -%>
+    <%- if p("ha_proxy.requests_rate_limit.block") -%>
+    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
+    <%- end -%>
+    tcp-request content track-sc1 src table sc_http_req_rate
+  <%- end -%>
+  <%- if_p("ha_proxy.cidr_whitelist") do -%>
+    acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
+    tcp-request content accept if whitelist
   <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
