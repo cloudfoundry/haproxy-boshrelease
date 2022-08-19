@@ -77,7 +77,11 @@ bundle install
 bundle exec guard
 ```
 
+#### PR Validation
 PRs will be automatically tested by https://concourse.cfi.sapcloud.io/teams/main/pipelines/haproxy-boshrelease once a maintainer has labelled the PR with the `approved` label
+
+#### Unit Test Debugging
+Unit/rspec Tests can also be debugged when needed. See for example the [VSCode rdbg Ruby Debugger](https://marketplace.visualstudio.com/items?itemName=KoichiSasada.vscode-rdbg) extension. You can follow the "Launch without configuration" instructions for the extension, just set the "Debug command line" input to `bundle exec rspec <filepath>`.
 
 ### Acceptance tests
 
