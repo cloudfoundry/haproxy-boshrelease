@@ -19,7 +19,7 @@ describe 'config/haproxy.config rate limiting' do
   end
 
   context 'when ha_proxy.requests_rate_limit properties "requests", "window_size", "table_size" are provided' do
-    let(:backend_req_rate) { haproxy_conf['backend sc_http_req_rate'] }
+    let(:backend_req_rate) { haproxy_conf['backend st_http_req_rate'] }
 
     let(:request_limit_base_properties) do
       {
@@ -42,8 +42,8 @@ describe 'config/haproxy.config rate limiting' do
     end
 
     it 'tracks requests in stick tables' do
-      expect(frontend_http).to include('tcp-request content track-sc1 src table sc_http_req_rate')
-      expect(frontend_https).to include('tcp-request content track-sc1 src table sc_http_req_rate')
+      expect(frontend_http).to include('tcp-request content track-sc1 src table st_http_req_rate')
+      expect(frontend_https).to include('tcp-request content track-sc1 src table st_http_req_rate')
     end
 
     context 'when requests_rate_limit.block is also provided' do
@@ -59,7 +59,7 @@ describe 'config/haproxy.config rate limiting' do
   end
 
   context 'when ha_proxy.connections_rate_limit properties "connections", "window_size", "table_size" are provided' do
-    let(:backend_conn_rate) { haproxy_conf['backend sc_tcp_conn_rate'] }
+    let(:backend_conn_rate) { haproxy_conf['backend st_tcp_conn_rate'] }
 
     let(:connection_limit_base_properties) do
       {
@@ -82,8 +82,8 @@ describe 'config/haproxy.config rate limiting' do
     end
 
     it 'tracks connections in stick tables' do
-      expect(frontend_http).to include('tcp-request connection track-sc0 src table sc_tcp_conn_rate')
-      expect(frontend_https).to include('tcp-request connection track-sc0 src table sc_tcp_conn_rate')
+      expect(frontend_http).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
+      expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
     end
 
     context 'when connections_rate_limit.block is also provided' do
@@ -92,8 +92,8 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'adds http-request deny condition to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request connection reject if { sc0_conn_rate gt 5 }')
-        expect(frontend_https).to include('tcp-request connection reject if { sc0_conn_rate gt 5 }')
+        expect(frontend_http).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
+        expect(frontend_https).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
       end
     end
   end
