@@ -2,10 +2,11 @@ package acceptance_tests
 
 import (
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/http"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Drain Test", func() {
@@ -71,5 +72,53 @@ var _ = Describe("Drain Test", func() {
 		expectConnectionRefusedErr(err)
 		_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
 		expectConnectionRefusedErr(err)
+	})
+
+	// drain with an inexisting Process
+	It("Honors grace and drain periods with stale PID", func() {
+		haproxyBackendPort := 12000
+		// Expect initial deployment to be failing due to lack of healthy backends
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileDrainTimeout}, map[string]interface{}{}, false)
+
+		// Verify that is in a failing state
+		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
+
+		By("Waiting monit to report HAProxy is now healthy (due to having a healthy backend instance)")
+		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
+		// and monit should in turn start reporting a healthy process
+		// We will up to wait one minute for the status to stabilise
+		Eventually(func() string {
+			return boshInstances(deploymentNameForTestNode())[0].ProcessState
+		}, time.Minute, time.Second).Should(Equal("running"))
+
+		By("The healthcheck health endpoint should report a 200 status code")
+		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
+
+		By("Sending a request to HAProxy works")
+		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
+
+		// Set a fake PID of the parent process haproxy_wrapper
+		_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "echo 32761 | sudo tee -a /var/vcap/sys/run/bpm/haproxy/haproxy.pid")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Draining HAproxy, drain script should not fail and HAproxy should still healthy")
+		_, _, err = runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "sudo /var/vcap/jobs/haproxy/bin/drain")
+		Expect(err).Should(BeNil())
+
+		By("The healthcheck health endpoint should report a 200 status code")
+		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
+
+		By("Sending a request to HAProxy works")
+		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
 	})
 })
