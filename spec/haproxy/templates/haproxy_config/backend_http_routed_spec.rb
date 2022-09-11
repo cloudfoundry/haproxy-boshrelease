@@ -248,7 +248,7 @@ describe 'config/haproxy.config backend http-routed-backend-X' do
         it 'aborts with a meaningful error message' do
           expect do
             backend_images
-          end.to raise_error /Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in routed_backend_servers/
+          end.to raise_error(/Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in routed_backend_servers/)
         end
       end
     end
