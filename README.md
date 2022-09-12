@@ -78,9 +78,22 @@ bundle exec guard
 ```
 
 #### PR Validation
-PRs will be automatically tested by https://concourse.cfi.sapcloud.io/teams/main/pipelines/haproxy-boshrelease once a maintainer has labelled the PR with the `approved` label
+PRs will be automatically tested by https://concourse.cfi.sapcloud.io/teams/main/pipelines/haproxy-boshrelease once a maintainer has labelled the PR with the `run-ci` label
 
 #### Unit Test Debugging
+Unit/rspec Tests and linters can be run locally to verify correct functionality before pushing to the CI system.
+
+```shell
+# install the necessary dependencies, once
+bundle package
+
+# run the linter to identify any issues
+bundle exec rake lint
+
+# run the rspec / unit tests for the configuration generation
+bundle exec rake spec
+```
+
 Unit/rspec Tests can also be debugged when needed. See for example the [VSCode rdbg Ruby Debugger](https://marketplace.visualstudio.com/items?itemName=KoichiSasada.vscode-rdbg) extension. You can follow the "Launch without configuration" instructions for the extension, just set the "Debug command line" input to `bundle exec rspec <filepath>`.
 
 ### Acceptance tests

@@ -53,7 +53,9 @@ describe 'config/haproxy.config rate limiting' do
 
       it 'adds http-request deny condition to http-in and https-in frontends' do
         expect(frontend_http).to include('http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt 5 }')
+        expect(frontend_http).to include('tcp-request content track-sc1 src table st_http_req_rate')
         expect(frontend_https).to include('http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt 5 }')
+        expect(frontend_https).to include('tcp-request content track-sc1 src table st_http_req_rate')
       end
     end
   end
@@ -93,7 +95,9 @@ describe 'config/haproxy.config rate limiting' do
 
       it 'adds http-request deny condition to http-in and https-in frontends' do
         expect(frontend_http).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
+        expect(frontend_http).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
         expect(frontend_https).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
+        expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
       end
     end
   end

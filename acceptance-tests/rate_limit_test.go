@@ -9,6 +9,55 @@ import (
 )
 
 var _ = Describe("Rate-Limiting", func() {
+	It("Connections/Requests aren't blocked when block config isn't set", func() {
+		rateLimit := 5
+		opsfileConnectionsRateLimit := fmt.Sprintf(`---
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit?/requests
+  value: %d
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/window_size?
+  value: 10s
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/table_size?
+  value: 100
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
+  value: %d
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
+  value: 100s
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
+  value: 100
+`, rateLimit, rateLimit)
+		haproxyBackendPort := 12000
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
+
+		By("Sending requests to test app, expecting none to be blocked")
+		testRequestCount := int(float64(rateLimit) * 1.5)
+		for i := 0; i < testRequestCount; i++ {
+			rt := &http.Transport{
+				DisableKeepAlives: true,
+			}
+			client := &http.Client{Transport: rt}
+			resp, err := client.Get(fmt.Sprintf("http://%s/foo", haproxyInfo.PublicIP))
+			// sucessful requests
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		}
+	})
+
 	It("Request Based Limiting Works", func() {
 		requestLimit := 5
 		opsfileRequestRateLimit := fmt.Sprintf(`---
@@ -61,7 +110,7 @@ var _ = Describe("Rate-Limiting", func() {
 		Expect(successfulRequestCount).To(Equal(requestLimit))
 	})
 
-	It("Connection Based Limiting Works", func() { //TODO: remove focus
+	It("Connection Based Limiting Works", func() {
 		connLimit := 5
 		opsfileConnectionsRateLimit := fmt.Sprintf(`---
 - type: replace
@@ -116,9 +165,9 @@ var _ = Describe("Rate-Limiting", func() {
 		Expect(successfulRequestCount).To(Equal(connLimit))
 	})
 
-	It("Both types of rate limiting work in parallel", func() { //TODO: remove focus
+	It("Both types of rate limiting work in parallel", func() {
 		requestLimit := 5
-		connLimit := 6  // needs to be higher than request limit for this test
+		connLimit := 6 // needs to be higher than request limit for this test
 		// connection based rate-limiting has priority over request based rate-limiting so we expect some sucesses, then one status 429 response, then no response at all
 		opsfileConnectionsRateLimit := fmt.Sprintf(`---
 - type: replace
