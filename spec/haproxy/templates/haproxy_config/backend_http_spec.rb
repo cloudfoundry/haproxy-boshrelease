@@ -214,7 +214,7 @@ describe 'config/haproxy.config backend http-routers' do
         it 'aborts with a meaningful error message' do
           expect do
             backend_http1
-          end.to raise_error /Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost/
+          end.to raise_error(/Conflicting configuration: backend_ssl must be 'verify' to use backend_ssl_verifyhost/)
         end
       end
     end

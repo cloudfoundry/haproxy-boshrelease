@@ -90,7 +90,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     it 'aborts with a meaningful error message' do
       expect do
         frontend_wss
-      end.to raise_error /Unknown 'disable_domain_fronting' option: foobar. Known options: true, false or 'mtls_only'/
+      end.to raise_error(/Unknown 'disable_domain_fronting' option: foobar. Known options: true, false or 'mtls_only'/)
     end
   end
 
@@ -120,7 +120,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         it 'aborts with a meaningful error message' do
           expect do
             frontend_wss
-          end.to raise_error /Conflicting configuration: must enable client_cert to use client_cert_ignore_err/
+          end.to raise_error(/Conflicting configuration: must enable client_cert to use client_cert_ignore_err/)
         end
       end
     end
@@ -142,7 +142,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         it 'aborts with a meaningful error message' do
           expect do
             frontend_wss
-          end.to raise_error /Conflicting configuration: must enable client_cert to use client_revocation_list/
+          end.to raise_error(/Conflicting configuration: must enable client_cert to use client_revocation_list/)
         end
       end
     end
@@ -389,7 +389,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         it 'aborts with a meaningful error message' do
           expect do
             frontend_wss
-          end.to raise_error /Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains/
+          end.to raise_error(/Conflicting configuration: hsts_enable must be true to use hsts_include_subdomains/)
         end
       end
 
@@ -415,7 +415,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         it 'aborts with a meaningful error message' do
           expect do
             frontend_wss
-          end.to raise_error /Conflicting configuration: hsts_enable must be true to enable hsts_preload/
+          end.to raise_error(/Conflicting configuration: hsts_enable must be true to enable hsts_preload/)
         end
       end
     end
@@ -645,7 +645,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     it 'aborts with a meaningful error message' do
       expect do
         frontend_wss
-      end.to raise_error /Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list/
+      end.to raise_error(/Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list/)
     end
   end
 end
