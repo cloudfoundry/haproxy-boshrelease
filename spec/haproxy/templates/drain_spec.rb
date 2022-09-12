@@ -31,6 +31,13 @@ describe 'bin/drain' do
           fi
 
           pid="$(cat ${pidfile})"
+          if ! [ pgrep -F "${pidfile}" ]; then
+            # In case haproxy_wrapper process is stale, pid_exists will be empty,
+            # the drain job should not fail
+            echo "$(date): There was no process for the recorded haproxy_wrapper PID." >> ${logfile}
+            echo 0
+            exit 0
+          fi
 
           haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
           haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
@@ -69,6 +76,13 @@ describe 'bin/drain' do
             fi
 
             pid="$(cat ${pidfile})"
+            if ! [ pgrep -F "${pidfile}" ]; then
+              # In case haproxy_wrapper process is stale, pid_exists will be empty,
+              # the drain job should not fail
+              echo "$(date): There was no process for the recorded haproxy_wrapper PID." >> ${logfile}
+              echo 0
+              exit 0
+            fi
 
             haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
             haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
