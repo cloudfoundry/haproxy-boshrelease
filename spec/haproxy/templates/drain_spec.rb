@@ -31,15 +31,6 @@ describe 'bin/drain' do
           fi
 
           pid="$(cat ${pidfile})"
-          pid_exists=$(ps -p ${pid} | tail -n +2)
-
-          if [ "${pid_exists}" = '' ]; then
-            # In case haproxy_wrapper process is stale, pid_exists will be empty,
-            # the drain job should not fail
-            echo "$(date): There was no master process for haproxy_wrapper." >> ${logfile}
-            echo 0
-            exit 0
-          fi
 
           haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
           haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
@@ -78,15 +69,6 @@ describe 'bin/drain' do
             fi
 
             pid="$(cat ${pidfile})"
-            pid_exists=$(ps -p ${pid} | tail -n +2)
-
-            if [ "${pid_exists}" = '' ]; then
-              # In case haproxy_wrapper process is stale, pid_exists will be empty,
-              # the drain job should not fail
-              echo "$(date): There was no master process for haproxy_wrapper." >> ${logfile}
-              echo 0
-              exit 0
-            fi
 
             haproxy_wrapper_pid=$(pgrep -P "$pid" haproxy_wrapper)
             haproxy_master_pid=$(pgrep -P "$haproxy_wrapper_pid" -x haproxy)
