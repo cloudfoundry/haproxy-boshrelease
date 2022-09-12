@@ -62,7 +62,7 @@ def parse_haproxy_config(config) # rubocop:disable Metrics/AbcSize
   config = config.split(/\n/).reject { |l| l.empty? || l =~ /^\s*#.*$/ }.join("\n")
 
   # split into top-level groups
-  config.split(/^([^\s].*)/).drop(1).each_slice(2).map do |group|
+  config.split(/^([^\s].*)/).drop(1).each_slice(2).to_h do |group|
     key = group[0]
     properties = group[1]
 
@@ -73,5 +73,5 @@ def parse_haproxy_config(config) # rubocop:disable Metrics/AbcSize
     properties = properties.split(/\n/).map(&:strip)
 
     [key, properties]
-  end.to_h
+  end
 end

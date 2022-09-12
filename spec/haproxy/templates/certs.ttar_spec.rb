@@ -181,7 +181,7 @@ describe 'config/certs.ttar' do
         it 'aborts with a meaningful error message' do
           expect do
             ttar
-          end.to raise_error /Conflicting configuration. Please configure 'client_ca_file' either globally OR in 'crt_list' entries, but not both/
+          end.to raise_error(/Conflicting configuration. Please configure 'client_ca_file' either globally OR in 'crt_list' entries, but not both/)
         end
       end
     end
@@ -230,7 +230,7 @@ describe 'config/certs.ttar' do
         it 'aborts with a meaningful error message' do
           expect do
             ttar
-          end.to raise_error /Conflicting configuration. Please configure 'client_revocation_list' either globally OR in 'crt_list' entries, but not both/
+          end.to raise_error(/Conflicting configuration. Please configure 'client_revocation_list' either globally OR in 'crt_list' entries, but not both/)
         end
       end
     end

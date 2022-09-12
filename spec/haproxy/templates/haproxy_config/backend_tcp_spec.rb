@@ -216,7 +216,7 @@ describe 'config/haproxy.config custom TCP backends' do
         it 'aborts with a meaningful error message' do
           expect do
             backend_tcp_redis
-          end.to raise_error /Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in tcp backend configuration/
+          end.to raise_error(/Conflicting configuration: backend_ssl must be 'verify' to use backend_verifyhost in tcp backend configuration/)
         end
       end
     end
