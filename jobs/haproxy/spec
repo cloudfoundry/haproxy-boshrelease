@@ -677,22 +677,22 @@ properties:
   ha_proxy.always_allow_body_http10:
     description: Always allow a body to be sent when using HTTP/1.0. By default HAProxy denies GET/HEAD/DELETE requests with a body when using HTTP/1.0 due to potential request smuggling attacks. See https://github.com/haproxy/haproxy/commit/e136bd12a32970bc90d862d5fe09ea1952b62974
     default: false
-  
+
   ha_proxy.requests_rate_limit.requests:
-    description: How many requests are allowed in the given time window from one IP address.
+    description: How many requests are allowed in the given time window from one IP address. See docs/rate_limiting.md
   ha_proxy.requests_rate_limit.window_size:
-    description: Window size for counting requests.
+    description: Window size for counting requests. See docs/rate_limiting.md
   ha_proxy.requests_rate_limit.table_size:
-    description: Size of the stick table in which the IPs and counters are stored.
+    description: Size of the stick table in which the IPs and counters are stored. See docs/rate_limiting.md
   ha_proxy.requests_rate_limit.block:
-    description: Whether or not to block requests.
+    description: Whether or not to block requests. See docs/rate_limiting.md
     default: false
   ha_proxy.connections_rate_limit.connections:
-    description: How many connections are allowed in the given time window from one IP address.
+    description: How many connections are allowed in the given time window from one IP address. See docs/rate_limiting.md
   ha_proxy.connections_rate_limit.window_size:
-    description: Window size for counting connections.
+    description: Window size for counting connections. See docs/rate_limiting.md
   ha_proxy.connections_rate_limit.table_size:
-    description: Size of the stick table in which the IPs and counters are stored.
+    description: Size of the stick table in which the IPs and counters are stored. See docs/rate_limiting.md
   ha_proxy.connections_rate_limit.block:
-    description: Whether or not to block connections.
+    description: Whether or not to block connections. See docs/rate_limiting.md
     default: false
