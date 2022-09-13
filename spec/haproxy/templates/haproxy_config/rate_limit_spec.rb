@@ -18,13 +18,12 @@ describe 'config/haproxy.config rate limiting' do
     }
   end
 
-  context 'when ha_proxy.requests_rate_limit properties "requests", "window_size", "table_size" are provided' do
+  context 'when ha_proxy.requests_rate_limit properties "window_size", "table_size" are provided' do
     let(:backend_req_rate) { haproxy_conf['backend st_http_req_rate'] }
 
     let(:request_limit_base_properties) do
       {
         'requests_rate_limit' => {
-          'requests' => '5',
           'window_size' => '10s',
           'table_size' => '10m'
         }
@@ -46,9 +45,9 @@ describe 'config/haproxy.config rate limiting' do
       expect(frontend_https).to include('tcp-request content track-sc1 src table st_http_req_rate')
     end
 
-    context 'when requests_rate_limit.block is also provided' do
+    context 'when "requests" and "block" are also provided' do
       let(:properties) do
-        temp_properties.deep_merge({ 'requests_rate_limit' => { 'block' => 'true' } })
+        temp_properties.deep_merge({ 'requests_rate_limit' => { 'requests' => '5', 'block' => 'true' } })
       end
 
       it 'adds http-request deny condition to http-in and https-in frontends' do
@@ -60,13 +59,12 @@ describe 'config/haproxy.config rate limiting' do
     end
   end
 
-  context 'when ha_proxy.connections_rate_limit properties "connections", "window_size", "table_size" are provided' do
+  context 'when ha_proxy.connections_rate_limit properties "window_size", "table_size" are provided' do
     let(:backend_conn_rate) { haproxy_conf['backend st_tcp_conn_rate'] }
 
     let(:connection_limit_base_properties) do
       {
         'connections_rate_limit' => {
-          'connections' => '5',
           'window_size' => '10s',
           'table_size' => '10m'
         }
@@ -88,9 +86,9 @@ describe 'config/haproxy.config rate limiting' do
       expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
     end
 
-    context 'when connections_rate_limit.block is also provided' do
+    context 'when "connections" and "block" are also provided' do
       let(:properties) do
-        temp_properties.deep_merge({ 'connections_rate_limit' => { 'block' => 'true' } })
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '5', 'block' => 'true' } })
       end
 
       it 'adds http-request deny condition to http-in and https-in frontends' do

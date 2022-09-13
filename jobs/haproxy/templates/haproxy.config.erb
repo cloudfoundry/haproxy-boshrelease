@@ -321,14 +321,14 @@ resolvers default
   <%- end -%>
 <% end -%>
 
-<% if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do %>
+<% if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do |table_size, window_size| %>
 backend st_http_req_rate
-    stick-table type ip size <%= p("ha_proxy.requests_rate_limit.table_size") %> expire <%= p("ha_proxy.requests_rate_limit.window_size") %> store http_req_rate(<%= p("ha_proxy.requests_rate_limit.window_size") %>)
+    stick-table type ip size <%= table_size %> expire <%= window_size %> store http_req_rate(<%= window_size %>)
 <% end %>
 
-<% if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do %>
+<% if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do |table_size, window_size| %>
 backend st_tcp_conn_rate
-    stick-table type ip size <%= p("ha_proxy.connections_rate_limit.table_size") %> expire <%= p("ha_proxy.connections_rate_limit.window_size") %> store conn_rate(<%= p("ha_proxy.connections_rate_limit.window_size") %>)
+    stick-table type ip size <%= table_size %> expire <%= window_size %> store conn_rate(<%= window_size %>)
 <% end %>
 
 <% unless p("ha_proxy.disable_http") -%>
@@ -339,25 +339,29 @@ frontend http-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
-  <%- if_p("ha_proxy.cidr_blacklist") do -%>
-    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
-    tcp-request content reject if blacklist
-  <%- end -%>
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
-    <%- if p("ha_proxy.connections_rate_limit.block") && if_p("ha_proxy.connections_rate_limit.connections") -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= p("ha_proxy.connections_rate_limit.connections") %> }
+    <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
+      <%-if block -%>
+    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
+      <%- end -%>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     tcp-request content track-sc1 src table st_http_req_rate
-    <%- if p("ha_proxy.requests_rate_limit.block") && if_p("ha_proxy.requests_rate_limit.requests") -%>
-    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
+    <%- if_p("ha_proxy.requests_rate_limit.block", "ha_proxy.requests_rate_limit.requests") do |block, requests| -%>
+      <%-if block -%>
+    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= requests %> }
+      <%- end -%>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
+  <%- end -%>
+  <%- if_p("ha_proxy.cidr_blacklist") do -%>
+    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
+    tcp-request content reject if blacklist
   <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
@@ -448,25 +452,29 @@ frontend https-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= p("ha_proxy.frontend_config") %>
   <%- end -%>
-  <%- if_p("ha_proxy.cidr_blacklist") do -%>
-    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
-    tcp-request content reject if blacklist
-  <%- end -%>
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
-    <%- if p("ha_proxy.connections_rate_limit.block") && if_p("ha_proxy.connections_rate_limit.connections") -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= p("ha_proxy.connections_rate_limit.connections") %> }
+    <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
+      <%-if block -%>
+    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
+      <%- end -%>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     tcp-request content track-sc1 src table st_http_req_rate
-    <%- if p("ha_proxy.requests_rate_limit.block") && if_p("ha_proxy.requests_rate_limit.requests") -%>
-    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
+    <%- if_p("ha_proxy.requests_rate_limit.block", "ha_proxy.requests_rate_limit.requests") do |block, requests| -%>
+      <%-if block -%>
+    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= requests %> }
+      <%- end -%>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
+  <%- end -%>
+  <%- if_p("ha_proxy.cidr_blacklist") do -%>
+    acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
+    tcp-request content reject if blacklist
   <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
