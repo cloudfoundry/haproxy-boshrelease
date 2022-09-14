@@ -8,7 +8,7 @@ PCRE_VERSION=10.40  # https://github.com/PCRE2Project/pcre2/releases/download/pc
 
 SOCAT_VERSION=1.7.4.3  # http://www.dest-unreach.org/socat/download/socat-1.7.4.3.tar.gz
 
-HAPROXY_VERSION=2.5.8  # http://www.haproxy.org/download/2.5/src/haproxy-2.5.8.tar.gz
+HAPROXY_VERSION=2.6.5  # https://www.haproxy.org/download/2.6/src/haproxy-2.6.5.tar.gz
 
 HATOP_VERSION=0.8.2  # https://api.github.com/repos/jhunt/hatop/tarball/v0.8.2
 
