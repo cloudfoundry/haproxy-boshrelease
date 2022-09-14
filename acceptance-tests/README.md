@@ -31,6 +31,12 @@ A convenience script that does this for you is below.
 docker_restart_with_cgroupsv1() {
     SETTINGS=~/Library/Group\ Containers/group.com.docker/settings.json
 
+    if ! command -v jq >/dev/null || ! command -v sponge; then
+        echo "Requires jq and sponge. Consider installing via:"
+        echo "   brew install jq moreutils"
+        return
+    fi
+
     cgroupsV1Enabled=$(jq '.deprecatedCgroupv1' "$SETTINGS")
     if [ "$cgroupsV1Enabled" = "true" ]; then
         echo "deprecatedCgroupv1 is already set to 'true'. Acceptance tests should work."
@@ -46,6 +52,7 @@ docker_restart_with_cgroupsv1() {
         echo 'Setting "deprecatedCgroupv1" to true.'
 
         # Add the needed cgroup config to docker settings.json
+        # sponge is needed because we're updating the same file in place
         echo '{"deprecatedCgroupv1": true}' |
             jq -s '.[0] * .[1]' "$SETTINGS" - |
             sponge "$SETTINGS"
@@ -66,6 +73,7 @@ docker_restart_with_cgroupsv1
 ```
 
 ### Focussed Tests
+
 If you want to run only a specific part of the suite, you can use [focussed specs](https://onsi.github.io/ginkgo/#focused-specs)
 
 The easiest way is to just add an `F` to your `Describe`, `Context` or `It` closures.
