@@ -28,7 +28,7 @@ var _ = Describe("Drain Test", func() {
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/drain_timeout?
   value: 10
 `
-	FIt("Honors grace and drain periods", func() {
+	It("Honors grace and drain periods", func() {
 		haproxyBackendPort := 12000
 		// Expect initial deployment to be failing due to lack of healthy backends
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
@@ -60,15 +60,16 @@ var _ = Describe("Drain Test", func() {
 		By("Sending a request to HAProxy works")
 		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
 
-		// By("Draining HAproxy should first shut down health check, listeners still working")
-		// drainHAProxy(haproxyInfo)
-		// _, err := http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
-		// expectConnectionRefusedErr(err)
-		// expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
-		time.Sleep(30 * time.Second)
+		By("Draining HAproxy should first shut down health check, listeners still working")
+		drainHAProxy(haproxyInfo)
+
+		_, err := http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
+		expectConnectionRefusedErr(err)
+		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
+		time.Sleep(10 * time.Second)
 
 		By("After grace period has passed, draining should set in, disabling listeners")
-		_, err := http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
+		_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
 		expectConnectionRefusedErr(err)
 		_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
 		expectConnectionRefusedErr(err)
