@@ -72,6 +72,12 @@ docker_restart_with_cgroupsv1() {
 docker_restart_with_cgroupsv1
 ```
 
+The output at the end should be:
+```plain
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 1
+```
+
 ### Focussed Tests
 
 If you want to run only a specific part of the suite, you can use [focussed specs](https://onsi.github.io/ginkgo/#focused-specs)
