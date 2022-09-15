@@ -94,7 +94,7 @@ var _ = Describe("Drain Test", func() {
 		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 		defer closeTunnel()
 
-		By("Waiting monit to report HAProxy is now healthy (due to having a healthy backend instance)")
+		By("Waiting for monit to report HAProxy is now healthy (due to having a healthy backend instance)")
 		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
 		// and monit should in turn start reporting a healthy process
 		// We will up to wait one minute for the status to stabilise
