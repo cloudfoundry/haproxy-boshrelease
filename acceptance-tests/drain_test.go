@@ -76,7 +76,7 @@ var _ = Describe("Drain Test", func() {
 	})
 
 	// drain with an inexisting Process
-	It("Honors grace and drain periods with stale PID", func() {
+	FIt("Honors grace and drain periods with stale PID", func() {
 		haproxyBackendPort := 12000
 		// Expect initial deployment to be failing due to lack of healthy backends
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
@@ -109,11 +109,16 @@ var _ = Describe("Drain Test", func() {
 		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
 
 		// Set a fake PID of the parent process haproxy_wrapper
-		_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "echo 32761 | sudo tee -a /var/vcap/sys/run/bpm/haproxy/haproxy.pid")
+		_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "sudo cat /var/vcap/sys/run/bpm/haproxy/haproxy.pid > /tmp/haproxy.pid")
+		Expect(err).NotTo(HaveOccurred())
+		_, _, err = runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "echo 32761 | sudo tee /var/vcap/sys/run/bpm/haproxy/haproxy.pid")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Draining HAproxy, drain script should not fail and HAproxy should still healthy")
 		drainHAProxy(haproxyInfo)
+
+		_, _, err = runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "sudo cat /tmp/haproxy.pid > /var/vcap/sys/run/bpm/haproxy/haproxy.pid")
+		Expect(err).NotTo(HaveOccurred())
 
 		By("The healthcheck health endpoint should report a 200 status code")
 		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
