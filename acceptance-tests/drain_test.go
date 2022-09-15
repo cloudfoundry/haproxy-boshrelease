@@ -114,7 +114,7 @@ var _ = Describe("Drain Test", func() {
 		_, _, err = runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "echo 32761 | sudo tee /var/vcap/sys/run/bpm/haproxy/haproxy.pid")
 		Expect(err).NotTo(HaveOccurred())
 
-		By("Draining HAproxy, drain script should not fail and HAproxy should still healthy")
+		By("Draining HAproxy, drain script should not fail and HAproxy should still be healthy")
 		drainHAProxy(haproxyInfo)
 
 		_, _, err = runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "cat /tmp/haproxy.pid | sudo tee /var/vcap/sys/run/bpm/haproxy/haproxy.pid")
