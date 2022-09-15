@@ -79,12 +79,19 @@ echo "v${VERSION}"                         > ${RELEASE_ROOT}/name
 mv ${REPO_ROOT}/releases/*/*-${VERSION}.tgz  ${RELEASE_ROOT}/artifacts
 mv ${REPO_ROOT}/ci/release_notes.md          ${RELEASE_ROOT}/notes.md
 
-HAPROXY_VERSION=$(sed -n 's/HAPROXY_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
-LUA_VERSION=$(sed -n 's/LUA_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
-SOCAT_VERSION=$(sed -n 's/SOCAT_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
-PCRE_VERSION=$(sed -n 's/PCRE_VERSION=//p' "${REPO_ROOT}/packages/haproxy/packaging")
+version() {
+  # extract the version variable $1 from the packaging script $2 (default 'haproxy')
+  pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
+  package=${2:-haproxy}
+  # extract version and remove all spaces
+  sed -n -E "${pattern//VERSION/${1:?}}" "${REPO_ROOT}/packages/${package}/packaging" | sed 's/ *//g'
+}
 
-KEEPALIVED_VERSION=$(sed -n 's/KEEPALIVED_VERSION=//p' "${REPO_ROOT}/packages/keepalived/packaging")
+HAPROXY_VERSION=$(version HAPROXY_VERSION)
+LUA_VERSION=$(version LUA_VERSION)
+SOCAT_VERSION=$(version SOCAT_VERSION)
+PCRE_VERSION=$(version PCRE_VERSION)
+KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
 
 cat >> ${RELEASE_ROOT}/notes.md <<EOF
 ### Versions
