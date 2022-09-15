@@ -76,7 +76,7 @@ var _ = Describe("Drain Test", func() {
 	})
 
 	// drain with an inexisting Process
-	FIt("Honors grace and drain periods with stale PID", func() {
+	It("Honors grace and drain periods with stale PID", func() {
 		haproxyBackendPort := 12000
 		// Expect initial deployment to be failing due to lack of healthy backends
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
