@@ -31,8 +31,7 @@ describe 'bin/drain' do
           fi
 
           pid="$(cat ${pidfile})"
-          pid_exists=$(ps -p ${pid} | tail -n +2)
-          if [ "${pid_exists}" = '' ]; then
+          if ![ ps -p ${pid} >/dev/null ]; then
             # In case haproxy_wrapper process is stale, pid_exists will be empty,
             # the drain job should not fail
             echo "$(date): There was no process for the recorded haproxy_wrapper PID." >> ${logfile}
@@ -77,8 +76,7 @@ describe 'bin/drain' do
             fi
 
             pid="$(cat ${pidfile})"
-            pid_exists=$(ps -p ${pid} | tail -n +2)
-            if [ "${pid_exists}" = '' ]; then
+            if ![ ps -p ${pid} >/dev/null ]; then
               # In case haproxy_wrapper process is stale, pid_exists will be empty,
               # the drain job should not fail
               echo "$(date): There was no process for the recorded haproxy_wrapper PID." >> ${logfile}
