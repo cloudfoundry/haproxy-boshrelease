@@ -2,7 +2,7 @@
 
 set -eu
 
-stemcell_bionic_path=$PWD/stemcell/*.tgz
+stemcell_jammy_path=$PWD/stemcell/*.tgz
 stemcell_xenial_path=$PWD/stemcell-xenial/*.tgz
 bpm_release_path=$PWD/bpm/*.tgz
 
@@ -32,8 +32,8 @@ release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].
 export RELEASE_VERSION="${release_final_version}.latest"
 echo "----- Created ${RELEASE_VERSION}"
 
-echo "----- Uploading Bionic stemcell"
-bosh -n upload-stemcell $stemcell_bionic_path
+echo "----- Uploading Jammy stemcell"
+bosh -n upload-stemcell $stemcell_jammy_path
 
 echo "----- Uploading Xenial stemcell"
 bosh -n upload-stemcell $stemcell_xenial_path
