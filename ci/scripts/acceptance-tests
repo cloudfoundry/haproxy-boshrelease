@@ -3,7 +3,7 @@
 set -eu
 
 stemcell_jammy_path=$PWD/stemcell/*.tgz
-stemcell_xenial_path=$PWD/stemcell-xenial/*.tgz
+stemcell_bionic_path=$PWD/stemcell-bionic/*.tgz
 bpm_release_path=$PWD/bpm/*.tgz
 
 cd ${REPO_ROOT:?required}
@@ -35,8 +35,8 @@ echo "----- Created ${RELEASE_VERSION}"
 echo "----- Uploading Jammy stemcell"
 bosh -n upload-stemcell $stemcell_jammy_path
 
-echo "----- Uploading Xenial stemcell"
-bosh -n upload-stemcell $stemcell_xenial_path
+echo "----- Uploading Bionic stemcell"
+bosh -n upload-stemcell $stemcell_bionic_path
 
 echo "----- Uploading BPM"
 bosh -n upload-release $bpm_release_path
