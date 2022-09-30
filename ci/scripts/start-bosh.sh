@@ -128,7 +128,7 @@ function start_docker() {
   [[ ! -d /etc/docker ]] && mkdir /etc/docker
   cat <<EOF > /etc/docker/daemon.json
 {
-  "hosts": ["${DOCKER_HOST}"],
+  "hosts": ["${DOCKER_HOST}","unix:///var/run/docker.sock"],
   "tls": true,
   "tlscert": "${certs_dir}/server-cert.pem",
   "tlskey": "${certs_dir}/server-key.pem",

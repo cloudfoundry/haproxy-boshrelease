@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y wget jq git vim nano python3-pip\
   && echo "deb http://apt.starkandwayne.com stable main" | tee /etc/apt/sources.list.d/starkandwayne.list \
   && apt-get update && apt-get install -y wget spruce && apt-get clean
 
+# Set bosh env at login
+RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
+
 # Install Python libraries needed for scripts
 COPY scripts/requirements.txt /requirements.txt
 RUN /usr/bin/python3 -m pip install -r /requirements.txt

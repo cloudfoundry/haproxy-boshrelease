@@ -1,10 +1,18 @@
 #!/bin/bash
 
-set -eu
+set -e
 
-stemcell_bionic_path=$PWD/stemcell/*.tgz
-stemcell_xenial_path=$PWD/stemcell-xenial/*.tgz
+stemcell_jammy_path=$PWD/stemcell/*.tgz
+stemcell_bionic_path=$PWD/stemcell-bionic/*.tgz
 bpm_release_path=$PWD/bpm/*.tgz
+
+if [ -n "$FOCUS" ]; then
+  echo "------------------------------------------------------------------"
+  echo "FOCUS is set. Will only run tests matching '$FOCUS'"
+  echo "Docker won't be stopped afterwards, so you can debug the test."
+  echo "------------------------------------------------------------------"
+  FOCUS_ARG="-focus $FOCUS"
+fi
 
 cd ${REPO_ROOT:?required}
 echo "----- Pulling in any git submodules..."
@@ -19,7 +27,9 @@ function stop_docker() {
   service docker stop
 }
 
-trap stop_docker EXIT
+if [ -z "$FOCUS" ]; then
+  trap stop_docker EXIT
+fi
 
 source /tmp/local-bosh/director/env
 
@@ -32,11 +42,11 @@ release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].
 export RELEASE_VERSION="${release_final_version}.latest"
 echo "----- Created ${RELEASE_VERSION}"
 
+echo "----- Uploading Jammy stemcell"
+bosh -n upload-stemcell $stemcell_jammy_path
+
 echo "----- Uploading Bionic stemcell"
 bosh -n upload-stemcell $stemcell_bionic_path
-
-echo "----- Uploading Xenial stemcell"
-bosh -n upload-stemcell $stemcell_xenial_path
 
 echo "----- Uploading BPM"
 bosh -n upload-release $bpm_release_path
@@ -56,4 +66,4 @@ go mod download
 echo "----- Running tests"
 
 export PATH=$PATH:$GOPATH/bin
-ginkgo -v -p -r -debug -trace -progress -randomizeAllSpecs -flakeAttempts 5
+ginkgo -v -p -r -debug -trace -progress -randomizeAllSpecs -flakeAttempts 5 $FOCUS_ARG

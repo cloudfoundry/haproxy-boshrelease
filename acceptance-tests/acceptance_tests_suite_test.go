@@ -154,6 +154,10 @@ func expectTLSUnknownCertificateAuthorityErr(err error) {
 	checkNetOpErr(err, "tls: unknown certificate authority")
 }
 
+func expectTLSUnknownCertificateErr(err error) {
+	checkNetOpErr(err, "tls: unknown certificate")
+}
+
 func expectTLSHandshakeFailureErr(err error) {
 	checkNetOpErr(err, "tls: handshake failure")
 }

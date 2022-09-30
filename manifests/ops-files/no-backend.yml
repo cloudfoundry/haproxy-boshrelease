@@ -1,0 +1,8 @@
+- type: remove
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties?/ha_proxy?/backend_port?
+- type: remove
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties?/ha_proxy?/backend_servers?
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties?/ha_proxy?/frontend_config?
+  value: |
+    http-request return status 200 content-type text/plain string OK

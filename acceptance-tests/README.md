@@ -3,10 +3,10 @@
 ## Requirements
 
 * Docker installed locally
-* A matching Bionic stemcell tgz downloaded to `ci/scripts/stemcell`
+* A matching Jammy stemcell tgz downloaded to `ci/scripts/stemcell`
+  * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
+* A matching Bionic stemcell tgz downloaded to `ci/scripts/stemcell-bionic`
   * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
-* A matching Xenial stemcell tgz downloaded to `ci/scripts/stemcell-xenial`
-  * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-xenial-go_agent
 * A BPM release tgz downloaded to `ci/scripts/bpm`
   * Get it from https://bosh.io/releases/github.com/cloudfoundry/bpm-release?all=1
 
@@ -82,5 +82,24 @@ The output at the end should be:
 
 If you want to run only a specific part of the suite, you can use [focussed specs](https://onsi.github.io/ginkgo/#focused-specs)
 
-The easiest way is to just add an `F` to your `Describe`, `Context` or `It` closures.
+The easiest way is to just provide the name of the tests you want to run as a command line argument like so:
+
+```shell
+./run-local.sh "description of the test to run"
+```
+
+The argument is passed as a regular expression that will match all `Describe`, `Context` or `It` closure descriptions in the suite.
+So, e.g. if you want to run all tests that use mTLS, you can run:
+
+```shell
+./run-local.sh mTLS
+```
+
+However, if you want to run exactly one specific test, make sure you pass the exact description of the matching `It` closure:
+
+```shell
+./run-local.sh "Correctly terminates mTLS requests"
+```
+
+Alternatively, you add an `F` to your `Describe`, `Context` or `It` closures.
 Don't forget to do a local commit before running the tests, else BOSH will fail to produce a release. The git repo must be clean before running the tests.
