@@ -87,8 +87,10 @@ The easiest way is to just provide the name of the tests you want to run as a co
 ```shell
 ./run-local.sh "description of the test to run"
 ```
+
 The argument is passed as a regular expression that will match all `Describe`, `Context` or `It` closure descriptions in the suite.
 So, e.g. if you want to run all tests that use mTLS, you can run:
+
 ```shell
 ./run-local.sh mTLS
 ```
