@@ -13,15 +13,14 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	. "github.com/onsi/ginkgo"
-	ginkgoConfig "github.com/onsi/ginkgo/config"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 )
 
 // This deployment is reused between tests in the same thread to speed up test execution
 func deploymentNameForTestNode() string {
-	return fmt.Sprintf("haproxy%d", ginkgoConfig.GinkgoConfig.ParallelNode)
+	return fmt.Sprintf("haproxy%d", GinkgoParallelProcess())
 }
 
 func TestAcceptanceTests(t *testing.T) {
@@ -185,7 +184,8 @@ func checkNetOpErr(err error, expectString string) {
 }
 
 func writeLog(s string) {
+	ginkgoConfig, _ := GinkgoConfiguration()
 	for _, line := range strings.Split(s, "\n") {
-		fmt.Printf("node %d/%d: %s\n", ginkgoConfig.GinkgoConfig.ParallelNode, ginkgoConfig.GinkgoConfig.ParallelTotal, line)
+		fmt.Printf("node %d/%d: %s\n", ginkgoConfig.ParallelProcess, ginkgoConfig.ParallelTotal, line)
 	}
 }

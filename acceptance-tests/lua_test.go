@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -71,7 +71,7 @@ core.register_service("lua_test", "http", lua_test)
 
 		By("Sending a request to HAProxy with Lua endpoint")
 		resp, err := http.Get(fmt.Sprintf("http://%s/lua_test", haproxyInfo.PublicIP))
-		
+
 		expectLuaServer200(resp, err)
 		fmt.Printf("Server has Lua version %s", resp.Header.Get("Lua-Version"))
 
