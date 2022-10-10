@@ -272,6 +272,9 @@ defaults
     option log-separate-errors
     maxconn <%= p("ha_proxy.max_connections") %>
     option http-server-close
+    <%- if_p("ha_proxy.reload_idle_close_on_response") do -%>
+    option idle-close-on-response
+    <%- end -%>
     option httplog
     option forwardfor
     option contstats
