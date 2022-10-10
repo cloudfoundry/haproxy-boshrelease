@@ -2,7 +2,10 @@ package acceptance_tests
 
 import (
 	"fmt"
+	"io"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -27,6 +30,10 @@ var _ = Describe("Drain Test", func() {
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/drain_timeout?
   value: 10
+# Increase idle timeout between requests
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/keepalive_timeout?
+  value: 60
 `
 	It("Honors grace and drain periods", func() {
 		haproxyBackendPort := 12000
@@ -69,14 +76,16 @@ var _ = Describe("Drain Test", func() {
 		time.Sleep(10 * time.Second)
 
 		By("After grace period has passed, draining should set in, disabling listeners")
-		_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
+		// We need a new client so there won't be any reusable connections
+		httpClient := &http.Client{}
+		_, err = httpClient.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
 		expectConnectionRefusedErr(err)
-		_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
+		_, err = httpClient.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
 		expectConnectionRefusedErr(err)
 	})
 
-	// drain with an inexisting Process
-	It("Honors grace and drain periods with stale PID", func() {
+	// drain with a non-existent Process
+	It("Stale PID should be ignored", func() {
 		haproxyBackendPort := 12000
 		// Expect initial deployment to be failing due to lack of healthy backends
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
@@ -126,4 +135,68 @@ var _ = Describe("Drain Test", func() {
 		By("Sending a request to HAProxy works")
 		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
 	})
+
+	It("Closes idle connections gracefully", func() {
+		haproxyBackendPort := 12000
+		// Expect initial deployment to be failing due to lack of healthy backends
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileDrainTimeout}, map[string]interface{}{}, false)
+
+		// Verify that is in a failing state
+		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
+
+		By("Waiting monit to report HAProxy is now healthy (due to having a healthy backend instance)")
+		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
+		// and monit should in turn start reporting a healthy process
+		// We will up to wait one minute for the status to stabilise
+		Eventually(func() string {
+			return boshInstances(deploymentNameForTestNode())[0].ProcessState
+		}, time.Minute, time.Second).Should(Equal("running"))
+
+		By("The healthcheck health endpoint should report a 200 status code")
+		expect200(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
+
+		By("Sending request using keep-alive works")
+		conn, err := net.Dial("tcp", fmt.Sprintf("%s:80", haproxyInfo.PublicIP))
+		defer conn.Close()
+		Expect(err).ToNot(HaveOccurred())
+
+		sendHTTP := func(conn net.Conn) string {
+			_, err := conn.Write([]byte(strings.Join([]string{
+				"GET / HTTP/1.1",
+				fmt.Sprintf("Host: %s", haproxyInfo.PublicIP),
+				"Content-Length: 0",
+				"Content-Type: text/plain",
+				"\r\n",
+			}, "\r\n")))
+
+			Expect(err).ToNot(HaveOccurred())
+
+			// Too lazy to properly parse headers? Just stop reading after a second!
+			_ = conn.SetReadDeadline(time.Now().Add(time.Second))
+
+			response, _ := io.ReadAll(conn)
+			return string(response)
+		}
+
+		response := sendHTTP(conn)
+		Expect(response).NotTo(ContainSubstring("connection: close"))
+
+		drainHAProxy(haproxyInfo)
+		time.Sleep(10 * time.Second)
+
+		By("During draining, idle connections should be closed upon the next request")
+		response = sendHTTP(conn)
+		Expect(response).To(ContainSubstring("connection: close"))
+	})
+
 })
