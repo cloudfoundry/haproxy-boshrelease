@@ -76,12 +76,12 @@ var _ = Describe("Drain Test", func() {
 		time.Sleep(10 * time.Second)
 
 		By("After grace period has passed, draining should set in, disabling listeners")
-		// We need a new client so there won't be any reusable connections
-		httpClient := &http.Client{}
-		_, err = httpClient.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
+		_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
 		expectConnectionRefusedErr(err)
-		_, err = httpClient.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		expectConnectionRefusedErr(err)
+		Eventually(func() error {
+			_, err := net.Dial("tcp", fmt.Sprintf("%s:80", haproxyInfo.PublicIP))
+			return err
+		}, time.Minute, time.Second).Should(HaveOccurred())
 	})
 
 	// drain with a non-existent Process

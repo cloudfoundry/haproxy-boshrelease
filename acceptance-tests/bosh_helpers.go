@@ -302,3 +302,8 @@ func drainHAProxy(haproxyInfo haproxyInfo) {
 	}()
 	time.Sleep(5 * time.Second)
 }
+
+func crashHAProxy(haproxyInfo haproxyInfo) {
+	_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "sudo pkill -9 -x haproxy")
+	Expect(err).NotTo(HaveOccurred())
+}
