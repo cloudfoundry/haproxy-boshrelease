@@ -6,13 +6,21 @@ set -e
 pidfile=/var/vcap/sys/run/bpm/haproxy/haproxy.pid
 sockfile=/var/vcap/sys/run/haproxy/stats.sock
 logfile=/var/vcap/sys/log/haproxy/drain.log
+lockfile=/var/vcap/sys/run/haproxy/drain.lock
+
+mkdir -p "$(dirname ${logfile})"
 
 <% if not p("ha_proxy.drain_enable") -%>
 echo "drain is disabled" >> ${logfile}
 echo 0
 exit 0
 <% else -%>
-mkdir -p "$(dirname ${logfile})"
+
+if [[ -f ${lockfile} ]]; then
+  echo "$(date): draining already in progress" >> ${logfile}
+  echo 0
+  exit 0
+fi
 
 if [[ ! -f ${pidfile} ]]; then
   echo "$(date): pidfile does not exist" >> ${logfile}
@@ -22,7 +30,7 @@ fi
 
 pid="$(cat ${pidfile})"
 if ! ps -p ${pid} >/dev/null; then
-  # In case haproxy_wrapper process is stale, pid_exists will be empty,
+  # In case haproxy_wrapper process is stale, pid will be empty,
   # the drain job should not fail
   echo "$(date): There was no process for the recorded haproxy_wrapper PID (${pid})." >> ${logfile}
   echo 0
@@ -39,12 +47,24 @@ haproxy_master_pid=$(pgrep -P "$pid" -x haproxy)
 <%- if p("ha_proxy.enable_health_check_http") -%>
 echo "disable frontend health_check_http_url" | /usr/local/bin/socat stdio unix-connect:${sockfile}
 echo "$(date): triggering grace period for process ${haproxy_master_pid}" >> ${logfile}
-sleep <%= p("ha_proxy.drain_frontend_grace_time") -%>
+sleep <%= p("ha_proxy.drain_frontend_grace_time") %>
 <%- end -%>
 
+touch ${lockfile}
 kill -USR1 "${haproxy_master_pid}"
 echo "$(date): triggering drain for process ${haproxy_master_pid}" >> ${logfile}
 
-echo <%= p("ha_proxy.drain_timeout") -%>
+drain_time=0
+drain_timeout=<%= p("ha_proxy.drain_timeout") %>
+while kill -0 "${haproxy_master_pid}" 2>/dev/null; do
+  sleep 1;
+  drain_time=$((drain_time + 1))
+  if [ $drain_time -ge $drain_timeout ]; then
+    echo "$(date): Process ${haproxy_master_pid} still alive after ${drain_timeout} seconds. Forcing stop." >> ${logfile}
+    break
+  fi
+done
+
+echo 0
 
 <%- end -%>
