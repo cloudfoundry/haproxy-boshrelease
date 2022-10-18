@@ -6,6 +6,7 @@ set -e
 export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
+DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock
 
 cleanup_daemon() {
   if [ -f ${PID_FILE} ]; then
@@ -106,7 +107,5 @@ trap reload_daemon USR2
 echo "$(date): Starting HAProxy"
 haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> <%= cat_pipe %>
 
-<%- if !run_in_foreground -%>
-# wait for the HAProxy main process to terminate
-while kill -0 $(cat ${PID_FILE}) 2>/dev/null; do sleep 1; done;
-<%- end -%>
+# wait for the HAProxy main process to terminate non-gracefully (drain)
+while [ -f ${DRAIN_LOCK} ] || kill -0 $(cat ${PID_FILE}) 2>/dev/null; do sleep 1; done;

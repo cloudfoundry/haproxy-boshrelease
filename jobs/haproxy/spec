@@ -176,6 +176,13 @@ properties:
       What to do if the external certificates list located at `ha_proxy.ext_crt_list_file` does not appear within the time
       denoted by `ha_proxy.ext_crt_list_timeout`. Set to either 'fail' (HAproxy will not start) or 'continue' (HAproxy will start without external certificates)
     default: "fail"
+  ha_proxy.reload_idle_close_on_response:
+    description: |
+      This option makes HAproxy wait for another request on idle connections during reloads or restarts. Once the response is received, a "Connection: close" header
+      is injected to signal to the client that this connection no longer usable and permitting a more graceful handling on the client's side. This has the downside
+      that HAproxy may linger around for longer, waiting for a request on idle connections, so it should be used in conjunction with the "reload_hard_stop_after" option
+      to limit that time. If set to false, idle connections will be terminated immediately during reloads or restarts.
+    default: true
   ha_proxy.reload_hard_stop_after:
     description: |
       Defines the maximum time allowed to perform a clean soft-stop. This is used when issuing a reload via the "bin/reload" script. It limits the time for the
