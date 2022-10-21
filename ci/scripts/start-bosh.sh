@@ -101,7 +101,7 @@ function sanitize_cgroups() {
 
 function stop_docker() {
   echo "ERROR: stopping docker"
-  service docker stop
+  # service docker stop
 }
 
 function start_docker() {
@@ -166,14 +166,12 @@ EOF
 }
 
 function main() {
-  export OUTER_CONTAINER_IP=$(ruby -rsocket -e 'puts Socket.ip_address_list
+  export DOCKER_HOST="tcp://$(ruby -rsocket -e 'puts Socket.ip_address_list
                           .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
-                          .map { |addr| addr.ip_address }.first')
-
-  export DOCKER_HOST="tcp://${OUTER_CONTAINER_IP}:4243"
+                          .map { |addr| addr.ip_address }.first'):4243"
 
   local certs_dir
-  certs_dir=$(mktemp -d)
+  certs_dir=$(mktemp -d /tmp/docker-certs.XXXX)
   start_docker "${certs_dir}"
 
   local local_bosh_dir
