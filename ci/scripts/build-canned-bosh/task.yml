@@ -12,8 +12,8 @@ inputs:
 - name: git
 
 params:
-  - DOCKER_USERNAME:
-  - DOCKER_PASSWORD:
+  DOCKER_USERNAME:
+  DOCKER_PASSWORD:
 
 run:
   path: git/ci/scripts/build-canned-bosh/task.sh
