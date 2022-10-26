@@ -1,0 +1,29 @@
+---
+resources:
+- name: git
+  type: git
+  source:
+    uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
+    branch:      build-docker-bosh-image
+    private_key: ((github.private_key))
+
+- name: haproxy-testflight
+  source:
+    repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+    tag: latest
+    username: ((docker.username))
+    password: ((docker.password))
+  type: docker-image
+
+jobs:
+- name: build-canned-bosh-director-image
+  plan:
+  - get: git
+  - get: haproxy-testflight
+  - task: build-and-commit-docker-image
+    privileged: true
+    image: haproxy-testflight
+    file: git/ci/new/build-canned-bosh.yml
+    params:
+      DOCKER_USERNAME: ((docker.username))
+      DOCKER_PASSWORD: ((docker.password))

@@ -1,0 +1,19 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
+    username: ((docker.username))
+    password: ((docker.password))
+
+inputs:
+- name: git
+
+params:
+  - DOCKER_USERNAME:
+  - DOCKER_PASSWORD:
+
+run:
+  path: git/ci/scripts/build-canned-bosh/task.sh
