@@ -1,13 +1,6 @@
 ---
 platform: linux
 
-image_resource:
-  type: registry-image
-  source:
-    repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-    username: ((docker.username))
-    password: ((docker.password))
-
 inputs:
 - name: git
 
