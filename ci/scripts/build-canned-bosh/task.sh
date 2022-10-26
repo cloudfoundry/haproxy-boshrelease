@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 
+set -eo pipefail
+
+cat <<EOF > /etc/docker/daemon.json
+{
+  "storage-driver": "vfs"
+}
+EOF
+service docker start
+
 BUILD_CONTAINER=bosh-director-build-$(date +%s)-$RANDOM
 
 docker run -d -e BOSH_CERT_DIR=/tmp/certs --privileged --name $BUILD_CONTAINER bosh/docker-cpi:main sleep infinity
 
 docker exec -it -e BOSH_CERT_DIR=/tmp/certs $BUILD_CONTAINER bash -c '
     sed -i '"'"'s#certs_dir=$(mktemp -d)#certs_dir=${BOSH_CERT_DIR:-$(mktemp -d /tmp/certs.XXXX)}#'"'"' $(command -v start-bosh)
+    sed -i '"'"'s/^{/{\n  "storage-driver": "vfs"/g'"'"' $(command -v start-bosh)
     [ -n "$BOSH_CERT_DIR" ] && mkdir -p $BOSH_CERT_DIR
     source start-bosh
 
