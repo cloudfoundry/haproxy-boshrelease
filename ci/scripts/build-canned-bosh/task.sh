@@ -9,7 +9,11 @@ cat <<EOF > /etc/docker/daemon.json
   "storage-driver": "vfs"
 }
 EOF
+
 service docker start
+
+# Waitng for docker to start
+sleep 5
 
 BUILD_CONTAINER=bosh-director-build-$(date +%s)-$RANDOM
 
