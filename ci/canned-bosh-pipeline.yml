@@ -23,7 +23,7 @@ jobs:
   - task: build-and-commit-docker-image
     privileged: true
     image: haproxy-testflight
-    file: git/ci/new/build-canned-bosh.yml
+    file: git/ci/scripts/build-canned-bosh/task.yml
     params:
       DOCKER_USERNAME: ((docker.username))
       DOCKER_PASSWORD: ((docker.password))
