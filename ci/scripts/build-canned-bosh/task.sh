@@ -2,6 +2,8 @@
 
 set -eo pipefail
 
+mkdir -p /etc/docker
+
 cat <<EOF > /etc/docker/daemon.json
 {
   "storage-driver": "vfs"
