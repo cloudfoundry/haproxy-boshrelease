@@ -3,7 +3,7 @@
 BUILD_CONTAINER=bosh-director-build-$(date +%s)-$RANDOM
 
 BOSH_DIRECTOR_TAG=${1:-bosh-director-docker}
-BASE_IMAGE=${2:-bosh/docker-cpi:main}
+BASE_IMAGE=${2:-bosh/main-bosh-docker}
 
 docker run -d -e BOSH_CERT_DIR=/tmp/certs --privileged --name "$BUILD_CONTAINER" "$BASE_IMAGE" sleep infinity
 
