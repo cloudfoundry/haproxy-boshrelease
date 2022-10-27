@@ -18,25 +18,25 @@ cd ${REPO_ROOT:?required}
 echo "----- Pulling in any git submodules..."
 git submodule update --init --recursive --force
 
-echo "----- Starting BOSH"
-
-time ./ci/scripts/start-bosh.sh || ( echo Starting bosh failed! && exit 1 )
-
-source /tmp/local-bosh/director/env
+if ! timeout 1 bosh env &>/dev/null; then
+  echo "----- Starting BOSH"
+  time ./ci/scripts/start-bosh.sh || ( echo Starting bosh failed! && exit 1 )
+  source /tmp/local-bosh/director/env
+fi
 
 function stop_docker() {
   echo "----- stopping docker"
   service docker stop
 }
 
-if [ -z "$FOCUS" ]; then
+if [ -z "$FOCUS" ] && [ -z "$NO_STOP" ]; then
   trap stop_docker EXIT
 fi
 
 echo "----- Creating candidate BOSH release..."
 bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
-time bosh create-release
+time bosh create-release --force
 
 echo "uploading release. Vars:"
 export
