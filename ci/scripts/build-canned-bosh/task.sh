@@ -17,7 +17,7 @@ sleep 5
 
 BUILD_CONTAINER=bosh-director-build-$(date +%s)-$RANDOM
 
-docker run -d -e BOSH_CERT_DIR=/tmp/certs --privileged --name $BUILD_CONTAINER bosh/docker-cpi:main sleep infinity
+docker run -d -e BOSH_CERT_DIR=/tmp/certs --privileged --name $BUILD_CONTAINER bosh/main-bosh-docker sleep infinity
 
 docker exec -it -e BOSH_CERT_DIR=/tmp/certs $BUILD_CONTAINER bash -c '
     sed -i '"'"'s#certs_dir=$(mktemp -d)#certs_dir=${BOSH_CERT_DIR:-$(mktemp -d /tmp/certs.XXXX)}#'"'"' $(command -v start-bosh)
@@ -51,8 +51,9 @@ docker exec -it -e BOSH_CERT_DIR=/tmp/certs $BUILD_CONTAINER bash -c '
 docker stop $BUILD_CONTAINER
 
 docker container commit $BUILD_CONTAINER bosh-director-docker:latest
-docker login iacbox.common.repositories.cloud.sap -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-docker image tag bosh-director-docker:latest iacbox.common.repositories.cloud.sap/bosh-director-docker:latest
+# docker login iacbox.common.repositories.cloud.sap -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+docker image tag bosh-director-docker:latest 
+# iacbox.common.repositories.cloud.sap/bosh-director-docker:latest
 
 docker rm -f $BUILD_CONTAINER
 
