@@ -48,6 +48,7 @@ done
 
 docker exec "$BOSH0_CONTAINER" /var/vcap/bosh/bin/monit start all
 docker exec "$BOSH0_CONTAINER" bash -c 'while ! ( /var/vcap/bosh/bin/monit summary | grep -E "System.*running\$" ); do echo Waiting for monit to start all jobs; sleep 1; done'
+docker exec "$BOSH0_CONTAINER" bash -c 'if ! ( /var/vcap/bosh/bin/monit summary | grep -w nats | grep running ); then echo "nats not running"; pkill nats-server; /var/vcap/bosh/bin/monit restart all ; fi '
 
 while ! bosh env &>/dev/null; do
   echo "Waiting for BOSH Director to respond"
