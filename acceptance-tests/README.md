@@ -11,10 +11,39 @@
   * Get it from https://bosh.io/releases/github.com/cloudfoundry/bpm-release?all=1
 
 ## Running
+### Building canned docker image
 
 ```shell
-cd acceptance-tests
-./run-local.sh
+cd ci/new
+./build-canned-docker.sh
+```
+### Running tests locally
+
+```shell
+docker run -d --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "sleep infinity "
+```
+If you're sure you have only one running docker container:
+
+```shell
+docker exec -it $(docker ps -q -l) bash -l
+```
+
+Otherwise, get the ID of your container:
+
+```shell
+docker ps
+```
+
+Then, run 
+```shell
+docker exec -it $(docker ps -q -l) bash -l
+```
+
+Once connected to the container, run:
+
+```shell
+cd ci/scripts
+./acceptance-tests
 ```
 
 ### Running on Docker for Mac
