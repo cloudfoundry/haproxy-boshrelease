@@ -5,13 +5,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# if [ "$(git status -s | wc -l)" -gt 0 ]; then
-#     echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
-#     echo "The build will fail otherwise."
-#     echo "Git Status:"
-#     git status
-#     exit 1
-# fi
 
 FOCUS="$1"
 

@@ -39,7 +39,7 @@ bosh -n reset-release # in case dev_releases/ is in repo accidentally
 time bosh create-release --force
 
 echo "uploading release. Vars:"
-export
+env
 bosh upload-release --rebase
 release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
 export RELEASE_VERSION="${release_final_version}.latest"
