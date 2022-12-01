@@ -19,6 +19,7 @@ describe 'config/haproxy.config healthcheck listeners' do
     it 'adds a health check listener for the http-routers-http1' do
       expect(healthcheck_listener).to include('bind :8080')
       expect(healthcheck_listener).to include('mode http')
+      expect(healthcheck_listener).to include('option httpclose')
       expect(healthcheck_listener).to include('monitor-uri /health')
       expect(healthcheck_listener).to include('acl http-routers_down nbsrv(http-routers-http1) eq 0')
       expect(healthcheck_listener).to include('monitor fail if http-routers_down')
@@ -38,6 +39,7 @@ describe 'config/haproxy.config healthcheck listeners' do
       it 'adds a health check listener for the http-routers-http2' do
         expect(healthcheck_listener).to include('bind :8080')
         expect(healthcheck_listener).to include('mode http')
+        expect(healthcheck_listener).to include('option httpclose')
         expect(healthcheck_listener).to include('monitor-uri /health')
         expect(healthcheck_listener).to include('acl http-routers_down nbsrv(http-routers-http2) eq 0')
         expect(healthcheck_listener).to include('monitor fail if http-routers_down')

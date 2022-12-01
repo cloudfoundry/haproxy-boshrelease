@@ -2,7 +2,10 @@ package acceptance_tests
 
 import (
 	"fmt"
+	"io"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -82,5 +85,32 @@ var _ = Describe("HTTP Health Check", func() {
 
 		By("Sending a request to HAProxy works")
 		expectTestServer200(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
+
+		By("The healthcheck health endpoint does not use keep-alive")
+		conn, err := net.Dial("tcp", fmt.Sprintf("%s:8080", haproxyInfo.PublicIP))
+		defer conn.Close()
+		Expect(err).ToNot(HaveOccurred())
+
+		sendHTTP := func(conn net.Conn) string {
+			_, err := conn.Write([]byte(strings.Join([]string{
+				"GET /health HTTP/1.1",
+				fmt.Sprintf("Host: %s", haproxyInfo.PublicIP),
+				"Content-Length: 0",
+				"Content-Type: text/plain",
+				"\r\n",
+			}, "\r\n")))
+
+			Expect(err).ToNot(HaveOccurred())
+
+			// Too lazy to properly parse headers? Just stop reading after a second!
+			_ = conn.SetReadDeadline(time.Now().Add(time.Second))
+
+			response, _ := io.ReadAll(conn)
+			return string(response)
+		}
+
+		response := sendHTTP(conn)
+		Expect(response).To(ContainSubstring("connection: close"))
+
 	})
 })
