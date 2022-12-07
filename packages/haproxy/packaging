@@ -4,7 +4,7 @@ set -euxo pipefail
 
 LUA_VERSION=5.4.4  # https://www.lua.org/ftp/lua-5.4.4.tar.gz
 
-PCRE_VERSION=10.40  # https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.40/pcre2-10.40.tar.gz
+PCRE_VERSION=10.41  # https://api.github.com/repos/PCRE2Project/pcre2/tarball/pcre2-10.41
 
 SOCAT_VERSION=1.7.4.4  # http://www.dest-unreach.org/socat/download/socat-1.7.4.4.tar.gz
 
