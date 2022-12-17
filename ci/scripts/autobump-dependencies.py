@@ -249,6 +249,13 @@ class GithubDependency(Dependency):
         repo = gh.get_repo(repo_org_and_name)
         releases = repo.get_releases()
 
+        def get_release_download_url(rel):
+            assets = rel.get_assets()
+            for asset in assets:
+                if asset.name.endswith(".tar.gz"):
+                    return asset.browser_download_url
+            raise Exception(f"No *.tar.gz asset found for release '{rel}'")
+
         latest_release = None
         latest_version = version.parse("0.0.0")
 
@@ -259,7 +266,7 @@ class GithubDependency(Dependency):
                 latest_version = current_version
                 latest_release = Release(
                     rel.title,
-                    rel.tarball_url,
+                    get_release_download_url(rel),
                     f"{self.name}-{str(current_version)}.tar.gz",
                     current_version,
                 )
