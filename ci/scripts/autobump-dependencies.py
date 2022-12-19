@@ -243,6 +243,7 @@ class Dependency:
 class GithubDependency(Dependency):
 
     tagname_prefix: str = ""
+    filename_suffix: str = ".tar.gz"
 
     def fetch_latest_release(self) -> Release:
         repo_org_and_name = self.root_url.lstrip("https://github.com/")
@@ -252,9 +253,9 @@ class GithubDependency(Dependency):
         def get_release_download_url(rel):
             assets = rel.get_assets()
             for asset in assets:
-                if asset.name.endswith(".tar.gz"):
+                if asset.name.endswith(self.filename_suffix):
                     return asset.browser_download_url
-            raise Exception(f"No *.tar.gz asset found for release '{rel}'")
+            raise Exception(f"No *{self.filename_suffix} asset found for release '{rel}'")
 
         latest_release = None
         latest_version = version.parse("0.0.0")
@@ -267,7 +268,7 @@ class GithubDependency(Dependency):
                 latest_release = Release(
                     rel.title,
                     get_release_download_url(rel),
-                    f"{self.name}-{str(current_version)}.tar.gz",
+                    f"{self.name}-{str(current_version)}{self.filename_suffix}",
                     current_version,
                 )
 
@@ -412,6 +413,7 @@ def main() -> None:
             "0",
             "https://github.com/jhunt/hatop",
             tagname_prefix="v",
+            filename_suffix="",
         ),
         # ttar (currently a submodule to https://github.com/jhunt/ttar, no new releases. Manual bump only.)
     ]
