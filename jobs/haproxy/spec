@@ -527,6 +527,10 @@ properties:
     description: "Optionally block all incoming traffic to http(s). Use in conjunction with whitelist."
     default: false
 
+  ha_proxy.allow_all:
+    description: "Optionally allow all incoming traffic to http(s). Overrides cidr_whitelist and cidr_blacklist."
+    default: false
+
   ha_proxy.tcp_routing.port_range:
     description: "A range of ports for haproxy to listen on to enable CF TCP Routing. Used only if 'tcp_router' link is present."
     default: 1024-1123

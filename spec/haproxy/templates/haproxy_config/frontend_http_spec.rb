@@ -86,6 +86,16 @@ describe 'config/haproxy.config HTTP frontend' do
     end
   end
 
+  context 'when ha_proxy.allow_all is provided' do
+    let(:properties) do
+      { 'allow_all' => true }
+    end
+
+    it 'sets the correct content reject rules' do
+      expect(frontend_http).to include('tcp-request content accept')
+    end
+  end
+
   it 'correct request capturing configuration' do
     expect(frontend_http).to include('capture request header Host len 256')
   end

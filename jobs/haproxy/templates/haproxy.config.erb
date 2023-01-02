@@ -370,6 +370,9 @@ frontend http-in
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
+  <%- if p("ha_proxy.allow_all")  -%>
+    tcp-request content accept
+  <%- end -%>
     capture request header Host len 256
     default_backend <%= backends.last[:name] %>
   <%- if_p("ha_proxy.http_request_deny_conditions") do |conditions| -%>
@@ -601,6 +604,9 @@ frontend https-in
     acl is_http2 ssl_fc_alpn,lower,strcmp(proc.h2_alpn_tag) eq 0
     use_backend http-routers-http1 if ! is_http2
     use_backend http-routers-http2 if is_http2
+  <%- end -%>
+  <%- if p("ha_proxy.allow_all")  -%>
+    tcp-request content accept
   <%- end -%>
 # }}}
 <% end -%>

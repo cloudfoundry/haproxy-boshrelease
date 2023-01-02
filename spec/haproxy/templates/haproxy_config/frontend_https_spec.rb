@@ -528,6 +528,16 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
   end
 
+  context 'when ha_proxy.allow_all is provided' do
+    let(:properties) do
+      default_properties.merge({ 'allow_all' => true })
+    end
+
+    it 'sets the correct content reject rules' do
+      expect(frontend_https).to include('tcp-request content accept')
+    end
+  end
+
   context 'when ha_proxy.headers are provided' do
     let(:properties) do
       default_properties.merge({ 'headers' => ['X-Application-ID: my-custom-header', 'MyCustomHeader: 3'] })
