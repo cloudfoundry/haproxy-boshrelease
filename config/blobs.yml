@@ -1,7 +1,7 @@
-haproxy/haproxy-2.7.1.tar.gz:
-  size: 4120306
-  object_id: 7718ce33-4170-4953-5391-14a9aa1bdc01
-  sha: sha256:155f3a2fb6dfc1fdfd13d946a260ab8dd2a137714acb818510749e3ffb6b351d
+haproxy/haproxy-2.7.2.tar.gz:
+  size: 4130348
+  object_id: 16482d54-23fb-44b5-7b69-8c2f2f5cf161
+  sha: sha256:63bc6ec0302d0ebbe1fa769c19606640de834ac8cb07447b80799cb563dc0f3f
 haproxy/hatop-0.8.2:
   size: 74157
   object_id: 36e24366-438a-4d1e-6b43-019397107a2d
