@@ -123,6 +123,8 @@ builds:
     version: "7"
   b886e503-131a-4d2f-4f38-4dbac070f7dc:
     version: 9.6.2
+  b969a9b9-8e00-4935-755c-d3beb8103d61:
+    version: 11.17.0
   bc29cdea-e116-43a3-6852-790396a54eed:
     version: 11.7.1
   c009083a-490f-4382-56e7-b3e1811f7f7b:
