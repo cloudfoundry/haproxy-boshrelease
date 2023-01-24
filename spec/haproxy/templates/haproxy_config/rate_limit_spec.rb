@@ -41,8 +41,8 @@ describe 'config/haproxy.config rate limiting' do
     end
 
     it 'tracks requests in stick tables' do
-      expect(frontend_http).to include('tcp-request content track-sc1 src table st_http_req_rate')
-      expect(frontend_https).to include('tcp-request content track-sc1 src table st_http_req_rate')
+      expect(frontend_http).to include('http-request track-sc1 src table st_http_req_rate')
+      expect(frontend_https).to include('http-request track-sc1 src table st_http_req_rate')
     end
 
     context 'when "requests" and "block" are also provided' do
@@ -52,9 +52,9 @@ describe 'config/haproxy.config rate limiting' do
 
       it 'adds http-request deny condition to http-in and https-in frontends' do
         expect(frontend_http).to include('http-request deny status 429 if { sc_http_req_rate(1) gt 5 }')
-        expect(frontend_http).to include('tcp-request content track-sc1 src table st_http_req_rate')
+        expect(frontend_http).to include('http-request track-sc1 src table st_http_req_rate')
         expect(frontend_https).to include('http-request deny status 429 if { sc_http_req_rate(1) gt 5 }')
-        expect(frontend_https).to include('tcp-request content track-sc1 src table st_http_req_rate')
+        expect(frontend_https).to include('http-request track-sc1 src table st_http_req_rate')
       end
     end
   end
