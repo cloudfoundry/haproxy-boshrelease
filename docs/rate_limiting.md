@@ -50,7 +50,7 @@ backend st_http_req_rate
     stick-table type ip size 1m expire 10s store http_req_rate(10s)
 # [...]
 frontend http-in
-    tcp-request content track-sc1 src table st_http_req_rate
+    http-request track-sc1 src table st_http_req_rate
 ```
 
 
@@ -71,7 +71,7 @@ backend st_http_req_rate
     stick-table type ip size 1m expire 10s store http_req_rate(10s)
 # [...]
 frontend http-in
-    tcp-request content track-sc1 src table st_http_req_rate
+    http-request track-sc1 src table st_http_req_rate
     http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
 ```
 
@@ -102,7 +102,7 @@ backend st_tcp_conn_rate
 # [...]
 frontend http-in
     # [...]
-    tcp-request content track-sc1 src table st_http_req_rate
+    http-request track-sc1 src table st_http_req_rate
     http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt 10 }
 
     tcp-request content track-sc0 src table st_tcp_conn_rate
@@ -110,7 +110,7 @@ frontend http-in
 ```
 
 ## Querying current stick-table status
-To give us more insights into what is going on inside HAProxy with regards to its rate limits we can query the stats socket to get the raw table data:
+To give us more insights into what is going on inside HAProxy regarding its rate limits we can query the stats socket to get the raw table data:
 
 ```bash
 $ echo "show table st_http_req_rate" | socat /var/vcap/sys/run/haproxy/stats.sock -

@@ -352,7 +352,7 @@ frontend http-in
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
-    tcp-request content track-sc1 src table st_http_req_rate
+    http-request track-sc1 src table st_http_req_rate
     <%- if_p("ha_proxy.requests_rate_limit.block", "ha_proxy.requests_rate_limit.requests") do |block, requests| -%>
       <%-if block -%>
     http-request deny status 429 if { sc_http_req_rate(1) gt <%= requests %> }
@@ -465,7 +465,7 @@ frontend https-in
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
-    tcp-request content track-sc1 src table st_http_req_rate
+    http-request track-sc1 src table st_http_req_rate
     <%- if_p("ha_proxy.requests_rate_limit.block", "ha_proxy.requests_rate_limit.requests") do |block, requests| -%>
       <%-if block -%>
     http-request deny status 429 if { sc_http_req_rate(1) gt <%= requests %> }
