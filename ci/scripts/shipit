@@ -73,6 +73,12 @@ echo "SHA1=$SHA1"
 export SHA256=$(sha256sum $RELEASE_TGZ | head -n1 | awk '{print $1}')
 echo "SHA256=$SHA256"
 
+PATCHED_RELEASE_TGZ=$REPO_ROOT/releases/$RELEASE_NAME/$RELEASE_NAME_patched-$VERSION.tgz
+export PATCHED_SHA1=$(sha1sum $PATCHED_RELEASE_TGZ | head -n1 | awk '{print $1}')
+echo "PATCHED_SHA1=$PATCHED_SHA1"
+export PATCHED_SHA256=$(sha256sum $PATCHED_RELEASE_TGZ | head -n1 | awk '{print $1}')
+echo "PATCHED_SHA256=$PATCHED_SHA256"
+
 mkdir -p "${RELEASE_ROOT}/artifacts"
 echo "v${VERSION}"                         > ${RELEASE_ROOT}/tag
 echo "v${VERSION}"                         > ${RELEASE_ROOT}/name
@@ -116,6 +122,17 @@ releases:
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:$SHA256"
+
+### Deployment (patched)
+\`\`\`yaml
+releases:
+- name: "$RELEASE_NAME"
+  version: "$VERSION"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}_patched-${VERSION}.tgz"
+  sha1: "$PATCHED_SHA1"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:$PATCHED_SHA256"
 \`\`\`
 EOF
 cat > ${RELEASE_ROOT}/notification <<EOF
