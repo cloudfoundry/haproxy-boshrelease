@@ -363,7 +363,7 @@ jobs:
         params:
           rebase: true
           repository: pushme/git
-      - put: s3
+      - put: blobstore
         params:
           file:  "gh/artifacts/haproxy-*.tgz"
       - put: github
@@ -441,6 +441,11 @@ resource_types:
     source:
       repository: concourse/github-release-resource
 
+  - name: gcs
+    type: docker-image
+    source:
+      repository: frodenas/gcs-resource
+
 resources:
   - name: git
     type: git
@@ -475,13 +480,11 @@ resources:
   - name: version
     type: semver
     source :
-      driver:            s3
-      bucket:            cf-haproxy-boshrelease-pipeline
-      region_name:       us-east-1
-      key:               version
-      access_key_id:     ((aws.access_key))
-      secret_access_key: ((aws.secret_key))
-      initial_version:   "0.0.1"
+      driver:          gcs
+      bucket:          haproxy-boshrelease
+      key:             version
+      json_key:        ((gcp.service_key))
+      initial_version: "11.17.0"
 
   - name: notify
     type: slack-notification
@@ -495,14 +498,12 @@ resources:
       repository:   haproxy-boshrelease
       access_token: ((github.access_token))
 
-  - name: s3
-    type: s3
+  - name: blobstore
+    type: gcs
     source:
-      bucket:            cf-haproxy-boshrelease-pipeline
-      region_name:       us-east-1
-      regexp:            haproxy-([0-9\.]+).tgz
-      access_key_id:     ((aws.access_key))
-      secret_access_key: ((aws.secret_key))
+      bucket:   haproxy-boshrelease
+      json_key: ((gcp.service_key))
+      regexp:   haproxy-([0-9\.]+).tgz
 
   - name: daily
     type: time
