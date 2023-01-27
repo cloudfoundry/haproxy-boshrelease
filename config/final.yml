@@ -1,7 +1,6 @@
 ---
+name: haproxy
 blobstore:
-  provider: s3
+  provider: gcs
   options:
-    bucket_name: cf-haproxy-boshrelease # leaving as old release name for blob compatibility
-
-final_name: haproxy
+    bucket_name: haproxy-boshrelease
