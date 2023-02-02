@@ -14,18 +14,17 @@ header() {
 	echo
 	echo "###############################################"
 	echo
-	echo $*
+	echo "$*"
 	echo
 }
 
-: ${REPO_ROOT:?required}
-: ${RELEASE_ROOT:?required}
-: ${REPO_OUT:?required}
-: ${BRANCH:?required}
-: ${GITHUB_OWNER:?required}
-: ${VERSION_FROM:?required}
-: ${AWS_ACCESS_KEY:?required}
-: ${AWS_SECRET_KEY:?required}
+: "${REPO_ROOT:?required}"
+: "${RELEASE_ROOT:?required}"
+: "${REPO_OUT:?required}"
+: "${BRANCH:?required}"
+: "${GITHUB_OWNER:?required}"
+: "${VERSION_FROM:?required}"
+: "${GCP_SERVICE_KEY:?required}"
 
 if [[ ! -f ${VERSION_FROM} ]]; then
   echo >&2 "Version file (${VERSION_FROM}) not found.  Did you misconfigure Concourse?"
@@ -47,15 +46,20 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ###############################################################
 
 cd ${REPO_ROOT}
-RELEASE_NAME=$(bosh int config/final.yml --path /final_name)
+RELEASE_NAME=$(bosh int config/final.yml --path /name)
+
+# YAML needs to be indented. The GCP service key is a multiline YAML and needs to be indented uniformly.
+INDENT=6
+PAD=$(printf ' %.0s' {1..$INDENT})
+PADDED_GCP_SERVICE_KEY=$(sed -E 's/^(.*)$/'"$PAD"'\1/g' <<<"$GCP_SERVICE_KEY")
 
 cat > config/private.yml <<YAML
 ---
 blobstore:
-  provider: s3
   options:
-    access_key_id: ${AWS_ACCESS_KEY}
-    secret_access_key: ${AWS_SECRET_KEY}
+    credentials_source: static
+    json_key: |
+${PADDED_GCP_SERVICE_KEY}
 YAML
 
 header "Pulling in any git submodules..."
@@ -68,15 +72,15 @@ bosh -n create-release releases/$RELEASE_NAME/$RELEASE_NAME-$VERSION.yml \
 cd -
 
 RELEASE_TGZ=$REPO_ROOT/releases/$RELEASE_NAME/$RELEASE_NAME-$VERSION.tgz
-export SHA1=$(sha1sum $RELEASE_TGZ | head -n1 | awk '{print $1}')
+export SHA1=$(sha1sum "$RELEASE_TGZ" | head -n1 | awk '{print $1}')
 echo "SHA1=$SHA1"
-export SHA256=$(sha256sum $RELEASE_TGZ | head -n1 | awk '{print $1}')
+export SHA256=$(sha256sum "$RELEASE_TGZ" | head -n1 | awk '{print $1}')
 echo "SHA256=$SHA256"
 
-PATCHED_RELEASE_TGZ=$REPO_ROOT/releases/$RELEASE_NAME/$RELEASE_NAME_patched-$VERSION.tgz
-export PATCHED_SHA1=$(sha1sum $PATCHED_RELEASE_TGZ | head -n1 | awk '{print $1}')
+PATCHED_RELEASE_TGZ=$REPO_ROOT/releases/$RELEASE_NAME/${RELEASE_NAME}_patched-$VERSION.tgz
+export PATCHED_SHA1=$(sha1sum "$PATCHED_RELEASE_TGZ" | head -n1 | awk '{print $1}')
 echo "PATCHED_SHA1=$PATCHED_SHA1"
-export PATCHED_SHA256=$(sha256sum $PATCHED_RELEASE_TGZ | head -n1 | awk '{print $1}')
+export PATCHED_SHA256=$(sha256sum "$PATCHED_RELEASE_TGZ" | head -n1 | awk '{print $1}')
 echo "PATCHED_SHA256=$PATCHED_SHA256"
 
 mkdir -p "${RELEASE_ROOT}/artifacts"
@@ -148,11 +152,11 @@ if [[ -z $(git config --global user.name) ]]; then
   git config --global user.name "CI Bot"
 fi
 
-pushd ${REPO_ROOT}
+pushd "${REPO_ROOT}"
   for MANIFEST_PATH in $(ls manifests/*.yml); do
-    $DIR/update-manifest $GITHUB_OWNER $RELEASE_NAME $VERSION $SHA1 $MANIFEST_PATH
+    $DIR/update-manifest ${GITHUB_OWNER} ${RELEASE_NAME} ${VERSION} ${SHA1} ${MANIFEST_PATH}
   done
-  git merge --no-edit ${BRANCH}
+  git merge --no-edit "${BRANCH}"
   git add -A
   git status
   git commit -m "release v${VERSION}"
@@ -163,8 +167,8 @@ pushd ${REPO_ROOT}
   bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
   bosh upload-blobs
 
-  bosh -n create-release --force --version ${VERSION}-patched \
-    --tarball ../${RELEASE_NAME}_patched-$VERSION.tgz
+  bosh -n create-release --force --version "${VERSION}-patched" \
+    --tarball "../${RELEASE_NAME}_patched-${VERSION}.tgz"
 
   # Undo changes to repo from creating dev release
   git clean -df
