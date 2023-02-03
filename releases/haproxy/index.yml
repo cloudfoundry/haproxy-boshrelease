@@ -159,6 +159,8 @@ builds:
     version: 8.0.11
   e7e1994d-1d05-4aad-66e8-b8e1910da29b:
     version: 9.6.0
+  e8262fbb-5849-421c-417a-9e8c8c77d950:
+    version: 11.17.1
   e88bf54e-7cad-4494-5cd2-1ca1c6467237:
     version: 8.6.1
   ec7f20fc-a16a-4278-6f8e-93c7cc11d5bf:
