@@ -83,10 +83,10 @@ echo "SHA256=${SHA256}"
 
 
 mkdir -p "${RELEASE_ROOT}/artifacts"
-echo "v${VERSION}"                           > "${RELEASE_ROOT}/tag"
-echo "v${VERSION}"                           > "${RELEASE_ROOT}/name"
-mv "${REPO_ROOT}/releases/*/*-${VERSION}.tgz"  "${RELEASE_ROOT}/artifacts"
-mv "${REPO_ROOT}/ci/release_notes.md"          "${RELEASE_ROOT}/notes.md"
+echo "v${VERSION}"                            > "${RELEASE_ROOT}/tag"
+echo "v${VERSION}"                            > "${RELEASE_ROOT}/name"
+mv "${REPO_ROOT}"/releases/*/*-"${VERSION}".tgz "${RELEASE_ROOT}/artifacts"
+mv "${REPO_ROOT}/ci/release_notes.md"           "${RELEASE_ROOT}/notes.md"
 
 version() {
   # extract the version variable $1 from the packaging script $2 (default 'haproxy')
