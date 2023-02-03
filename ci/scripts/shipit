@@ -18,13 +18,13 @@ header() {
 	echo
 }
 
-: "${REPO_ROOT:?required}"
-: "${RELEASE_ROOT:?required}"
-: "${REPO_OUT:?required}"
-: "${BRANCH:?required}"
-: "${GITHUB_OWNER:?required}"
-: "${VERSION_FROM:?required}"
-: "${GCP_SERVICE_KEY:?required}"
+: "${REPO_ROOT:?required}" # Contains the Git repo
+: "${RELEASE_ROOT:?required}" # Contains any information that is passed on to subsequent steps, e.g. GitHub publish
+: "${REPO_OUT:?required}" # Resulting repo state for subsequent steps
+: "${BRANCH:?required}" # The branch name, from which to build the release
+: "${GITHUB_OWNER:?required}" # The github organization / owner of the repo
+: "${VERSION_FROM:?required}" # The path to the Version file
+: "${GCP_SERVICE_KEY:?required}" # The GCP service key for accessing the blobstore, written to a temporary private.yml.
 
 if [[ ! -f "${VERSION_FROM}" ]]; then
   echo >&2 "Version file (${VERSION_FROM}) not found.  Did you misconfigure Concourse?"
@@ -72,7 +72,7 @@ bosh -n create-release "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.yml"
 cd -
 
 # SC2155 discourages variable assignment and export in the same line.
-RELEASE_TGZ=${REPO_ROOT}/releases/${RELEASE_NAME/}${RELEASE_NAME}-${VERSION}.tgz
+RELEASE_TGZ=${REPO_ROOT}/releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.tgz
 # shellcheck disable=SC2155
 export SHA1=$(sha1sum "${RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "SHA1=${SHA1}"
@@ -81,8 +81,8 @@ export SHA256=$(sha256sum "${RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "SHA256=${SHA256}"
 
 mkdir -p "${RELEASE_ROOT}/artifacts"
-echo "v${VERSION}"                         > "${RELEASE_ROOT}/tag"
-echo "v${VERSION}"                         > "${RELEASE_ROOT}/name"
+echo "v${VERSION}"                           > "${RELEASE_ROOT}/tag"
+echo "v${VERSION}"                           > "${RELEASE_ROOT}/name"
 mv "${REPO_ROOT}/releases/*/*-${VERSION}.tgz"  "${RELEASE_ROOT}/artifacts"
 mv "${REPO_ROOT}/ci/release_notes.md"          "${RELEASE_ROOT}/notes.md"
 
@@ -122,13 +122,13 @@ releases:
   sha1: "${SHA1}"
 
 # for deployments with sha256, use the following line instead:
-# sha1: "sha256:$SHA256"
+# sha1: "sha256:${SHA256}"
 \`\`\`
 EOF
+
 cat > "${RELEASE_ROOT}/notification" <<EOF
 <!here> New ${RELEASE_NAME} v${VERSION} released!
 EOF
-
 
 header "Update git repo with final release..."
 if [[ -z $(git config --global user.email) ]]; then
@@ -162,6 +162,29 @@ pushd "${REPO_ROOT}"
 popd
 
 mv "${RELEASE_NAME}_patched-${VERSION}.tgz" "${RELEASE_ROOT}/artifacts"
+
+PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts/${RELEASE_NAME}_patched-${VERSION}.tgz
+# shellcheck disable=SC2155
+export PATCHED_SHA1=$(sha1sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "PATCHED_SHA1=${PATCHED_SHA1}"
+# shellcheck disable=SC2155
+export PATCHED_SHA256=$(sha256sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "PATCHED_SHA256=${PATCHED_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (patched)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}_patched-${VERSION}.tgz"
+  sha1: "${PATCHED_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${PATCHED_SHA256}"
+\`\`\`
+EOF
 
 # so that future steps in the pipeline can push our changes
 cp -a "${REPO_ROOT}" "${REPO_OUT}"
