@@ -20,8 +20,7 @@ from git import Repo
 
 
 # Required Environment Vars
-BLOBSTORE_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY"]
-BLOBSTORE_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_KEY"]
+BLOBSTORE_SECRET_ACCESS_KEY = os.environ["GCP_SERVICE_KEY"]
 gh = github.Github(login_or_token=os.environ["GITHUB_COM_TOKEN"])
 PR_ORG = os.environ["PR_ORG"]
 PR_BASE = os.environ["PR_BASE"]
@@ -107,7 +106,7 @@ class Dependency:
 
     @property
     def pr_branch(self):
-        return f"{self.name}-auto-bump"
+        return f"{self.name}-auto-bump-{PR_BASE}"
 
     @property
     def current_version(self) -> version.Version:
@@ -229,8 +228,8 @@ class Dependency:
         except github.UnknownObjectException:
             print(f"Branch {branch} didn't exist. We'll create it.")
         finally:
-            master = repo.get_git_ref("heads/master")
-            repo.create_git_ref(f"refs/heads/{branch}", master.object.sha)
+            base_branch = repo.get_git_ref(f"heads/{PR_BASE}")
+            repo.create_git_ref(f"refs/heads/{branch}", base_branch.object.sha)
 
     def _update_file(self, repo, path, branch, message):
         with open(path, "rb") as f:
@@ -357,8 +356,8 @@ def write_private_yaml():
     private_yml = {
         "blobstore": {
             "options": {
-                "access_key_id": BLOBSTORE_ACCESS_KEY_ID,
-                "secret_access_key": BLOBSTORE_SECRET_ACCESS_KEY,
+                "credentials_source": "static",
+                "json_key": BLOBSTORE_SECRET_ACCESS_KEY,
             }
         }
     }

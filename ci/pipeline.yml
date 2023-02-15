@@ -418,8 +418,7 @@ jobs:
                 PR_ORG: cloudfoundry
                 PR_LABEL: run-ci
 
-                AWS_ACCESS_KEY: ((aws.access_key))
-                AWS_SECRET_KEY: ((aws.secret_key))
+                GCP_SERVICE_KEY: ((gcp.service_key))
                 GITHUB_COM_TOKEN: ((github.access_token))
 
 resource_types:
