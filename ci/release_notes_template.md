@@ -1,10 +1,10 @@
 # Fixes
-- fix a
-- fix b
+- fix a (@personA)
+- fix b (@personB)
 
 # New Features
-- feature a
-- feature b
+- feature a (@personA)
+- feature b (@personB)
 
 # Upgrades
 
