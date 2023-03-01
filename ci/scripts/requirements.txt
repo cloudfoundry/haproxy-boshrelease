@@ -1,4 +1,4 @@
-beautifulsoup4==4.11.1
+beautifulsoup4==4.11.2
 gitpython==3.1.27
 packaging==21.3
 pygithub==1.55
