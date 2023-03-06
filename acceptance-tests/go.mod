@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/bramvdbogaerde/go-scp v0.0.0-20210527193300-acf430e39785
 	github.com/gorilla/websocket v1.5.0
-	github.com/onsi/ginkgo/v2 v2.8.4
+	github.com/onsi/ginkgo/v2 v2.9.0
 	github.com/onsi/gomega v1.27.2
 	golang.org/x/crypto v0.0.0-20220924013350-4ba4fb4dd9e7
 	golang.org/x/net v0.7.0
