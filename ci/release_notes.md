@@ -1,6 +1,7 @@
-# New Features
-- Introduce @dependabot to automatically bump our ci dependencies (@maxmoehl)
+# Fixes
+- fix(autobumper): update to use the GCS bucket (@peanball)
 
-# Acknowledgements
 
-Thanks @maxmoehl for the PR / fixes!
+# Upgrades
+
+- `haproxy` has been upgraded from v7.2.3 to v7.2.4
