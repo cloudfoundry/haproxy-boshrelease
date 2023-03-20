@@ -10,8 +10,9 @@ groups:
       - pre
       - rc
       - shipit
-      - major
+      - patch
       - minor
+      - major
       - autobump-dependencies
 
 jobs:
@@ -291,6 +292,20 @@ jobs:
           icon_url: "((slack.icon))"
           text:    "((slack.fail_url)) haproxy-boshrelease : rc job failed"
 
+  - name: patch
+    public: true
+    plan:
+      - do:
+          - { get: version, trigger: false, params: {bump: patch} }
+          - { put: version,                 params: {file: version/number} }
+        on_failure:
+          put: notify
+          params:
+            channel:  "#haproxy-boshrelease"
+            username: ci-bot
+            icon_url: "((slack.icon))"
+            text:    "((slack.fail_url)) haproxy-boshrelease : patch job failed"
+
   - name: minor
     public: true
     plan:
@@ -371,9 +386,6 @@ jobs:
           tag:    gh/tag
           body:   gh/notes.md
           globs: [gh/artifacts/*]
-      - put: version
-        params:
-          bump: patch
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"
