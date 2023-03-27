@@ -3,4 +3,4 @@ name: haproxy
 blobstore:
   provider: gcs
   options:
-    bucket_name: haproxy-boshrelease
+    bucket_name: haproxy-boshrelease-maintenance
