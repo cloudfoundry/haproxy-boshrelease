@@ -87,7 +87,7 @@ The pipeline `haproxy-boshrelease` is used to build, verify and release this BOS
 
 New pipeline steps should be added without modifying existing steps or resources, or in a separate pipeline altogether.
 
-A pipeline can be uploaded to concourse via the [`upload-to-concourse.sh`](upload-to-concourse.sh) script. This script requires the data in `source.me`, which can be found in the team's Vault.
+A pipeline can be uploaded manually to concourse via the [`upload-to-concourse.sh`](upload-to-concourse.sh) script. This script requires the data in `source.me`, which can be found in the team's Vault.
 
 ### Testing new Pipeline Steps in a Branch
 
