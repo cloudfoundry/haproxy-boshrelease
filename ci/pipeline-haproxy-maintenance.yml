@@ -207,7 +207,7 @@ jobs:
             - { name: stemcell-bionic }
             - { name: bpm }
           run:
-            path: ./git-pull-requests/ci/scripts/acceptance-tests
+            path: ./git-pull-requests-previous-release/ci/scripts/acceptance-tests
             args: []
           params:
             REPO_ROOT:            git-pull-requests-previous-release
@@ -250,7 +250,7 @@ jobs:
             args:
             - -ce
             - |
-              cd git
+              cd git-previous-release
               if [ -f ci/release_notes.md ]; then
                 echo "######   RELEASE NOTES   ###############"
                 echo
@@ -266,14 +266,14 @@ jobs:
               fi
           inputs:
           - name: git-previous-release
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text: release candidate job 'pre' failed (which is unusual).
-          ok: false
+      #on_failure:
+      #  put: notify
+      #  params:
+      #    channel:  "#haproxy-boshrelease"
+      #    username: ci-bot
+      #    icon_url: "((slack.icon))"
+      #    text: release candidate job 'pre' failed (which is unusual).
+      #    ok: false
 
   - name: rc
     public: true
@@ -284,13 +284,13 @@ jobs:
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : rc job failed"
+      #on_failure:
+      #  put: notify
+      #  params:
+      #    channel:  "#haproxy-boshrelease"
+      #    username: ci-bot
+      #    icon_url: "((slack.icon))"
+      #    text:    "((slack.fail_url)) haproxy-boshrelease : rc job failed"
 
   - name: patch
     public: true
@@ -369,14 +369,14 @@ jobs:
             REPO_OUT:     pushme
             NOTIFICATION_OUT: notifications
             BRANCH:        maintenance
-            GITHUB_OWNER:  sap-contributions
+            GITHUB_OWNER:  b1tamara
 
             GCP_SERVICE_KEY: ((gcp.service_key))
 
       - put: git-previous-release
         params:
           rebase: true
-          repository: pushme/git
+          repository: pushme/git-previous-release
       - put: blobstore
         params:
           file:  "gh/artifacts/haproxy-*.tgz"
@@ -386,19 +386,19 @@ jobs:
           tag:    gh/tag
           body:   gh/notes.md
           globs: [gh/artifacts/*]
-      - put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text_file: notifications/message
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
+      # - put: notify
+      #  params:
+      #    channel:  "#haproxy-boshrelease"
+      #    username: ci-bot
+      #    icon_url: "((slack.icon))"
+      #    text_file: notifications/message
+      # on_failure:
+      #  put: notify
+      #  params:
+      #    channel:  "#haproxy-boshrelease"
+      #    username: ci-bot
+      #    icon_url: "((slack.icon))"
+      #    text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
   - name: autobump-dependencies
     public: true
     serial: true
@@ -426,7 +426,7 @@ jobs:
               params:
                 REPO_ROOT: git-previous-release
                 PR_BASE: maintenance
-                PR_ORG: sap-contributions
+                PR_ORG: b1tamara
                 PR_LABEL: run-ci
 
                 GCP_SERVICE_KEY: ((gcp.service_key))
@@ -461,7 +461,7 @@ resources:
   - name: git-previous-release
     type: git
     source:
-      uri:         git@github.com:sap-contributions/haproxy-boshrelease.git
+      uri:         git@github.com:b1tamara/haproxy-boshrelease.git
       branch:      maintenance
       private_key: ((github.private_key))
 
@@ -469,7 +469,7 @@ resources:
     type: pull-request
     source:
       access_token: ((github.access_token))
-      repository:   sap-contributions/haproxy-boshrelease
+      repository:   b1tamara/haproxy-boshrelease
       base_branch:  maintenance
       labels:       [run-ci]
 
@@ -505,7 +505,7 @@ resources:
   - name: github
     type: github-release-alt
     source:
-      user:         sap-contributions
+      user:         b1tamara
       repository:   haproxy-boshrelease
       access_token: ((github.access_token))
 
