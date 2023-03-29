@@ -125,7 +125,8 @@ For creating a new release please follow the versioning guide based on the [Sema
   
   Used for documentation updates, changes in the test suite or any updates in the testing frameworks (e.g. ginkgo).
 
-The `haproxy-boshrelease` also contains patches (see [haproxy-patches](../haproxy-patches)). The patched version is denoted by appending a hyphen and key word `patched`, like `11.17.4-patched`.
-
 Since releases `11.16.3` and `11.17.5` the build metadata has been included into the version number. The build metadata denotes the contained HAProxy version. As an example, `11.16.2+2.6.9` means that HAProxy 2.6.9 is used.
+
+The `haproxy-boshrelease` also contains patches (see [haproxy-patches](../haproxy-patches)). The patched version is a part of the build metadata and is denoted by appending a hyphen and key word `patched`, like `11.17.4+2.6.9-patched`.
+
 
