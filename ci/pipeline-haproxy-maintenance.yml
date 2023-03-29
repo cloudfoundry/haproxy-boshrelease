@@ -378,7 +378,7 @@ jobs:
           repository: pushme/git-previous-release
       - put: blobstore
         params:
-          file:  "gh/artifacts/haproxy-*.tgz"
+          file:  "gh/artifacts/haproxy-[0-9+-.A-z]+.tgz"
       - put: github
         params:
           name:   gh/name
