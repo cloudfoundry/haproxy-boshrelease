@@ -110,3 +110,23 @@ Note that you can use the `dir` parameter in `run` to define the working directo
 ```
 
 Don't forget to remove separate pipelines that were created for testing.
+
+### Versioning Guide
+
+For creating a new release please follow the versioning guide based on the [Semantic Versioning Specification](https://semver.org/).
+
+* **Major Version** (*X*.y.z) -- incremented if any backwards incompatible changes are introduced to the public API
+
+  Used for new HAProxy **minor** versions, as they could contain breaking changes.
+* **Minor Version** (x.*Y*.z) -- incremented if new, backwards compatible functionality is introduced to the public API
+  
+  Used when upgrading dependencies (e.g. PCRE, socat, etc.) or HAProxy **patch** versions.
+* **Patch Version** (x.y.*Z*) -- incremented if only backwards compatible bug fixes are introduced)
+  
+  Used for documentation updates, changes in the test suite or any updates in the testing frameworks (e.g. ginkgo).
+
+Since releases `11.16.3` and `11.17.5` the build metadata has been included into the version number. The build metadata denotes the contained HAProxy version. As an example, `11.16.2+2.6.9` means that HAProxy 2.6.9 is used.
+
+The `haproxy-boshrelease` also contains patches (see [haproxy-patches](../haproxy-patches)). The patched version is a part of the build metadata and is denoted by appending a hyphen and key word `patched`, like `11.17.4+2.6.9-patched`.
+
+
