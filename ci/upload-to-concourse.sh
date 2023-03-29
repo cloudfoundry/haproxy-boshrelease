@@ -33,4 +33,8 @@ fly -t "$CONCOURSE_TARGET" validate-pipeline -c pipeline.yml
 fly -t "$CONCOURSE_TARGET" set-pipeline -p haproxy-boshrelease -c pipeline.yml --load-vars-from vars.yml
 fly -t "$CONCOURSE_TARGET" expose-pipeline -p haproxy-boshrelease
 
+fly -t "$CONCOURSE_TARGET" validate-pipeline -c pipeline-haproxy-maintenance.yml
+fly -t "$CONCOURSE_TARGET" set-pipeline -p haproxy-boshrelease-maintenance -c pipeline-haproxy-maintenance.yml --load-vars-from vars.yml
+fly -t "$CONCOURSE_TARGET" expose-pipeline -p haproxy-boshrelease-maintenance
+
 echo "Done."
