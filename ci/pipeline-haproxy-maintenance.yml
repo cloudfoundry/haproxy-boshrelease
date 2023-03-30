@@ -384,7 +384,7 @@ jobs:
           name:   gh/name
           tag:    gh/tag
           body:   gh/notes.md
-          globs: [gh/artifacts/*]
+          globs: [gh/artifacts/*, gh/artifacts-patched/*]
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"
