@@ -378,7 +378,7 @@ jobs:
           repository: pushme/git-previous-release
       - put: blobstore
         params:
-          file:  "gh/artifacts/haproxy-[0-9+-.A-z]+.tgz"
+          file:  "gh/artifacts/haproxy-*.tgz"
       - put: github
         params:
           name:   gh/name
@@ -513,7 +513,7 @@ resources:
     source:
       bucket:   haproxy-boshrelease
       json_key: ((gcp.service_key))
-      regexp:   haproxy-([0-9\.]+).tgz
+      regexp:   haproxy-([0-9\.+-]+).tgz
 
   - name: daily
     type: time
