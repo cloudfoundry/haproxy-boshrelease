@@ -167,9 +167,10 @@ pushd "${REPO_ROOT}"
   git reset --hard
 popd
 
-mv "${RELEASE_NAME}-${VERSION}-patched.tgz" "${RELEASE_ROOT}/artifacts"
+mkdir -p "${RELEASE_ROOT}/artifacts-patched"
+mv "${RELEASE_NAME}-${VERSION}-patched.tgz" "${RELEASE_ROOT}/artifacts-patched"
 
-PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts/${RELEASE_NAME}-${VERSION}-patched.tgz
+PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-patched.tgz
 # shellcheck disable=SC2155
 export PATCHED_SHA1=$(sha1sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "PATCHED_SHA1=${PATCHED_SHA1}"
