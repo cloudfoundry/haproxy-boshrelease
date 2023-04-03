@@ -30,8 +30,8 @@ if [[ ! -f "${VERSION_FROM}" ]]; then
   echo >&2 "Version file (${VERSION_FROM}) not found.  Did you misconfigure Concourse?"
   exit 2
 fi
-VERSION=$(cat "${VERSION_FROM}")
-if [[ -z "${VERSION}" ]]; then
+VERSION_TO_CREATE=$(cat "${VERSION_FROM}")
+if [[ -z "${VERSION_TO_CREATE}" ]]; then
   echo >&2 "Version file (${VERSION_FROM}) was empty.  Did you misconfigure Concourse?"
   exit 2
 fi
@@ -64,7 +64,25 @@ YAML
 
 header "Pulling in any git submodules..."
 git submodule update --init --recursive --force
+cd -
 
+version() {
+  # extract the version variable $1 from the packaging script $2 (default 'haproxy')
+  pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
+  package=${2:-haproxy}
+  # extract version and remove all spaces
+  sed -n -E "${pattern//VERSION/${1:?}}" "${REPO_ROOT}/packages/${package}/packaging" | sed 's/ *//g'
+}
+
+HAPROXY_VERSION=$(version HAPROXY_VERSION)
+LUA_VERSION=$(version LUA_VERSION)
+SOCAT_VERSION=$(version SOCAT_VERSION)
+PCRE_VERSION=$(version PCRE_VERSION)
+KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
+
+VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
+
+cd "${REPO_ROOT}"
 header "Create final release..."
 bosh -n create-release --final --version "${VERSION}"
 bosh -n create-release "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.yml" \
@@ -87,20 +105,6 @@ echo "v${VERSION}"                            > "${RELEASE_ROOT}/tag"
 echo "v${VERSION}"                            > "${RELEASE_ROOT}/name"
 mv "${REPO_ROOT}"/releases/*/*-"${VERSION}".tgz "${RELEASE_ROOT}/artifacts"
 mv "${REPO_ROOT}/ci/release_notes.md"           "${RELEASE_ROOT}/notes.md"
-
-version() {
-  # extract the version variable $1 from the packaging script $2 (default 'haproxy')
-  pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
-  package=${2:-haproxy}
-  # extract version and remove all spaces
-  sed -n -E "${pattern//VERSION/${1:?}}" "${REPO_ROOT}/packages/${package}/packaging" | sed 's/ *//g'
-}
-
-HAPROXY_VERSION=$(version HAPROXY_VERSION)
-LUA_VERSION=$(version LUA_VERSION)
-SOCAT_VERSION=$(version SOCAT_VERSION)
-PCRE_VERSION=$(version PCRE_VERSION)
-KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
 
 cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 ### Versions
@@ -156,16 +160,17 @@ pushd "${REPO_ROOT}"
   bosh upload-blobs
 
   bosh -n create-release --force --version "${VERSION}-patched" \
-    --tarball "../${RELEASE_NAME}_patched-${VERSION}.tgz"
+    --tarball "../${RELEASE_NAME}-${VERSION}-patched.tgz"
 
   # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 popd
 
-mv "${RELEASE_NAME}_patched-${VERSION}.tgz" "${RELEASE_ROOT}/artifacts"
+mkdir -p "${RELEASE_ROOT}/artifacts-patched"
+mv "${RELEASE_NAME}-${VERSION}-patched.tgz" "${RELEASE_ROOT}/artifacts-patched"
 
-PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts/${RELEASE_NAME}_patched-${VERSION}.tgz
+PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-patched.tgz
 # shellcheck disable=SC2155
 export PATCHED_SHA1=$(sha1sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "PATCHED_SHA1=${PATCHED_SHA1}"
@@ -179,8 +184,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}_patched-${VERSION}.tgz"
+  version: "${VERSION}-patched"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-patched.tgz"
   sha1: "${PATCHED_SHA1}"
 
 # for deployments with sha256, use the following line instead:
