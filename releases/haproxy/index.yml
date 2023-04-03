@@ -43,6 +43,8 @@ builds:
     version: 8.0.4
   4ad9a47e-b42a-4d28-5d07-a7682be83aa4:
     version: 11.12.0
+  4df20c18-649e-41fd-57f4-9514d6bc53e8:
+    version: 12.0.0+2.7.6
   53d69e13-909b-42da-56c6-6abb3b9e6203:
     version: 9.1.0
   629cf530-f528-40ab-56e2-eb9fd5ebacb0:
