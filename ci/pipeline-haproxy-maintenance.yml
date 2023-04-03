@@ -1,7 +1,7 @@
 ---
 
 groups:
-  - name: haproxy-boshrelease
+  - name: haproxy-boshrelease-maintenance
     jobs:
       - unit-tests
       - unit-tests-pr
@@ -21,7 +21,7 @@ jobs:
     serial: true
     plan:
     - do:
-      - get: git
+      - get: git-previous-release
         trigger: true
       - task: lint
         config:
@@ -34,15 +34,15 @@ jobs:
               username:   ((docker.username))
               password:   ((docker.password))
           inputs:
-            - { name: git }
+            - { name: git-previous-release }
           caches:
-          - path: git/vendor/cache
-          - path: git/.bundle
+          - path: git-previous-release/vendor/cache
+          - path: git-previous-release/.bundle
           run:
-            path: ./git/ci/scripts/lint
+            path: ./git-previous-release/ci/scripts/lint
             args: []
           params:
-            REPO_ROOT: git
+            REPO_ROOT: git-previous-release
       - task: unit-tests
         config:
           platform: linux
@@ -54,16 +54,15 @@ jobs:
               username:   ((docker.username))
               password:   ((docker.password))
           inputs:
-            - { name: git }
-
+            - { name: git-previous-release }
           caches:
-          - path: git/vendor/cache
-          - path: git/.bundle
+          - path: git-previous-release/vendor/cache
+          - path: git-previous-release/.bundle
           run:
-            path: ./git/ci/scripts/unit-tests
+            path: ./git-previous-release/ci/scripts/unit-tests
             args: []
           params:
-            REPO_ROOT: git
+            REPO_ROOT: git-previous-release
       on_failure:
         put: notify
         params:
@@ -77,10 +76,10 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every }
-      - put: git-pull-requests
+      - { get: git-pull-requests-previous-release, trigger: true, version: every }
+      - put: git-pull-requests-previous-release
         params:
-          path: git-pull-requests
+          path: git-pull-requests-previous-release
           status: pending
           context: unit-tests
       - task: lint
@@ -94,15 +93,15 @@ jobs:
               username:   ((docker.username))
               password:   ((docker.password))
           inputs:
-            - { name: git-pull-requests }
+            - { name: git-pull-requests-previous-release }
           caches:
-          - path: git-pull-requests/vendor/cache
-          - path: git-pull-requests/.bundle
+          - path: git-pull-requests-previous-release/vendor/cache
+          - path: git-pull-requests-previous-release/.bundle
           run:
-            path: ./git-pull-requests/ci/scripts/lint
+            path: ./git-pull-requests-previous-release/ci/scripts/lint
             args: []
           params:
-            REPO_ROOT: git-pull-requests
+            REPO_ROOT: git-pull-requests-previous-release
       - task: unit-tests
         config:
           platform: linux
@@ -114,25 +113,25 @@ jobs:
               username:   ((docker.username))
               password:   ((docker.password))
           inputs:
-            - { name: git-pull-requests }
+            - { name: git-pull-requests-previous-release }
           caches:
-          - path: git-pull-requests/vendor/cache
-          - path: git-pull-requests/.bundle
+          - path: git-pull-requests-previous-release/vendor/cache
+          - path: git-pull-requests-previous-release/.bundle
           run:
-            path: ./git-pull-requests/ci/scripts/unit-tests
+            path: ./git-pull-requests-previous-release/ci/scripts/unit-tests
             args: []
           params:
-            REPO_ROOT: git-pull-requests
+            REPO_ROOT: git-pull-requests-previous-release
     on_success:
-      put: git-pull-requests
+      put: git-pull-requests-previous-release
       params:
-        path: git-pull-requests
+        path: git-pull-requests-previous-release
         status: success
         context: unit-tests
     on_failure:
-      put: git-pull-requests
+      put: git-pull-requests-previous-release
       params:
-        path: git-pull-requests
+        path: git-pull-requests-previous-release
         status: failure
         context: unit-tests
 
@@ -143,7 +142,7 @@ jobs:
     plan:
     - do:
       - in_parallel:
-        - { get: git, trigger: true, passed: [unit-tests] }
+        - { get: git-previous-release, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
         - { get: stemcell-bionic }
         - { get: bpm }
@@ -159,15 +158,15 @@ jobs:
               username:   ((docker.username))
               password:   ((docker.password))
           inputs:
-            - { name: git }
+            - { name: git-previous-release }
             - { name: stemcell }
             - { name: stemcell-bionic }
             - { name: bpm }
           run:
-            path: ./git/ci/scripts/acceptance-tests
+            path: ./git-previous-release/ci/scripts/acceptance-tests
             args: []
           params:
-            REPO_ROOT:            git
+            REPO_ROOT:            git-previous-release
       on_failure:
         put: notify
         params:
@@ -181,13 +180,13 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every, passed: [unit-tests-pr] }
+      - { get: git-pull-requests-previous-release, trigger: true, version: every, passed: [unit-tests-pr] }
       - { get: stemcell }
       - { get: stemcell-bionic }
       - { get: bpm }
-      - put: git-pull-requests
+      - put: git-pull-requests-previous-release
         params:
-          path: git-pull-requests
+          path: git-pull-requests-previous-release
           status: pending
           context: acceptance-tests
       - task: acceptance-tests
@@ -198,29 +197,29 @@ jobs:
             type: docker-image
             source:
               repository: iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
+              tag: latest
+              username: ((docker.username))
+              password: ((docker.password))
           inputs:
-            - { name: git-pull-requests }
+            - { name: git-pull-requests-previous-release }
             - { name: stemcell }
             - { name: stemcell-bionic }
             - { name: bpm }
           run:
-            path: ./git-pull-requests/ci/scripts/acceptance-tests
+            path: ./git-pull-requests-previous-release/ci/scripts/acceptance-tests
             args: []
           params:
-            REPO_ROOT:            git-pull-requests
+            REPO_ROOT:            git-pull-requests-previous-release
     on_success:
-      put: git-pull-requests
+      put: git-pull-requests-previous-release
       params:
-        path: git-pull-requests
+        path: git-pull-requests-previous-release
         status: success
         context: acceptance-tests
     on_failure:
-      put: git-pull-requests
+      put: git-pull-requests-previous-release
       params:
-        path: git-pull-requests
+        path: git-pull-requests-previous-release
         status: failure
         context: acceptance-tests
 
@@ -229,7 +228,7 @@ jobs:
     serial: true
     plan:
     - do:
-      - get: git
+      - get: git-previous-release
         passed:
         - acceptance-tests
         trigger: true
@@ -250,7 +249,7 @@ jobs:
             args:
             - -ce
             - |
-              cd git
+              cd git-previous-release
               if [ -f ci/release_notes.md ]; then
                 echo "######   RELEASE NOTES   ###############"
                 echo
@@ -265,7 +264,7 @@ jobs:
                 echo
               fi
           inputs:
-          - name: git
+          - name: git-previous-release
       on_failure:
         put: notify
         params:
@@ -280,7 +279,7 @@ jobs:
     plan:
     - do:
       - in_parallel:
-          - { get: git,     trigger: true,  passed: [pre] }
+          - { get: git-previous-release,     trigger: true,  passed: [pre] }
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
@@ -341,7 +340,7 @@ jobs:
     - do:
       - in_parallel:
           - { get: version, passed: [rc], params: {bump: final} }
-          - { get: git,     passed: [rc] }
+          - { get: git-previous-release,     passed: [rc] }
       - task: release
         config:
           platform: linux
@@ -354,29 +353,29 @@ jobs:
               password:   ((docker.password))
           inputs:
             - name: version
-            - name: git
+            - name: git-previous-release
           outputs:
             - name: gh
             - name: pushme
             - name: notifications
           run:
-            path: ./git/ci/scripts/shipit
+            path: ./git-previous-release/ci/scripts/shipit
             args: []
           params:
-            REPO_ROOT:    git
+            REPO_ROOT:    git-previous-release
             VERSION_FROM: version/number
             RELEASE_ROOT: gh
             REPO_OUT:     pushme
             NOTIFICATION_OUT: notifications
-            BRANCH:        master
+            BRANCH:        maintenance
             GITHUB_OWNER:  cloudfoundry
 
             GCP_SERVICE_KEY: ((gcp.service_key))
 
-      - put: git
+      - put: git-previous-release
         params:
           rebase: true
-          repository: pushme/git
+          repository: pushme/git-previous-release
       - put: blobstore
         params:
           file:  "gh/artifacts/haproxy-*.tgz"
@@ -406,11 +405,11 @@ jobs:
       - do:
           - get: daily
             trigger: true
-          - get: git
+          - get: git-previous-release
           - task: autobump-dependencies
             config:
               inputs:
-                - name: git
+                - name: git-previous-release
               platform: linux
               image_resource:
                 type: docker-image
@@ -420,12 +419,12 @@ jobs:
                   username: ((docker.username))
                   password: ((docker.password))
               run:
-                dir: git
+                dir: git-previous-release
                 path: /usr/bin/python3
                 args: ["ci/scripts/autobump-dependencies.py"]
               params:
-                REPO_ROOT: git
-                PR_BASE: master
+                REPO_ROOT: git-previous-release
+                PR_BASE: maintenance
                 PR_ORG: cloudfoundry
                 PR_LABEL: run-ci
 
@@ -458,19 +457,19 @@ resource_types:
       repository: frodenas/gcs-resource
 
 resources:
-  - name: git
+  - name: git-previous-release
     type: git
     source:
       uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
-      branch:      master
+      branch:      maintenance
       private_key: ((github.private_key))
 
-  - name: git-pull-requests
+  - name: git-pull-requests-previous-release
     type: pull-request
     source:
       access_token: ((github.access_token))
       repository:   cloudfoundry/haproxy-boshrelease
-      base_branch:  master
+      base_branch:  maintenance
       labels:       [run-ci]
 
   - name: stemcell-bionic
@@ -492,10 +491,10 @@ resources:
     type: semver
     source :
       driver:          gcs
-      bucket:          haproxy-boshrelease
-      key:             version
+      bucket:          haproxy-boshrelease-maintenance
+      key:             version-11.16
       json_key:        ((gcp.service_key))
-      initial_version: "11.17.0"
+      initial_version: "11.16.3"
 
   - name: notify
     type: slack-notification
@@ -523,3 +522,4 @@ resources:
       stop: 8:00 AM
       location: Europe/Berlin
       interval: 24h
+      
