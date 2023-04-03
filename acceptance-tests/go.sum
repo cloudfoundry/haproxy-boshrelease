@@ -1,5 +1,5 @@
-github.com/bramvdbogaerde/go-scp v0.0.0-20210527193300-acf430e39785 h1:HUwKh+QkSVGf3CocZEMNhrLk24yxc8g96jlukhdnUcw=
-github.com/bramvdbogaerde/go-scp v0.0.0-20210527193300-acf430e39785/go.mod h1:s4ZldBoRAOgUg8IrRP2Urmq5qqd2yPXQTPshACY8vQ0=
+github.com/bramvdbogaerde/go-scp v1.2.1 h1:BKTqrqXiQYovrDlfuVFaEGz0r4Ou6EED8L7jCXw6Buw=
+github.com/bramvdbogaerde/go-scp v1.2.1/go.mod h1:s4ZldBoRAOgUg8IrRP2Urmq5qqd2yPXQTPshACY8vQ0=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
