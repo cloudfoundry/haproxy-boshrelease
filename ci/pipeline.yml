@@ -370,7 +370,7 @@ jobs:
           name:   gh/name
           tag:    gh/tag
           body:   gh/notes.md
-          globs: [gh/artifacts/*]
+          globs: [gh/artifacts/*, gh/artifacts-patched/*]
       - put: version
         params:
           bump: patch
@@ -502,7 +502,7 @@ resources:
     source:
       bucket:   haproxy-boshrelease
       json_key: ((gcp.service_key))
-      regexp:   haproxy-([0-9\.]+).tgz
+      regexp:   haproxy-([0-9\.+-]+).tgz
 
   - name: daily
     type: time
