@@ -45,7 +45,7 @@ func copyFileToRemote(user string, addr string, privateKey string, remotePath st
 		return err
 	}
 
-	return scpClient.CopyFile(fileReader, remotePath, permissions)
+	return scpClient.CopyFile(context.Background(), fileReader, remotePath, permissions)
 }
 
 // Forwards a TCP connection from a given port on the local machine to a given port on the remote machine
