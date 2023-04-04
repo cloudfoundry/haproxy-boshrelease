@@ -4,12 +4,14 @@ updates:
   directory: /acceptance-tests
   schedule:
     interval: weekly
+    day: "monday"
     time: "09:00"
     timezone: "Europe/Berlin"
 - package-ecosystem: pip
   directory: /ci/scripts
   schedule:
     interval: weekly
+    day: "monday"
     time: "09:00"
     timezone: "Europe/Berlin"
 - package-ecosystem: gomod
@@ -17,6 +19,7 @@ updates:
   target-branch: "maintenance"
   schedule:
     interval: weekly
+    day: "wednesday"
     time: "09:00"
     timezone: "Europe/Berlin"
 - package-ecosystem: pip
@@ -24,6 +27,7 @@ updates:
   target-branch: "maintenance"
   schedule:
     interval: weekly
+    day: "wednesday"
     time: "09:00"
     timezone: "Europe/Berlin"
 

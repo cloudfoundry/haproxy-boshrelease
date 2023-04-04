@@ -63,13 +63,6 @@ jobs:
             args: []
           params:
             REPO_ROOT: git-previous-release
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : unit-tests job failed"
 
   - name: unit-tests-pr
     public: true
@@ -167,13 +160,6 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git-previous-release
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : acceptance tests failed"
 
   - name: acceptance-tests-pr
     public: true
@@ -265,14 +251,6 @@ jobs:
               fi
           inputs:
           - name: git-previous-release
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text: release candidate job 'pre' failed (which is unusual).
-          ok: false
 
   - name: rc
     public: true
@@ -283,13 +261,6 @@ jobs:
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : rc job failed"
 
   - name: patch
     public: true
@@ -297,13 +268,6 @@ jobs:
       - do:
           - { get: version, trigger: false, params: {bump: patch} }
           - { put: version,                 params: {file: version/number} }
-        on_failure:
-          put: notify
-          params:
-            channel:  "#haproxy-boshrelease"
-            username: ci-bot
-            icon_url: "((slack.icon))"
-            text:    "((slack.fail_url)) haproxy-boshrelease : patch job failed"
 
   - name: minor
     public: true
@@ -311,13 +275,6 @@ jobs:
     - do:
       - { get: version, trigger: false, params: {bump: minor} }
       - { put: version,                 params: {file: version/number} }
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : minor job failed"
 
   - name: major
     public: true
@@ -325,13 +282,6 @@ jobs:
     - do:
       - { get: version, trigger: false, params: {bump: major} }
       - { put: version,                 params: {file: version/number} }
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : major job failed"
 
   - name: shipit
     public: true
@@ -385,19 +335,7 @@ jobs:
           tag:    gh/tag
           body:   gh/notes.md
           globs: [gh/artifacts/*, gh/artifacts-patched/*]
-      - put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text_file: notifications/message
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:    "((slack.fail_url)) haproxy-boshrelease : shipit job failed"
+
   - name: autobump-dependencies
     public: true
     serial: true
