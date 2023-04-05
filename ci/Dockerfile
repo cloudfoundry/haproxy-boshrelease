@@ -1,4 +1,4 @@
-FROM bosh/main-bosh-docker
+FROM bosh/docker-cpi:main
 
 ARG GINKGO_VERSION=v2.9.2
 ARG SPRUCE_VERSION=v1.30.2
