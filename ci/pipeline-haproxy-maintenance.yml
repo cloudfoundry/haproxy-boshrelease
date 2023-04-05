@@ -434,11 +434,6 @@ resources:
       json_key:        ((gcp.service_key))
       initial_version: "11.16.3"
 
-  - name: notify
-    type: slack-notification
-    source:
-      url: ((slack.webhook))
-
   - name: github
     type: github-release-alt
     source:
