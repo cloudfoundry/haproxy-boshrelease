@@ -429,7 +429,7 @@ resources:
     type: semver
     source :
       driver:          gcs
-      bucket:          haproxy-boshrelease-maintenance
+      bucket:          haproxy-boshrelease
       key:             version-11.16
       json_key:        ((gcp.service_key))
       initial_version: "11.16.3"
@@ -449,7 +449,7 @@ resources:
   - name: blobstore
     type: gcs
     source:
-      bucket:   haproxy-boshrelease-maintenance
+      bucket:   haproxy-boshrelease
       json_key: ((gcp.service_key))
       regexp:   haproxy-([0-9\.+-]+).tgz
 
