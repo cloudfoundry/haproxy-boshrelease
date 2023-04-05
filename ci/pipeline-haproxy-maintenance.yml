@@ -449,7 +449,7 @@ resources:
   - name: blobstore
     type: gcs
     source:
-      bucket:   haproxy-boshrelease
+      bucket:   haproxy-boshrelease-maintenance
       json_key: ((gcp.service_key))
       regexp:   haproxy-([0-9\.+-]+).tgz
 
@@ -460,4 +460,3 @@ resources:
       stop: 8:00 AM
       location: Europe/Berlin
       interval: 24h
-      
