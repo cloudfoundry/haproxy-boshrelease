@@ -430,7 +430,7 @@ resources:
     source :
       driver:          gcs
       bucket:          haproxy-boshrelease
-      key:             Version-11.16
+      key:             version-11
       json_key:        ((gcp.service_key))
       initial_version: "11.16.3"
 
@@ -460,3 +460,4 @@ resources:
       stop: 8:00 AM
       location: Europe/Berlin
       interval: 24h
+      
