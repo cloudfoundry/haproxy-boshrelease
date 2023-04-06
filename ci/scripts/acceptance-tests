@@ -11,7 +11,7 @@ if [ -n "$FOCUS" ]; then
   echo "FOCUS is set. Will only run tests matching '$FOCUS'"
   echo "Docker won't be stopped afterwards, so you can debug the test."
   echo "------------------------------------------------------------------"
-  FOCUS_ARG="-focus $FOCUS"
+  ADDITIONAL_ARGS=("--focus" "$FOCUS")
 fi
 
 cd ${REPO_ROOT:?required}
@@ -67,4 +67,4 @@ echo "----- Running tests"
 
 export PATH=$PATH:$GOPATH/bin
 ginkgo version
-ginkgo -v -p -r -debug -trace -progress -randomizeAllSpecs -flakeAttempts 5 $FOCUS_ARG
+ginkgo -v -p -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
