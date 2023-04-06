@@ -17,6 +17,13 @@
 cd ci/new
 ./build-canned-docker.sh
 ```
+
+Re-build the `haproxy-boshrelease-testflight` image:
+```shell
+cd `ci/`
+docker build --no-cache -t haproxy-boshrelease-testflight .
+```
+
 ### Running tests locally
 
 ```shell
