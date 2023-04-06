@@ -14,7 +14,7 @@ if [ -n "$FOCUS" ]; then
   FOCUS_ARG="-focus $FOCUS"
 fi
 
-cd ${REPO_ROOT:?required}
+cd "${REPO_ROOT:?required}"
 echo "----- Pulling in any git submodules..."
 git submodule update --init --recursive --force
 
@@ -35,14 +35,12 @@ fi
 
 echo "----- Creating candidate BOSH release..."
 bosh -n reset-release # in case dev_releases/ is in repo accidentally
-
 time bosh create-release --force
 
-echo "uploading release. Vars:"
-env
 bosh upload-release --rebase
 release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
 export RELEASE_VERSION="${release_final_version}.latest"
+echo
 echo "----- Created ${RELEASE_VERSION}"
 
 echo "----- Uploading Jammy stemcell"
