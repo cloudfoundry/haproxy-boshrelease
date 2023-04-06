@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 BUILD_CONTAINER=bosh-director-build-$(date +%s)-$RANDOM
 
 BOSH_DIRECTOR_TAG=${1:-bosh-director-docker}
@@ -8,6 +10,7 @@ BASE_IMAGE=${2:-bosh/main-bosh-docker}
 docker run -d -e BOSH_CERT_DIR=/tmp/certs --privileged --name "$BUILD_CONTAINER" "$BASE_IMAGE" sleep infinity
 
 docker exec -e BOSH_CERT_DIR=/tmp/certs $BUILD_CONTAINER bash -c '
+    set -x
     sed -i '"'"'s#certs_dir=$(mktemp -d)#certs_dir=${BOSH_CERT_DIR:-$(mktemp -d /tmp/certs.XXXX)}#'"'"' $(command -v start-bosh)
 
     [ -n "$BOSH_CERT_DIR" ] && mkdir -p $BOSH_CERT_DIR
@@ -24,6 +27,7 @@ docker exec -e BOSH_CERT_DIR=/tmp/certs $BUILD_CONTAINER bash -c '
     export BOSH0_CONTAINER=$(jq .current_vm_cid -r /tmp/local-bosh/director/state.json)
 
     docker exec "$BOSH0_CONTAINER" bash -c "
+        set -x
         /var/vcap/bosh/bin/monit stop all
         
         while ! ( /var/vcap/bosh/bin/monit summary | grep -E '"'"'System.*not monitored$'"'"' ); do echo Waiting for monit to stop all jobs; sleep 1; done
