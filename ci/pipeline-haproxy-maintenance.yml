@@ -429,8 +429,8 @@ resources:
     type: semver
     source :
       driver:          gcs
-      bucket:          haproxy-boshrelease-maintenance
-      key:             version-11.16
+      bucket:          haproxy-boshrelease
+      key:             version-11
       json_key:        ((gcp.service_key))
       initial_version: "11.16.3"
 
