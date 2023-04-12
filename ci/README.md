@@ -16,7 +16,7 @@ Concourse is used as CI system. There are two main types of tests and various re
   * `acceptance-tests-pr` is executed for each PR that is marked with the `run-ci` label, while
   * `acceptance-tests` is run on new commits to `master`, e.g. after a PR has been merged.
 
-All tests run in Docker. The image `iacbox.common.repositories.cloud.sap/haproxy-boshrelease-testflight` is a built and cached version of building [`Dockerfile`](Dockerfile).
+All tests run in Docker. The image `cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight` is a built and cached version of building [`Dockerfile`](Dockerfile).
 
 ***Note, August 2022***: The image used for acceptance tests is working, but on an older version. It will be updated to a recent state in the near future.
 
