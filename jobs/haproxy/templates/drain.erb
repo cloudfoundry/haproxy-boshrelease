@@ -60,7 +60,7 @@ while kill -0 "${haproxy_master_pid}" 2>/dev/null; do
   sleep 1;
   drain_time=$((drain_time + 1))
   if [ $drain_time -ge $drain_timeout ]; then
-    echo "$(date): Process ${haproxy_master_pid} still alive after ${drain_timeout} seconds. Forcing stop." >> ${logfile}
+    echo "$(date): Process ${haproxy_master_pid} still alive after ${drain_time} seconds. Forcing stop." >> ${logfile}
     break
   fi
 done
