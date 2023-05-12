@@ -8,8 +8,8 @@ describe 'config/haproxy.config backend http-routers' do
   end
 
   let(:properties) { {} }
-  let(:backend_http1) { haproxy_conf['backend http-routers-http1'] }
-  let(:backend_http2) { haproxy_conf['backend http-routers-http2'] }
+  let(:backend_http1) { haproxy_conf['backend http-routers-http1'] } # rubocop:disable RSpec/IndexedLet
+  let(:backend_http2) { haproxy_conf['backend http-routers-http2'] } # rubocop:disable RSpec/IndexedLet
 
   it 'has the correct mode' do
     expect(backend_http1).to include('mode http')
