@@ -409,6 +409,7 @@ resources:
       repository:   cloudfoundry/haproxy-boshrelease
       base_branch:  maintenance
       labels:       [run-ci]
+      required_review_approvals: 1
 
   - name: stemcell-bionic
     type: bosh-io-stemcell
