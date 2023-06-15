@@ -9,7 +9,7 @@ blacklist internal-only domains, preventing potential Host header spoofing from 
 unauthorized access of internal APIs. It also allows for better control over haproxy's
 timeouts, for greater resiliency under heavy load.
 
-test
+test2
 
 Usage
 -----
