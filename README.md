@@ -1,4 +1,4 @@
-BOSH Release for haproxy
+BOSH Release for haproxy.
 ===========================
 
 Questions? Pop in our [slack channel](https://cloudfoundry.slack.com/messages/haproxy-boshrelease/)!
