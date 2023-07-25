@@ -441,7 +441,10 @@ resource_types:
   - name: pull-request
     type: docker-image
     source:
-      repository: teliaoss/github-pr-resource
+      repository: cf-routing.common.repositories.cloud.sap/eirini-github-pr-resource
+      tag: latest
+      username: ((docker.username))
+      password: ((docker.password))
 
   - name: gcs
     type: docker-image
@@ -464,6 +467,11 @@ resources:
       base_branch:  master
       labels:       [run-ci]
       required_review_approvals: 1
+      trusted_teams:
+        - "wg-app-runtime-platform-networking-extensions-approvers"
+      trusted_users:
+        - "dependabot"
+        - "CFN-CI"
 
   - name: stemcell-bionic
     type: bosh-io-stemcell

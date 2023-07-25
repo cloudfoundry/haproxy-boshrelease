@@ -378,7 +378,10 @@ resource_types:
   - name: pull-request
     type: docker-image
     source:
-      repository: teliaoss/github-pr-resource
+      repository: cf-routing.common.repositories.cloud.sap/eirini-github-pr-resource
+      tag: latest
+      username: ((docker.username))
+      password: ((docker.password))
 
   # FIXME: Need to use latest version of this resource due to
   # https://github.com/concourse/github-release-resource/issues/108
@@ -410,6 +413,11 @@ resources:
       base_branch:  maintenance
       labels:       [run-ci]
       required_review_approvals: 1
+      trusted_teams:
+        - "wg-app-runtime-platform-networking-extensions-approvers"
+      trusted_users:
+        - "dependabot"
+        - "CFN-CI"
 
   - name: stemcell-bionic
     type: bosh-io-stemcell
@@ -456,4 +464,3 @@ resources:
       stop: 8:00 AM
       location: Europe/Berlin
       interval: 24h
-      
