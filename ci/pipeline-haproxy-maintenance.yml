@@ -383,15 +383,6 @@ resource_types:
       username: ((docker.username))
       password: ((docker.password))
 
-  # FIXME: Need to use latest version of this resource due to
-  # https://github.com/concourse/github-release-resource/issues/108
-  # https://github.com/concourse/github-release-resource/pull/107
-  # Until Concourse is updated to 7.5.0+
-  - name: github-release-alt
-    type: registry-image
-    source:
-      repository: concourse/github-release-resource
-
   - name: gcs
     type: docker-image
     source:
@@ -444,7 +435,7 @@ resources:
       initial_version: "11.16.3"
 
   - name: github
-    type: github-release-alt
+    type: github-release
     source:
       user:         cloudfoundry
       repository:   haproxy-boshrelease
