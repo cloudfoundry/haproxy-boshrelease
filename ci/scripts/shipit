@@ -23,6 +23,8 @@ header() {
 : "${REPO_OUT:?required}" # Resulting repo state for subsequent steps
 : "${BRANCH:?required}" # The branch name, from which to build the release
 : "${GITHUB_OWNER:?required}" # The github organization / owner of the repo
+: "${GIT_USER_NAME:?required}" # The user name for GIT commits is mandatory. This should be a user that is allowed to push to master.
+: "${GIT_USER_EMAIL:?required}" # The e-mail address for GIT commits is mandatory. This should be a user that is allowed to push to master.
 : "${VERSION_FROM:?required}" # The path to the Version file
 : "${GCP_SERVICE_KEY:?required}" # The GCP service key for accessing the blobstore, written to a temporary private.yml.
 
@@ -138,10 +140,10 @@ EOF
 
 header "Update git repo with final release..."
 if [[ -z $(git config --global user.email) ]]; then
-  git config --global user.email "ci@starkandwayne.com"
+  git config --global user.email "$GIT_USER_EMAIL"
 fi
 if [[ -z $(git config --global user.name) ]]; then
-  git config --global user.name "CI Bot"
+  git config --global user.name "$GIT_USER_NAME"
 fi
 
 pushd "${REPO_ROOT}"
