@@ -392,9 +392,10 @@ resources:
   - name: git-previous-release
     type: git
     source:
-      uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
+      uri:         https://github.com/cloudfoundry/haproxy-boshrelease
       branch:      maintenance
-      private_key: ((github.private_key))
+      username:    ((github.bot_user))
+      password:    ((github.access_token))
 
   - name: git-pull-requests-previous-release
     type: pull-request
