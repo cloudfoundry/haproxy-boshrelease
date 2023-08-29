@@ -7,6 +7,8 @@ updates:
     day: "monday"
     time: "09:00"
     timezone: "Europe/Berlin"
+  labels:
+    - run-ci
 - package-ecosystem: pip
   directory: /ci/scripts
   schedule:
@@ -14,6 +16,8 @@ updates:
     day: "monday"
     time: "09:00"
     timezone: "Europe/Berlin"
+  labels:
+    - run-ci
 - package-ecosystem: gomod
   directory: /acceptance-tests
   target-branch: "maintenance"
@@ -22,6 +26,8 @@ updates:
     day: "wednesday"
     time: "09:00"
     timezone: "Europe/Berlin"
+  labels:
+    - run-ci
 - package-ecosystem: pip
   directory: /ci/scripts
   target-branch: "maintenance"
@@ -30,4 +36,6 @@ updates:
     day: "wednesday"
     time: "09:00"
     timezone: "Europe/Berlin"
+  labels:
+    - run-ci
 
