@@ -69,6 +69,39 @@ describe 'config/bpm.yml' do
     end
   end
 
+  context 'when ha_proxy.host_pid_namespace is provided' do
+    it 'disables the host PID namespace inside the haproxy container' do
+      bpm_yaml = template.render({
+        'ha_proxy' => {
+          'max_open_files' => 123,
+          'host_pid_namespace' => false
+        }
+      })
+
+      expect(bpm_yaml).to eq(<<~EXPECTED)
+        processes:
+          - name: haproxy
+            executable: /var/vcap/jobs/haproxy/bin/haproxy_wrapper
+            additional_volumes:
+              - path: /var/vcap/jobs/haproxy/config/cidrs
+                writable: true
+              - path: /var/vcap/jobs/haproxy/config/ssl
+                writable: true
+              - path: /var/vcap/sys/run/haproxy
+                writable: true
+
+            unsafe:
+              unrestricted_volumes: []
+              host_pid_namespace: false
+
+            limits:
+              open_files: 123
+            capabilities:
+              - NET_BIND_SERVICE
+      EXPECTED
+    end
+  end
+
   context 'when ha_proxy.additional_unrestricted_volumes are provided' do
     it 'grants BPM access to the volumes' do
       bpm_yaml = template.render({

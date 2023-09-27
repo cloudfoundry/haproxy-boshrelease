@@ -602,7 +602,9 @@ properties:
       Map of Additional Unrestricted volumes to added so HA Proxy to give the ability to load external volumes under BPM. These will need to be provided
       in a Map based on bpm unrestricted volume spec
     default: ~
-
+  ha_proxy.host_pid_namespace:
+    description: Use the host's PID namespace inside the haproxy container. This option is based on "host_pid_namespace" BPM spec.
+    default: true
 
   ha_proxy.backend_use_http_health:
     description: |

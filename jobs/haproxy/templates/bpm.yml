@@ -17,9 +17,14 @@ processes:
       additional_volumes.concat(p("ha_proxy.additional_unrestricted_volumes"))
    end
 %>
-<%-  if additional_volumes then -%>
+<%- if additional_volumes || !p("ha_proxy.host_pid_namespace") -%>
     unsafe:
+    <%- if additional_volumes -%>
       unrestricted_volumes: <%= additional_volumes.to_json %>
+    <%- end -%>
+    <%- if !p("ha_proxy.host_pid_namespace") -%>
+      host_pid_namespace: false
+    <%- end -%>
 <% end %>
     limits:
       open_files: <%= p("ha_proxy.max_open_files") %>
