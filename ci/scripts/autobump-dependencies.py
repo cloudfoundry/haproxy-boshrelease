@@ -390,7 +390,7 @@ def main() -> None:
         HaproxyDependency(
             "haproxy",
             "HAPROXY_VERSION",
-            "2.7",
+            "2.8",
             "https://www.haproxy.org/download/{}/src",
         ),
         WebLinkDependency(
