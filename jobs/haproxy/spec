@@ -297,6 +297,12 @@ properties:
   ha_proxy.trusted_stats_cidrs:
     description: "Trusted ip range that can access the stats UI"
     default: 0.0.0.0/32
+  ha_proxy.stats_promex_enable:
+     description: "If true, haproxy will enable native prometheus exporter."
+     default: false
+  ha_proxy.stats_promex_path:
+    description: "Define prometheus exporter path."
+    default: "/metrics"
 
   ha_proxy.master_cli_enable:
     description: "If true, enables the master CLI which can be used to manage HAProxy"

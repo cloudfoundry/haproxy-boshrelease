@@ -34,6 +34,16 @@ describe 'config/haproxy.config stats listener' do
       expect(stats_listener).to include('stats auth admin:secret')
     end
 
+    context 'when ha_proxy.stats_promex_enable is true' do
+      let(:properties) do
+        default_properties.merge({ 'stats_promex_enable' => true, 'stats_promex_path' => '/foo' })
+      end
+
+      it 'sets up a prometheus exporter endpoint' do
+        expect(stats_listener).to include('http-request use-service prometheus-exporter if { path /foo }')
+      end
+    end
+
     context 'when ha_proxy.trusted_stats_cidrs is set' do
       let(:properties) do
         default_properties.merge({ 'trusted_stats_cidrs' => '1.2.3.4/32' })
