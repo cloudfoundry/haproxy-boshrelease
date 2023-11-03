@@ -1,5 +1,5 @@
 beautifulsoup4==4.12.2
-gitpython==3.1.38
+gitpython==3.1.40
 packaging==23.2
 pygithub==2.1.1
 pyyaml==6.0.1
