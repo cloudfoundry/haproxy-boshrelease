@@ -127,6 +127,8 @@ builds:
     version: 11.8.0
   acbe6f20-83b9-42a2-b12d-6ccef204abf3:
     version: "8"
+  adb620be-3257-4e12-7fee-b5eb3ef1ddf5:
+    version: 13.2.0+2.8.4
   af78051a-ba98-4a7b-773a-39035e5ed3e4:
     version: 10.1.1
   b2498f45-ad69-43c6-75a4-4f695d5243c9:
