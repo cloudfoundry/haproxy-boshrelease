@@ -432,4 +432,30 @@ describe 'config/haproxy.config global and default options' do
       expect(global).to include('h1-accept-payload-with-any-method')
     end
   end
+
+  context 'when ha_proxy.enable_redispatch is true but retries missing' do
+    let(:properties) do
+      {
+        'enable_redispatch' => true
+      }
+    end
+
+    it 'throws an error because retries are missing' do
+      expect { defaults }.to raise_error(/Conflicting configuration: enable_redispatch works only with retries > 0/)
+    end
+  end
+
+  context 'when ha_proxy.enable_redispatch is true and retries are enabled' do
+    let(:properties) do
+      {
+        'enable_redispatch' => true,
+        'retries' => 1
+      }
+    end
+
+    it 'enables redispatching in the default section and sets retries' do
+      expect(defaults).to include('option redispatch')
+      expect(defaults).to include('retries 1')
+    end
+  end
 end
