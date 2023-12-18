@@ -48,16 +48,16 @@ func copyFileToRemote(user string, addr string, privateKey string, remotePath st
 	return scpClient.CopyFile(context.Background(), fileReader, remotePath, permissions)
 }
 
-// Forwards a TCP connection from a given port on the local machine to a given port on the remote machine
-// Starts in backgound, cancel via context
-func startSSHPortForwarder(user string, addr string, privateKey string, localPort, remotePort int, ctx context.Context) error {
+// Opens a local port forwarding SSH connection. Equivalent to
+// ssh -i <privateKey> -L <localIP>:<localPort>:<remoteIP>:<remotePort> <user>@<addr>
+func startSSHPortAndIPForwarder(user string, addr string, privateKey string, localIP string, localPort int, remoteIP string, remotePort int, ctx context.Context) error {
 	remoteConn, err := buildSSHClient(user, addr, privateKey)
 	if err != nil {
 		return err
 	}
 
-	writeLog(fmt.Sprintf("Listening on 127.0.0.1:%d on local machine\n", remotePort))
-	localListener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
+	writeLog(fmt.Sprintf("Listening on %s:%d on local machine\n", localIP, localPort))
+	localListener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", localIP, localPort))
 	if err != nil {
 		return err
 	}
@@ -75,9 +75,9 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 				return
 			}
 
-			remoteConn, err := remoteConn.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", remotePort))
+			remoteConn, err := remoteConn.Dial("tcp", fmt.Sprintf("%s:%d", remoteIP, remotePort))
 			if err != nil {
-				writeLog(fmt.Sprintf("Error dialing local port %d: %s\n", remotePort, err.Error()))
+				writeLog(fmt.Sprintf("Error dialing remote ip %s port %d: %s\n", remoteIP, remotePort, err.Error()))
 				return
 			}
 
@@ -95,16 +95,22 @@ func startSSHPortForwarder(user string, addr string, privateKey string, localPor
 	return nil
 }
 
-// Forwards a TCP connection from a given port on the remote machine to a given port on the local machine
-// Starts in backgound, cancel via context
-func startReverseSSHPortForwarder(user string, addr string, privateKey string, remotePort, localPort int, ctx context.Context) error {
+// Forwards a TCP connection from a given port on the local machine to a given port on the remote machine
+// Starts in background, cancel via context
+func startSSHPortForwarder(user string, addr string, privateKey string, localPort, remotePort int, ctx context.Context) error {
+	return startSSHPortAndIPForwarder(user, addr, privateKey, "127.0.0.1", localPort, "127.0.0.1", remotePort, ctx)
+}
+
+// Opens a remote port forwarding SSH connection. Equivalent to
+// ssh -i <privateKey> -R <remoteIP>:<remotePort>:<localIP>:<localPort> <user>@<addr>
+func startReverseSSHPortAndIPForwarder(user string, addr string, privateKey string, remoteIP string, remotePort int, localIP string, localPort int, ctx context.Context) error {
 	remoteConn, err := buildSSHClient(user, addr, privateKey)
 	if err != nil {
 		return err
 	}
 
-	writeLog(fmt.Sprintf("Listening on 127.0.0.1:%d on remote machine\n", remotePort))
-	remoteListener, err := remoteConn.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", remotePort))
+	writeLog(fmt.Sprintf("Listening on %s:%d on remote machine %s\n", remoteIP, remotePort, addr))
+	remoteListener, err := remoteConn.Listen("tcp", fmt.Sprintf("%s:%d", remoteIP, remotePort))
 	if err != nil {
 		return err
 	}
@@ -122,9 +128,9 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 				return
 			}
 
-			localConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
+			localConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", localIP, localPort))
 			if err != nil {
-				writeLog(fmt.Sprintf("Error dialing local port %d: %s\n", localPort, err.Error()))
+				writeLog(fmt.Sprintf("Error dialing local ip %s port %d: %s\n", localIP, localPort, err.Error()))
 				return
 			}
 
@@ -140,6 +146,12 @@ func startReverseSSHPortForwarder(user string, addr string, privateKey string, r
 	}()
 
 	return nil
+}
+
+// Forwards a TCP connection from a given port on the remote machine to a given port on the local machine
+// Starts in background, cancel via context
+func startReverseSSHPortForwarder(user string, addr string, privateKey string, remotePort, localPort int, ctx context.Context) error {
+	return startReverseSSHPortAndIPForwarder(user, addr, privateKey, "127.0.0.1", remotePort, "127.0.0.1", localPort, ctx)
 }
 
 func copyConnections(client net.Conn, remote net.Conn) {

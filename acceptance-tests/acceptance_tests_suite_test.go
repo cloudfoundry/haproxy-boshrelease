@@ -2,12 +2,15 @@ package acceptance_tests
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -61,46 +64,94 @@ var _ = SynchronizedAfterSuite(func() {
 	deleteDeployment(deploymentNameForTestNode())
 }, func() {})
 
-// Starts a simple test server that returns 200 OK or echoes websocket messages back
-func startDefaultTestServer() (func(), int) {
-	var upgrader = websocket.Upgrader{}
+type TestServerOption func(*httptest.Server)
 
-	By("Starting a local websocket server to act as a backend")
-	closeLocalServer, localPort, err := startLocalHTTPServer(nil, func(w http.ResponseWriter, r *http.Request) {
-		// if no upgrade requested, act like a normal HTTP server
-		if strings.ToLower(r.Header.Get("Upgrade")) != "websocket" {
-			fmt.Fprintln(w, "Hello cloud foundry")
-			return
-		}
-
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer conn.Close()
-
-		for {
-			messageType, message, err := conn.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = conn.WriteMessage(messageType, message)
-			if err != nil {
-				break
-			}
-		}
-	})
-
-	Expect(err).NotTo(HaveOccurred())
-	return closeLocalServer, localPort
+func withIP(ip string) TestServerOption {
+	return func(server *httptest.Server) {
+		l, err := net.Listen("tcp", fmt.Sprintf("%s:0", ip))
+		Expect(err).ToNot(HaveOccurred())
+		server.Listener = l
+	}
 }
 
-// Sets up SSH tunnel from HAProxy VM to test server
-func setupTunnelFromHaproxyToTestServer(haproxyInfo haproxyInfo, haproxyBackendPort, localPort int) func() {
-	By(fmt.Sprintf("Creating a reverse SSH tunnel from HAProxy backend (port %d) to local HTTP server (port %d)", haproxyBackendPort, localPort))
+func withTLS(tlsConfig *tls.Config) TestServerOption {
+	return func(server *httptest.Server) {
+		server.TLS = tlsConfig
+	}
+}
+
+func withHandlerFunc(handlerFunc http.HandlerFunc) TestServerOption {
+	return func(server *httptest.Server) {
+		server.Config = &http.Server{Handler: handlerFunc}
+	}
+}
+
+func defaultHandler(w http.ResponseWriter, r *http.Request) {
+	// if no upgrade requested, act like a normal HTTP server
+	if strings.ToLower(r.Header.Get("Upgrade")) != "websocket" {
+		fmt.Fprintln(w, "Hello cloud foundry")
+		return
+	}
+	var upgrader = websocket.Upgrader{}
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+
+	for {
+		messageType, message, err := conn.ReadMessage()
+		if err != nil {
+			break
+		}
+		err = conn.WriteMessage(messageType, message)
+		if err != nil {
+			break
+		}
+	}
+}
+
+func newTestServer(options ...TestServerOption) *httptest.Server {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	Expect(err).NotTo(HaveOccurred())
+
+	server := &httptest.Server{
+		Listener:    l,
+		EnableHTTP2: false,
+		TLS:         nil,
+		Config:      &http.Server{Handler: http.HandlerFunc(defaultHandler)},
+	}
+
+	for _, opt := range options {
+		opt(server)
+	}
+
+	return server
+}
+
+// Starts a simple test server that returns 200 OK or echoes websocket messages back
+func startDefaultTestServer(options ...TestServerOption) (func(), int) {
+	By("Starting a local websocket server to act as a backend")
+	server := newTestServer(options...)
+	if server.TLS != nil {
+		server.StartTLS()
+	} else {
+		server.Start()
+	}
+
+	serverURL, err := url.Parse(server.URL)
+	Expect(err).NotTo(HaveOccurred())
+	port, err := strconv.ParseInt(serverURL.Port(), 10, 64)
+	Expect(err).NotTo(HaveOccurred())
+
+	return server.Close, int(port)
+}
+
+func setupTunnelFromHaproxyIPToTestServerIP(haproxyInfo haproxyInfo, haproxyBackendIP string, haproxyBackendPort int, localIP string, localPort int) func() {
+	By(fmt.Sprintf("Creating a reverse SSH tunnel from HAProxy backend (ip %s port %d) to local HTTP server (ip %s port %d)", haproxyBackendIP, haproxyBackendPort, localIP, localPort))
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	err := startReverseSSHPortForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, haproxyBackendPort, localPort, ctx)
+	err := startReverseSSHPortAndIPForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, haproxyBackendIP, haproxyBackendPort, localIP, localPort, ctx)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Waiting a few seconds so that HAProxy can detect the backend server is listening")
@@ -110,6 +161,11 @@ func setupTunnelFromHaproxyToTestServer(haproxyInfo haproxyInfo, haproxyBackendP
 	time.Sleep(5 * time.Second)
 
 	return cancelFunc
+}
+
+// Sets up SSH tunnel from HAProxy VM to test server
+func setupTunnelFromHaproxyToTestServer(haproxyInfo haproxyInfo, haproxyBackendPort, localPort int) func() {
+	return setupTunnelFromHaproxyIPToTestServerIP(haproxyInfo, "127.0.0.1", haproxyBackendPort, "127.0.0.1", localPort)
 }
 
 // Sets up SSH tunnel from local machine to HAProxy

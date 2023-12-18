@@ -258,6 +258,12 @@ properties:
   ha_proxy.disable_backend_http2_websockets:
     default: false
     description: "Forward websockets to the backend servers using HTTP/1.1, never HTTP/2. Does not apply to custom routed_backend_servers. Works around https://github.com/cloudfoundry/routing-release/issues/230. Overrides backend_match_http_protocol for websockets."
+  ha_proxy.enable_redispatch:
+    default: false
+    description: "When enabled, HAProxy will try to connect to another server if a connect attempt fails. Best used in conjunction with retries."
+  ha_proxy.retries:
+    default: 0
+    description: "HAProxy will retry this many times on failed connections. When redispatch is enabled, the retries may occur on different servers. In combination with connect_timeout this defines the maximum response time of HAProxy to clients. e.g. 0.5s connect_timeout * 10 retries = 5s max response time"
 
   ha_proxy.connect_timeout:
     description: "Timeout (in floating point seconds) used on connections from haproxy to a backend, while waiting for the TCP handshake to complete + connection to establish"
