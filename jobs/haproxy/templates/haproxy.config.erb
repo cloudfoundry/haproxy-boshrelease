@@ -172,6 +172,10 @@ end
     abort "Conflicting configuration: if enable_4443 is true, you must provide a valid SSL config via ssl_pem or crt_list"
   end
 
+  if p("ha_proxy.retries") == 0 && p("ha_proxy.enable_redispatch")
+    abort "Conflicting configuration: enable_redispatch works only with retries > 0"
+  end
+
   backend_servers = []
   backend_servers_local = []
   backend_port = nil
@@ -281,6 +285,13 @@ defaults
   <%- if p("ha_proxy.backend_prefer_local_az") -%>
     option allbackups
   <%- end -%>
+  <%- if p("ha_proxy.enable_redispatch") -%>
+    option redispatch
+  <%- end -%>
+  <%- if p("ha_proxy.retries") > 0 -%>
+    retries <%= p("ha_proxy.retries") %>
+  <%- end -%>
+
     timeout connect         <%= (p("ha_proxy.connect_timeout").to_f    * 1000).to_i %>ms
     timeout client          <%= (p("ha_proxy.client_timeout").to_f     * 1000).to_i %>ms
     timeout server          <%= (p("ha_proxy.server_timeout").to_f     * 1000).to_i %>ms
