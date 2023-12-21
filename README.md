@@ -47,7 +47,7 @@ bosh deploy
 KEEPALIVED_VIP=10.244.50.2 templates/make_manifest warden 10.244.0.22
 ```
 
-### Development
+## Development
 
 Feel free to contribute back to this via a pull request on a feature branch! Once merged, we'll
 cut a new final release for you.
@@ -93,3 +93,7 @@ Unit/rspec Tests can also be debugged/stepped through when needed. See for examp
 ### Acceptance tests
 
 See [acceptance-tests README](/acceptance-tests/README.md).
+
+### Certificate reloads during runtime
+
+See [external_certs README](/docs/external_certs.md)
