@@ -10,10 +10,10 @@ haproxy/lua-5.4.6.tar.gz:
   size: 363329
   object_id: 7b7ffa11-ae22-4fec-5f45-fcef34d8291f
   sha: sha256:7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88
-haproxy/pcre2-10.42.tar.gz:
-  size: 2397194
-  object_id: 1411549b-cc2b-4140-68d1-f55bc6b17bef
-  sha: sha256:c33b418e3b936ee3153de2c61cc638e7e4fe3156022a5c77d0711bcbb9d64f1f
+haproxy/pcre2-10.43rc1.tar.gz:
+  size: 2516042
+  object_id: 6635d3c6-740b-4db2-6df1-3692abc5df95
+  sha: sha256:4b59d54755b83ecc527b5182d8cb030bffc862ba674b79900151cf569cee8e4d
 haproxy/socat-1.7.4.4.tar.gz:
   size: 662968
   object_id: 674c1075-b8d9-4b29-5af3-d0d0ed1cbb09
