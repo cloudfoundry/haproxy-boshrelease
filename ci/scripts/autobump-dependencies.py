@@ -260,6 +260,8 @@ class GithubDependency(Dependency):
         latest_version = version.parse("0.0.0")
 
         for rel in releases:
+            if rel.prerelease:
+                continue
             current_raw = rel.tag_name.lstrip(self.tagname_prefix)
             current_version = version.parse(current_raw)
             if latest_version < current_version and current_raw.startswith(self.pinned_version):
