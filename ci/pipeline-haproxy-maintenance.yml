@@ -166,7 +166,7 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests-previous-release, trigger: true, version: every, passed: [unit-tests-pr] }
+      - { get: git-pull-requests-previous-release, trigger: true, version: every }
       - { get: stemcell }
       - { get: stemcell-bionic }
       - { get: bpm }
