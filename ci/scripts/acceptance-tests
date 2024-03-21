@@ -14,9 +14,18 @@ if [ -n "$FOCUS" ]; then
   ADDITIONAL_ARGS=("--focus" "$FOCUS")
 fi
 
-cd ${REPO_ROOT:?required}
+cd "${REPO_ROOT:?required}"
 echo "----- Pulling in any git submodules..."
 git submodule update --init --recursive --force
+
+# shellcheck disable=SC1091
+source "ci/scripts/skip-ci.sh"
+if skip_ci "ci/.ci-ignore" ".git/resource/changed_files"; then
+  echo "SKIP TEST: Only .ci-ignored changes found."
+  exit 0
+else
+  echo "RUN TEST: There is at least one non-ignored change found."
+fi
 
 echo "----- Starting BOSH"
 
@@ -31,6 +40,7 @@ if [ -z "$FOCUS" ]; then
   trap stop_docker EXIT
 fi
 
+# shellcheck disable=SC1091
 source /tmp/local-bosh/director/env
 
 echo "----- Creating candidate BOSH release..."
@@ -55,6 +65,7 @@ echo "----- Uploading os-conf (used for tests only)"
 bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
   https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.2
 
+# shellcheck disable=SC2155
 export BOSH_PATH=$(which bosh)
 export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
 
