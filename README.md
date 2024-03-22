@@ -2,6 +2,7 @@ BOSH Release for haproxy
 ===========================
 
 Test for skip-ci
+Another test
 
 Questions? Pop in our [slack channel](https://cloudfoundry.slack.com/messages/haproxy-boshrelease/)!
 
