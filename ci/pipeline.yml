@@ -190,7 +190,7 @@ jobs:
           path: git-pull-requests
           status: pending
           context: acceptance-tests
-        get_params: 
+        get_params:
           list_changed_files: true
       - task: acceptance-tests
         privileged: true
