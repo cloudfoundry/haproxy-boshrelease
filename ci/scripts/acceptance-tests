@@ -20,13 +20,14 @@ git submodule update --init --recursive --force
 
 # shellcheck disable=SC1091
 source "ci/scripts/skip-ci.sh"
-if skip_ci "ci/.ci-ignore" ".git/resource/changed_files"; then
-  echo "SKIP TEST: Only .ci-ignored changes found."
-  exit 0
-else
-  echo "RUN TEST: There is at least one non-ignored change found."
+if [ -f ".git/resource/changed_files" ]; then
+  if skip_ci "ci/.ci-ignore" ".git/resource/changed_files"; then
+    echo "SKIP TEST: Only .ci-ignored changes found."
+    exit 0
+  else
+    echo "RUN TEST: There is at least one non-ignored change found."
+  fi
 fi
-
 echo "----- Starting BOSH"
 
 ./ci/scripts/start-bosh.sh
