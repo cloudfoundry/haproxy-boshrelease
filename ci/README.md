@@ -61,6 +61,14 @@ There are examples for various types of tests already in the source code. Those 
 
    This command will output (but not overwrite) the resulting HAProxy manifest after the ops-file has been applied. This is also the most convenient way to ensure that the syntax and functionality in the ops-file are correct and can be handled by the BOSH CLI.
 
+#### Skipping Acceptance Tests on Certain Pull Requests
+
+Since the acceptance tests are very time consuming, they are skipped for certain changes. The tests are not run if the pull request contains only minor changes such as `README.md` or `release_notes.md`.
+
+The list of ignored files is maintained in [.ci-ignored](https://github.com/cloudfoundry/haproxy-boshrelease/blob/master/ci/.ci-ignore) and contains individual files as well as folders such as `docs`.
+
+**Caveat:** The regular (non-PR triggered) acceptance tests are not skippable in this way.
+
 #### Running Acceptance Tests Locally
 
 ***Note August 2022***: There is currently a mismatch between current Docker / Docker for Mac distributions and the way the `docker-cpi` for BOSH works. Running BOSH and thus the acceptance tests with the scripts as they are in this repository is currently not possible, but is being worked on.
