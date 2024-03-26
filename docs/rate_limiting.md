@@ -47,7 +47,7 @@ config:
 #### Resulting `haproxy.config`
 ```ini
 backend st_http_req_rate
-    stick-table type ip size 1m expire 10s store http_req_rate(10s)
+    stick-table type ipv6 size 1m expire 10s store http_req_rate(10s)
 # [...]
 frontend http-in
     http-request track-sc1 src table st_http_req_rate
@@ -68,7 +68,7 @@ config:
 #### Resulting `haproxy.config`
 ```ini
 backend st_http_req_rate
-    stick-table type ip size 1m expire 10s store http_req_rate(10s)
+    stick-table type ipv6 size 1m expire 10s store http_req_rate(10s)
 # [...]
 frontend http-in
     http-request track-sc1 src table st_http_req_rate
@@ -95,10 +95,10 @@ config:
 #### Resulting `haproxy.config`
 ```ini
 backend st_http_req_rate
-    stick-table type ip size 1m expire 10s store http_req_rate(10s)
+    stick-table type ipv6 size 1m expire 10s store http_req_rate(10s)
 
 backend st_tcp_conn_rate
-    stick-table type ip size 1m expire 10s store conn_rate(10s)
+    stick-table type ipv6 size 1m expire 10s store conn_rate(10s)
 # [...]
 frontend http-in
     # [...]

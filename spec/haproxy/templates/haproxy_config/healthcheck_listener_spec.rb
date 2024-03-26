@@ -58,5 +58,18 @@ describe 'config/haproxy.config healthcheck listeners' do
         expect(healthcheck_listener).to include('bind :1234')
       end
     end
+
+    context 'when ha_proxy.accept_proxy is true' do
+      let(:properties) do
+        {
+        'enable_health_check_http' => true,
+        'accept_proxy' => true
+        }
+      end
+
+      it 'sets expect-proxy with exception for LOCALHOST' do
+        expect(healthcheck_listener).to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
+      end
+    end
   end
 end
