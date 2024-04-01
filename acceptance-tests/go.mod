@@ -3,7 +3,7 @@ module github.com/cloudfoundry/haproxy-boshrelease/acceptance-tests
 go 1.18
 
 require (
-	github.com/bramvdbogaerde/go-scp v1.3.0
+	github.com/bramvdbogaerde/go-scp v1.4.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
