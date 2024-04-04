@@ -22,28 +22,3 @@ updates:
   open-pull-requests-limit: 1
   labels:
     - run-ci
-- package-ecosystem: gomod
-  directory: /acceptance-tests
-  target-branch: "maintenance"
-  schedule:
-    # Check for updates every weekday
-    interval: "daily"
-    time: "06:00"
-    timezone: "Europe/Berlin"
-  # Allow only 1 open pull requests for gomod to prevent parallel concourse runs
-  open-pull-requests-limit: 1
-  labels:
-    - run-ci
-- package-ecosystem: pip
-  directory: /ci/scripts
-  target-branch: "maintenance"
-  schedule:
-    # Check for updates every weekday
-    interval: "daily"
-    time: "12:00"
-    timezone: "Europe/Berlin"
-  # Allow only 1 open pull requests for pip to prevent parallel concourse runs
-  open-pull-requests-limit: 1
-  labels:
-    - run-ci
-
