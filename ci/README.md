@@ -120,6 +120,15 @@ Note that you can use the `dir` parameter in `run` to define the working directo
 
 Don't forget to remove separate pipelines that were created for testing.
 
+### Deprecated Maintenance Pipeline
+
+The maintenance pipeline was removed in [this PR](https://github.com/cloudfoundry/haproxy-boshrelease/pull/646)
+
+To re-establish it in the future, we need to revert these commits:
+- 94e3b88131ffcc2d5fc8cc54dde669cf137e68c7 (remove dependabot config)
+- f457e98848d98050e5541c1bc1993ceefa76ab58 (remove maintenance pipeline)
+
+
 ### Versioning Guide
 
 For creating a new release please follow the versioning guide based on the [Semantic Versioning Specification](https://semver.org/).
