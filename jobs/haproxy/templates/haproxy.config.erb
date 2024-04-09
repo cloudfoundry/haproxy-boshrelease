@@ -343,7 +343,7 @@ listen health_check_http_url
     mode http
     option httpclose
     monitor-uri /health
-    <%- if_p("ha_proxy.accept_proxy") do -%>
+    <%- if p("ha_proxy.accept_proxy") -%>
     tcp-request connection expect-proxy layer4 unless LOCALHOST
     <%- end -%>
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
