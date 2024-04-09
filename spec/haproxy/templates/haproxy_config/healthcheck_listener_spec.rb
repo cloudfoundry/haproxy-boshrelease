@@ -62,8 +62,8 @@ describe 'config/haproxy.config healthcheck listeners' do
     context 'when ha_proxy.accept_proxy is true' do
       let(:properties) do
         {
-        'enable_health_check_http' => true,
-        'accept_proxy' => true
+          'enable_health_check_http' => true,
+          'accept_proxy' => true
         }
       end
 
