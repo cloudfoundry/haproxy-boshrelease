@@ -14,7 +14,12 @@ if [ -n "$FOCUS" ]; then
   ADDITIONAL_ARGS=("--focus" "$FOCUS")
 fi
 
-cd "${REPO_ROOT:?required}"
+cd ${REPO_ROOT:?required}
+
+# TODO TEMPORARY: REMOVE BEFORE MERGE
+git config --global --add safe.directory /repo
+git config --global --add safe.directory /repo/src/ttar
+
 echo "----- Pulling in any git submodules..."
 git submodule update --init --recursive --force
 

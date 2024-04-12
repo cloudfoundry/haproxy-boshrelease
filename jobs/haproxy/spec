@@ -514,6 +514,9 @@ properties:
   ha_proxy.disable_tcp_accept_proxy:
     description: "Disables the PROXY protocol on tcp backends. Only applies if `ha_proxy.accept_proxy` is enabled."
     default: false
+  ha_proxy.disable_health_check_proxy:
+    description: "Disables the use of the PROXY protocol for health checks. Only applies if `ha_proxy.accept_proxy` is enabled."
+    default: false
   ha_proxy.binding_ip:
     description: "If there are multiple ethernet interfaces, specify which one to bind. Set to `::` to bind to all IPv6 interfaces (no IPv4). IPv6 must be enabled on the HAProxy VM in the deployment manifest."
     default: ""

@@ -70,6 +70,21 @@ describe 'config/haproxy.config healthcheck listeners' do
       it 'sets expect-proxy with exception for LOCALHOST' do
         expect(healthcheck_listener).to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
       end
+
+      context 'when ha_proxy.disable_health_check_proxy is also true' do
+        let(:properties) do
+          {
+            'enable_health_check_http' => true,
+            'accept_proxy' => true,
+            'disable_health_check_proxy' => true,
+          }
+        end
+
+        it 'does not set expect-proxy for the healthcheck' do
+          expect(healthcheck_listener).not_to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
+        end
+      end
+
     end
   end
 end
