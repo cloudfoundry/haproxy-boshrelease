@@ -29,6 +29,23 @@ docker_mac_check_cgroupsv1() {
     fi
 }
 
+check_required_files() {
+  REQUIRED_FILE_PATTERNS=(
+    ../ci/scripts/bpm/bpm-release-*.tgz
+    ../ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz
+    ../ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz
+  )
+
+  for pattern in "${REQUIRED_FILE_PATTERNS[@]}"; do
+    if [ ! -f "$pattern" ]; then
+      echo "Required file not found: {$pattern}"
+      exit 1
+    fi
+  done
+}
+
+check_required_files
+
 if [ "$(uname)" == "Darwin" ]; then
     docker_mac_check_cgroupsv1
 fi
