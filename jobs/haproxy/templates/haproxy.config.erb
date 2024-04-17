@@ -1,5 +1,21 @@
 <%- # see https://bosh.io/docs/jobs/#properties for documentation of bosh ERB templates -%>
-<% if properties.ha_proxy.raw_config -%>
+<%
+  def format_indented_multiline_config(raw_config)
+    ident = "    "
+    if raw_config
+      if raw_config.is_a?(Array)
+        out = ""
+        raw_config.each do |line|
+          out = out + line + "\n"+ident
+        end
+        return out
+      else
+        raw_config.gsub(/\n/, "\n"+ident)
+      end
+    end
+  end
+
+  if properties.ha_proxy.raw_config -%>
 <%= p("ha_proxy.raw_config") %>
 <%- else -%>
 <%-
@@ -228,7 +244,7 @@ global
     log <%= p('ha_proxy.syslog_server') %> len <%= p('ha_proxy.log_max_length') %> format <%= p('ha_proxy.log_format') %> syslog <%= p('ha_proxy.log_level') %>
     daemon
   <%- if properties.ha_proxy.global_config -%>
-    <%= p("ha_proxy.global_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.global_config")) %>
   <%- end -%>
   <%- if p("ha_proxy.nbthread") > 1 -%>
     nbthread <%= p("ha_proxy.nbthread") %>
@@ -300,7 +316,7 @@ defaults
     timeout http-request    <%= (p("ha_proxy.request_timeout").to_f    * 1000).to_i %>ms
     timeout queue           <%= (p("ha_proxy.queue_timeout").to_f      * 1000).to_i %>ms
     <%- if properties.ha_proxy.default_config -%>
-    <%= p("ha_proxy.default_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.default_config")) %>
     <%- end -%>
 
 <% if p("ha_proxy.stats_enable") -%>
@@ -355,7 +371,7 @@ frontend http-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:80 <%= accept_proxy %> <%= v4v6 %>
   <%- if properties.ha_proxy.frontend_config -%>
-    <%= p("ha_proxy.frontend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
@@ -468,7 +484,7 @@ frontend https-in
     <%- end -%>
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
-    <%= p("ha_proxy.frontend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
@@ -599,7 +615,6 @@ frontend https-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
-
   <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
     # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
     # https://github.com/cloudfoundry/routing-release/issues/230
@@ -638,7 +653,7 @@ frontend wss-in
     <%- end -%>
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
-    <%= p("ha_proxy.frontend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -753,7 +768,6 @@ frontend wss-in
   <%- end -%>
     acl xfp_exists hdr_cnt(X-Forwarded-Proto) gt 0
     http-request add-header X-Forwarded-Proto "https" if ! xfp_exists
-
   <%- if p("ha_proxy.disable_backend_http2_websockets") -%>
     # Send websockets to a backend that forces HTTP/1.1. This avoids bugs in Go & Gorouter's HTTP/2 websocket support
     # https://github.com/cloudfoundry/routing-release/issues/230
@@ -784,7 +798,7 @@ backend <%= backend[:name] %>
     compression type <%= p("ha_proxy.compress_types") %>
   <%- end -%>
   <%- if properties.ha_proxy.backend_config -%>
-    <%= p("ha_proxy.backend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.backend_config")) %>
   <%- end -%>
     <%- p('ha_proxy.custom_http_error_files', {}).keys.each do |status_code| -%>
         errorfile <%= status_code %> /var/vcap/jobs/haproxy/errorfiles/custom<%=status_code%>.http
@@ -815,7 +829,7 @@ backend http-routed-backend-<%= prefix_hash %>
     compression type <%= p("ha_proxy.compress_types") %>
   <%- end -%>
   <%- if properties.ha_proxy.backend_config -%>
-    <%= p("ha_proxy.backend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.backend_config")) %>
   <%- end -%>
 <%
   resolvers = ""
@@ -872,7 +886,7 @@ frontend cf_tcp_routing
 backend cf_tcp_routers
     mode tcp
   <%- if properties.ha_proxy.tcp_backend_config -%>
-    <%= p("ha_proxy.tcp_backend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.tcp_backend_config")) %>
   <%- end -%>
     option httpchk GET /health
   <% tcp_router.instances.each_with_index do |instance, index| %>
@@ -906,7 +920,7 @@ frontend tcp-frontend_<%= tcp_proxy["name"]%>
 backend tcp-<%= tcp_proxy["name"] %>
     mode tcp
   <%- if properties.ha_proxy.tcp_backend_config -%>
-    <%= p("ha_proxy.tcp_backend_config") %>
+    <%= format_indented_multiline_config(p("ha_proxy.tcp_backend_config")) %>
   <%- end -%>
   <%- if tcp_proxy["balance"] -%>
     balance <%= tcp_proxy["balance"] %>
@@ -959,3 +973,18 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 
 # }}}
 <% end -%>
+
+# raw blocks {{{
+<%- p('ha_proxy.raw_listen_blocks', {}).each do |block_id, block_raw_config| -%>
+listen <%= block_id %>
+    <%= format_indented_multiline_config(block_raw_config) %>
+<%- end -%>
+<%- p('ha_proxy.raw_frontend_blocks', {}).each do |block_id, block_raw_config| -%>
+frontend <%= block_id %>
+    <%= format_indented_multiline_config(block_raw_config) %>
+<%- end -%>
+<%- p('ha_proxy.raw_backend_blocks', {}).each do |block_id, block_raw_config| -%>
+backend <%= block_id %>
+    <%= format_indented_multiline_config(block_raw_config) %>
+<%- end -%>
+# }}}

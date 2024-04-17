@@ -635,19 +635,19 @@ properties:
 
   ha_proxy.global_config:
     description: |
-      A block of raw HAProxy config that will be added to the HA proxy global section
+      Raw HAProxy config that will be added to the HA proxy global section, provided either as a multiline text blob or as an array of lines.
 
   ha_proxy.default_config:
     description: |
-      A block of raw HAProxy config that will be added to the HA proxy default section
+      Raw HAProxy config that will be added to the HA proxy default section, provided either as a multiline text blob or as an array of lines.
 
   ha_proxy.frontend_config:
     description: |
-      A block of raw HAProxy config that will be added to each HA proxy frontend definition
+      Raw HAProxy config that will be added to each HA proxy frontend definition, provided either as a multiline text blob or as an array of lines.
 
   ha_proxy.backend_config:
     description: |
-      A block of raw HAProxy config that will be added to the default HTTP + routed HTTP backend definitions
+      Raw HAProxy config that will be added to the default HTTP + routed HTTP backend definitions, provided either as a multiline text blob or as an array of lines.
 
   ha_proxy.custom_http_error_files:
     description: |
@@ -664,13 +664,49 @@ properties:
                </body></html>
   ha_proxy.tcp_backend_config:
     description: |
-      A block of raw HAProxy config that will be added to the CF TCP Router + Generic TCP backend definitions
+      Raw HAProxy config that will be added to the CF TCP Router + Generic TCP backend definitions, provided either as a multiline text blob or as an array of lines.
 
   ha_proxy.raw_config:
     description: |
       A multiline text blob of an entire haproxy config. Overrides every other
       option available, so you can provide your own config, and do whatever
       you want. Use at your own risk.
+  ha_proxy.raw_listen_blocks:
+    description: |
+      A hash of 'listen' blocks with the configuration provided either as a multiline text blob or as an array of lines.
+      Use at your own risk.
+    example:
+      my-listen-x: |
+        bind :81
+        mode http
+        server-template srv 1-3 q-s0.web.default.deployment-x.bosh:8080 check inter 1000
+      my-listen-y:
+        - bind :82
+        - mode http
+        - server-template srv 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
+  ha_proxy.raw_frontend_blocks:
+    description: |
+      A hash of 'frontend' blocks with the configuration provided either as a multiline text blob or as an array of lines.
+      Use at your own risk.
+    example:
+      my-frontend-x: |
+        bind :81
+        use_backend my-backend-x if { hdr(host) -i x.example.com }
+      my-frontend-y:
+        - bind :82
+        - use_backend my-backend-y if { hdr(host) -i y.example.com }
+  ha_proxy.raw_backend_blocks:
+    description: |
+      A hash of 'backend' blocks with the configuration provided either as a multiline text blob or as an array of lines.
+      Use at your own risk.
+    example:
+      my-backend-x: |
+        mode http
+        server-template srv-x 1-3 q-s0.web.default.deployment-x.bosh:8080 check inter 1000
+      my-backend-y:
+        - mode http
+        - server-template srv-y 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
+
   ha_proxy.max_open_files:
     description: The number of file descriptors HAProxy can have open at one time
     default: 256000
