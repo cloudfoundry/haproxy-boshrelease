@@ -985,12 +985,12 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
   all_found_types = ordered_blocks + additional_types
   all_found_types.each do |block_type|
     raw_blocks[block_type].each do |block_id, block_raw_config|
--%>
+%>
 <%= block_type %> <%= block_id %>
     <%= format_indented_multiline_config(block_raw_config) %>
 <%-
     end
   end
--%>
+%>
 # }}}
 <%- end -%>
