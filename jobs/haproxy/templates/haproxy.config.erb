@@ -5,12 +5,14 @@
     if raw_config
       if raw_config.is_a?(Array)
         out = ""
+        sep = ""
         raw_config.each do |line|
-          out = out + line + "\n"+ident
+          out = out + sep+ line
+          sep = "\n"+ident
         end
         return out
       else
-        raw_config.gsub(/\n/, "\n"+ident)
+        raw_config.strip.gsub(/\n/, "\n"+ident)
       end
     end
   end
@@ -973,18 +975,22 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 
 # }}}
 <% end -%>
-
+<%- if properties.ha_proxy.raw_blocks && !properties.ha_proxy.raw_blocks.empty? -%>
 # raw blocks {{{
-<%- p('ha_proxy.raw_listen_blocks', {}).each do |block_id, block_raw_config| -%>
-listen <%= block_id %>
+<%-
+  correct_types_order = %w[global defaults listen frontend backend resolvers peers mailers]
+  raw_blocks = p('ha_proxy.raw_blocks', {})
+  ordered_blocks = correct_types_order.select { |type| raw_blocks.key?(type) }
+  additional_types = raw_blocks.keys - correct_types_order
+  all_found_types = ordered_blocks + additional_types
+  all_found_types.each do |block_type|
+    raw_blocks[block_type].each do |block_id, block_raw_config|
+-%>
+<%= block_type %> <%= block_id %>
     <%= format_indented_multiline_config(block_raw_config) %>
-<%- end -%>
-<%- p('ha_proxy.raw_frontend_blocks', {}).each do |block_id, block_raw_config| -%>
-frontend <%= block_id %>
-    <%= format_indented_multiline_config(block_raw_config) %>
-<%- end -%>
-<%- p('ha_proxy.raw_backend_blocks', {}).each do |block_id, block_raw_config| -%>
-backend <%= block_id %>
-    <%= format_indented_multiline_config(block_raw_config) %>
-<%- end -%>
+<%-
+    end
+  end
+-%>
 # }}}
+<%- end -%>
