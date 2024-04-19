@@ -689,10 +689,10 @@ properties:
           - server-template srv 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
       frontend:
         my-frontend-x: |
-          bind :81
+          bind :83
           use_backend my-backend-x if { hdr(host) -i x.example.com }
         my-frontend-y:
-          - bind :82
+          - bind :84
           - use_backend my-backend-y if { hdr(host) -i y.example.com }
       backend:
         my-backend-x: |
