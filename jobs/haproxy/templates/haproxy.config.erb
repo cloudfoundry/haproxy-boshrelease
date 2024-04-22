@@ -22,7 +22,7 @@ if p("ha_proxy.disable_tcp_accept_proxy")
 end
 # }}}
 # Global SSL Flags {{{
-ssl_flags = "no-sslv3"
+ssl_flags = ""
 if p("ha_proxy.disable_tls_10")
   ssl_flags = "#{ssl_flags} no-tlsv10"
 end
