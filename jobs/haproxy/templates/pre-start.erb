@@ -20,3 +20,5 @@ fi
 if [ ! -e /usr/local/bin/socat ]; then
   sudo ln -s /var/vcap/packages/haproxy/bin/socat /usr/local/bin/socat
 fi
+
+<%= p("ha_proxy.pre_start_script") %>

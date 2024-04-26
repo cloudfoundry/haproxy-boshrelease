@@ -17,7 +17,8 @@
     end
   end
 
-  if properties.ha_proxy.raw_config -%>
+  if properties.ha_proxy.config_mode == "auto"
+    if properties.ha_proxy.raw_config -%>
 <%= p("ha_proxy.raw_config") %>
 <%- else -%>
 <%-
@@ -26,8 +27,8 @@ require "digest"
 
 # Stats Binding Variables {{{
 stat = p("ha_proxy.stats_bind").split(':')
-stat_prefix = stat[0] + ":";
-stat_port = stat[1].to_i;
+stat_prefix = stat[0] + ":"
+stat_port = stat[1].to_i
 # }}}
 # Accept Proxy {{{
 accept_proxy = ""
@@ -40,21 +41,33 @@ if p("ha_proxy.disable_tcp_accept_proxy")
 end
 # }}}
 # Global SSL Flags {{{
-ssl_flags = "no-sslv3"
-if p("ha_proxy.disable_tls_10")
-  ssl_flags = "#{ssl_flags} no-tlsv10"
+ssl_flags = ""
+use_disable_ssl = true
+if_p("ha_proxy.ssl_min_ver") do |ssl_min_ver|
+  use_disable_ssl = false
+  ssl_flags = "ssl-min-ver #{ssl_min_ver}"
+  if_p("ha_proxy.ssl_max_ver") do |ssl_max_ver|
+    ssl_flags = "#{ssl_flags} ssl-max-ver #{ssl_max_ver}"
+  end
 end
-if p("ha_proxy.disable_tls_11")
-  ssl_flags = "#{ssl_flags} no-tlsv11"
-end
-if p("ha_proxy.disable_tls_12")
-  ssl_flags = "#{ssl_flags} no-tlsv12"
-end
-if p("ha_proxy.disable_tls_13")
-  ssl_flags = "#{ssl_flags} no-tlsv13"
-end
-if p("ha_proxy.disable_tls_tickets")
-  ssl_flags = "#{ssl_flags} no-tls-tickets"
+
+if use_disable_ssl
+  ssl_flags = "no-sslv3"
+  if p("ha_proxy.disable_tls_10")
+    ssl_flags = "#{ssl_flags} no-tlsv10"
+  end
+  if p("ha_proxy.disable_tls_11")
+    ssl_flags = "#{ssl_flags} no-tlsv11"
+  end
+  if p("ha_proxy.disable_tls_12")
+    ssl_flags = "#{ssl_flags} no-tlsv12"
+  end
+  if p("ha_proxy.disable_tls_13")
+    ssl_flags = "#{ssl_flags} no-tlsv13"
+  end
+  if p("ha_proxy.disable_tls_tickets")
+    ssl_flags = "#{ssl_flags} no-tls-tickets"
+  end
 end
 # }}}
 # TLS Bind Options {{{
@@ -334,7 +347,9 @@ listen stats
     stats hide-version
     stats realm "Haproxy Statistics"
     stats uri /<%= p("ha_proxy.stats_uri") %>
+    <%- if_p("ha_proxy.stats_user") do -%>
     stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+    <% end -%>
 <% end -%>
 
 <% if p("ha_proxy.enable_health_check_http") %>
@@ -975,6 +990,7 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 
 # }}}
 <% end -%>
+<%- end -%>
 <%- if properties.ha_proxy.raw_blocks && !properties.ha_proxy.raw_blocks.empty? -%>
 # raw blocks {{{
 <%-
@@ -984,10 +1000,18 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
   additional_types = raw_blocks.keys - correct_types_order
   all_found_types = ordered_blocks + additional_types
   all_found_types.each do |block_type|
-    raw_blocks[block_type].each do |block_id, block_raw_config|
+    raw_block = raw_blocks[block_type]
+    if raw_block.is_a?(Hash)
+      raw_block.each do |block_id, block_raw_config|
 %>
 <%= block_type %> <%= block_id %>
     <%= format_indented_multiline_config(block_raw_config) %>
+<%-
+      end
+    else
+%>
+<%= block_type %>
+    <%= format_indented_multiline_config(raw_block) %>
 <%-
     end
   end
