@@ -17,7 +17,8 @@
     end
   end
 
-  if properties.ha_proxy.raw_config -%>
+  if properties.ha_proxy.config_mode == "auto"
+    if properties.ha_proxy.raw_config -%>
 <%= p("ha_proxy.raw_config") %>
 <%- else -%>
 <%-
@@ -26,8 +27,8 @@ require "digest"
 
 # Stats Binding Variables {{{
 stat = p("ha_proxy.stats_bind").split(':')
-stat_prefix = stat[0] + ":";
-stat_port = stat[1].to_i;
+stat_prefix = stat[0] + ":"
+stat_port = stat[1].to_i
 # }}}
 # Accept Proxy {{{
 accept_proxy = ""
@@ -66,7 +67,8 @@ if use_disable_ssl
   if p("ha_proxy.disable_tls_tickets")
     ssl_flags = "#{ssl_flags} no-tls-tickets"
   end
-end# }}}
+end
+# }}}
 # TLS Bind Options {{{
 mutual_tls_enabled = p("ha_proxy.client_cert")
 ssl_enabled = false
@@ -985,6 +987,7 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 
 # }}}
 <% end -%>
+<%- end -%>
 <%- if properties.ha_proxy.raw_blocks && !properties.ha_proxy.raw_blocks.empty? -%>
 # raw blocks {{{
 <%-
@@ -994,10 +997,18 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
   additional_types = raw_blocks.keys - correct_types_order
   all_found_types = ordered_blocks + additional_types
   all_found_types.each do |block_type|
-    raw_blocks[block_type].each do |block_id, block_raw_config|
+    raw_block = raw_blocks[block_type]
+    if raw_block.is_a?(Hash)
+      raw_block.each do |block_id, block_raw_config|
 %>
 <%= block_type %> <%= block_id %>
     <%= format_indented_multiline_config(block_raw_config) %>
+<%-
+      end
+    else
+%>
+<%= block_type %>
+    <%= format_indented_multiline_config(raw_block) %>
 <%-
     end
   end

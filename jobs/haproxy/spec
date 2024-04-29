@@ -56,6 +56,11 @@ properties:
       fi
       CURR_MTU=$(ip link show $INTERFACE | grep -Po 'mtu \K\d+')
       echo "MTU: $CURR_MTU, interface: $INTERFACE"
+  ha_proxy.config_mode:
+    description: |
+      'auto' - utilizes raw_config if defined; otherwise, it uses traditional configuration mixed with raw_blocks,
+      'raw_blocks_only' - uses only raw_blocks, ignoring other configurations.
+    default: auto
   ha_proxy.nbthread:
     description: "Optional number of threads per VM"
     default: 1
@@ -701,11 +706,15 @@ properties:
       you want. Use at your own risk.
   ha_proxy.raw_blocks:
     description: |
-      A hash of block types, where each type contains a hash of specific block names with their respective configurations.
+      A hash of block types, where each type contains either a configuration
+      or a hash of specific block names with their respective configurations.
       The configurations are provided as either multiline text blobs or arrays of lines.
       This structure will be appended to the end of the HAProxy configuration file.
       Use at your own risk.
     example:
+      defaults: |
+        log global
+        timeout http-request 10s
       listen:
         my-listen-x: |
           bind :81
@@ -715,20 +724,6 @@ properties:
           - bind :82
           - mode http
           - server-template srv 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
-      frontend:
-        my-frontend-x: |
-          bind :83
-          use_backend my-backend-x if { hdr(host) -i x.example.com }
-        my-frontend-y:
-          - bind :84
-          - use_backend my-backend-y if { hdr(host) -i y.example.com }
-      backend:
-        my-backend-x: |
-          mode http
-          server-template srv-x 1-3 q-s0.web.default.deployment-x.bosh:8080 check inter 1000
-        my-backend-y:
-          - mode http
-          - server-template srv-y 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
 
   ha_proxy.max_open_files:
     description: The number of file descriptors HAProxy can have open at one time
