@@ -40,23 +40,33 @@ if p("ha_proxy.disable_tcp_accept_proxy")
 end
 # }}}
 # Global SSL Flags {{{
-ssl_flags = "no-sslv3"
-if p("ha_proxy.disable_tls_10")
-  ssl_flags = "#{ssl_flags} no-tlsv10"
+ssl_flags = ""
+use_disable_ssl = true
+if_p("ha_proxy.ssl_min_ver") do |ssl_min_ver|
+  use_disable_ssl = false
+  ssl_flags = "ssl-min-ver #{ssl_min_ver}"
+  if_p("ha_proxy.ssl_max_ver") do |ssl_max_ver|
+    ssl_flags = "#{ssl_flags} ssl-max-ver #{ssl_max_ver}"
+  end
 end
-if p("ha_proxy.disable_tls_11")
-  ssl_flags = "#{ssl_flags} no-tlsv11"
-end
-if p("ha_proxy.disable_tls_12")
-  ssl_flags = "#{ssl_flags} no-tlsv12"
-end
-if p("ha_proxy.disable_tls_13")
-  ssl_flags = "#{ssl_flags} no-tlsv13"
-end
-if p("ha_proxy.disable_tls_tickets")
-  ssl_flags = "#{ssl_flags} no-tls-tickets"
-end
-# }}}
+if use_disable_ssl
+  ssl_flags = "no-sslv3"
+  if p("ha_proxy.disable_tls_10")
+    ssl_flags = "#{ssl_flags} no-tlsv10"
+  end
+  if p("ha_proxy.disable_tls_11")
+    ssl_flags = "#{ssl_flags} no-tlsv11"
+  end
+  if p("ha_proxy.disable_tls_12")
+    ssl_flags = "#{ssl_flags} no-tlsv12"
+  end
+  if p("ha_proxy.disable_tls_13")
+    ssl_flags = "#{ssl_flags} no-tlsv13"
+  end
+  if p("ha_proxy.disable_tls_tickets")
+    ssl_flags = "#{ssl_flags} no-tls-tickets"
+  end
+end# }}}
 # TLS Bind Options {{{
 mutual_tls_enabled = p("ha_proxy.client_cert")
 ssl_enabled = false
