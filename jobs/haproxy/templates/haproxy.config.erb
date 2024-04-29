@@ -346,7 +346,11 @@ listen stats
     stats hide-version
     stats realm "Haproxy Statistics"
     stats uri /<%= p("ha_proxy.stats_uri") %>
-    stats auth <%= p("ha_proxy.stats_user") %>:<%= p("ha_proxy.stats_password") %>
+    <%- if_p("ha_proxy.stats_user") do |stats_user| -%>
+      <%- if stats_user != "" -%>
+    stats auth <%= stats_user %>:<%= p("ha_proxy.stats_password") %>
+      <%- end -%>
+    <%end -%>
 <% end -%>
 
 <% if p("ha_proxy.enable_health_check_http") %>

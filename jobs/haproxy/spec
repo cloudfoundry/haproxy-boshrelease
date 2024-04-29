@@ -327,9 +327,9 @@ properties:
     description: "Define listening address and port for the stats frontend. If multithreading is enabled (`ha_proxy.threads > 1`) multiple stat pages are available - one for each thread. You can see the stat page for each thread on a separate port - starting at the defined port number."
     default: "*:9000"
   ha_proxy.stats_user:
-    description: "User name to authenticate haproxy stats"
+    description: "User name to authenticate haproxy stats, leave empty if you want the statistics to be available without authentication"
   ha_proxy.stats_password:
-    description: "Password to authenticate haproxy stats"
+    description: "Password to authenticate haproxy stats, ignored when 'stats_user' is empty"
   ha_proxy.stats_uri:
     description: "URI used to access the stats UI."
     default: "haproxy_stats"
