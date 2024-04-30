@@ -111,6 +111,7 @@ var _ = Describe("forwarded_client_cert", func() {
 		"X-SSL-Client-Subject-Cn": "app.mycert.com",
 		"X-SSL-Client-Issuer-Dn":  "ACME inc, USA",
 		"X-SSL-Client-Issuer-Cn":  "mycert.com",
+		"X-SSL-Client-Root-CA-DN": "/C=X/ST=Y/L=xyz/O=ABC/CN=*.example.com"
 		"X-SSL-Client-Notbefore":  "Wednesday",
 		"X-SSL-Client-Notafter":   "Thursday",
 		"X-SSL-Client-Cert":       "ABC",
@@ -304,6 +305,7 @@ func checkXFCCHeadersMatchCert(expectedCert *x509.Certificate, headers http.Head
 	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-Dn"))).To(Equal("/C=Vatican City/O=Víkî's Vergnügungspark/CN=haproxy.client"))
 	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-CN"))).To(Equal("haproxy.client"))
 	Expect(base64Decode(headers.Get("X-SSL-Client-Issuer-Dn"))).To(Equal("/C=Palau/O=Pete's Café"))
+	Expect(base64Decode(headers.Get("X-SSL-Client-Root-CA-DN"))).To(Equal("/C=X/ST=Y/L=xyz/O=ABC/CN=*.example.com"))
 	Expect(headers.Get("X-SSL-Client-Notbefore")).To(Equal(expectedCert.NotBefore.UTC().Format("060102150405Z"))) //YYMMDDhhmmss[Z]
 	Expect(headers.Get("X-SSL-Client-Notafter")).To(Equal(expectedCert.NotAfter.UTC().Format("060102150405Z")))   //YYMMDDhhmmss[Z]
 
