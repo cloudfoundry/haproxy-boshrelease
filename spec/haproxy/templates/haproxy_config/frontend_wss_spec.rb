@@ -162,6 +162,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-Subject-DN')
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-Subject-CN')
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-Root-CA-DN')
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-NotAfter')
       end
@@ -185,6 +186,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-DN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-CN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter')
       end
@@ -197,9 +199,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       context 'when mutual TLS is enabled' do
         let(:properties) do
           default_properties.merge({
-                                     'client_cert' => true,
-                                     'forwarded_client_cert' => 'forward_only'
-                                   })
+            'client_cert' => true,
+            'forwarded_client_cert' => 'forward_only'
+          })
         end
 
         it 'deletes mTLS headers when mTLS is not used' do
@@ -210,6 +212,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }')
+          expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }')
         end
@@ -230,6 +233,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-DN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-CN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter')
       end
@@ -252,6 +256,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-DN')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-CN')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN')
+          expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter')
         end
@@ -298,6 +303,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-DN if !route_service_request')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-CN if !route_service_request')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
+        expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
       end
@@ -310,9 +316,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       context 'when mutual TLS is enabled' do
         let(:properties) do
           default_properties.merge({
-                                     'client_cert' => true,
-                                     'forwarded_client_cert' => 'forward_only_if_route_service'
-                                   })
+            'client_cert' => true,
+            'forwarded_client_cert' => 'forward_only_if_route_service'
+          })
         end
 
         it 'deletes mTLS headers for non-route service requests (for mTLS and non-mTLS)' do
@@ -324,6 +330,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-DN if !route_service_request')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Subject-CN if !route_service_request')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
+          expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
         end
@@ -344,10 +351,10 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         context 'when ha_proxy.legacy_xfcc_header_mapping is true' do
           let(:properties) do
             default_properties.merge({
-                                       'client_cert' => true,
-                                       'forwarded_client_cert' => 'forward_only_if_route_service',
-                                       'legacy_xfcc_header_mapping' => true
-                                     })
+              'client_cert' => true,
+              'forwarded_client_cert' => 'forward_only_if_route_service',
+              'legacy_xfcc_header_mapping' => true
+            })
           end
 
           it 'overwrites mTLS headers without base64 encoding when mTLS is used' do
@@ -438,10 +445,10 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
   context 'when HTTP1 and HTTP2 backend servers are available' do
     let(:properties) do
       default_properties.merge({
-                                 'disable_backend_http2_websockets' => true,
-                                 'enable_http2' => true,
-                                 'backend_ssl' => 'verify'
-                               })
+        'disable_backend_http2_websockets' => true,
+        'enable_http2' => true,
+        'backend_ssl' => 'verify'
+      })
     end
 
     it 'uses the HTTP2 backend default backend' do
@@ -452,11 +459,11 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
   context 'when only HTTP2 backend servers are available' do
     let(:properties) do
       default_properties.merge({
-                                 'disable_backend_http2_websockets' => false,
-                                 'enable_http2' => true,
-                                 'backend_match_http_protocol' => false,
-                                 'backend_ssl' => 'verify'
-                               })
+        'disable_backend_http2_websockets' => false,
+        'enable_http2' => true,
+        'backend_match_http_protocol' => false,
+        'backend_ssl' => 'verify'
+      })
     end
 
     it 'uses the HTTP2 backend default backend' do
@@ -467,9 +474,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
   context 'when backend_match_http_protocol is true' do
     let(:properties) do
       default_properties.merge({
-                                 'backend_match_http_protocol' => true,
-                                 'backend_ssl' => 'verify'
-                               })
+        'backend_match_http_protocol' => true,
+        'backend_ssl' => 'verify'
+      })
     end
 
     it 'enables config to match the protocol' do
@@ -481,9 +488,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     context('when backend_ssl is off') do
       let(:properties) do
         default_properties.merge({
-                                   'backend_match_http_protocol' => true,
-                                   'backend_ssl' => 'off'
-                                 })
+          'backend_match_http_protocol' => true,
+          'backend_ssl' => 'off'
+        })
       end
 
       it 'does not override the default backend' do
@@ -495,17 +502,17 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
   context 'when ha_proxy.http_request_deny_conditions are provided' do
     let(:properties) do
       default_properties.merge({
-                                 'http_request_deny_conditions' => [{
-                                                                      'condition' => [{
-                                                                                        'acl_name' => 'block_host',
-                                                                                        'acl_rule' => 'hdr_beg(host) -i login'
-                                                                                      }, {
-                                                                                        'acl_name' => 'whitelist_ips',
-                                                                                        'acl_rule' => 'src 5.22.5.11 5.22.5.12',
-                                                                                        'negate' => true
-                                                                                      }]
-                                                                    }]
-                               })
+        'http_request_deny_conditions' => [{
+          'condition' => [{
+            'acl_name' => 'block_host',
+            'acl_rule' => 'hdr_beg(host) -i login'
+          }, {
+            'acl_name' => 'whitelist_ips',
+            'acl_rule' => 'src 5.22.5.11 5.22.5.12',
+            'negate' => true
+          }]
+        }]
+      })
     end
 
     it 'adds the correct acls and http-request deny rules' do
@@ -595,13 +602,13 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
   context 'when ha_proxy.routed_backend_servers are provided' do
     let(:properties) do
       default_properties.merge({
-                                 'routed_backend_servers' => {
-                                   '/images' => {
-                                     'port' => 12_000,
-                                     'servers' => ['10.0.0.1']
-                                   }
-                                 }
-                               })
+        'routed_backend_servers' => {
+          '/images' => {
+            'port' => 12_000,
+            'servers' => ['10.0.0.1']
+          }
+        }
+      })
     end
 
     it 'grants access to the backend servers' do
@@ -612,12 +619,12 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     context 'when a routed_backend_server contains additional_acls' do
       let(:properties) do
         super().deep_merge({
-                             'routed_backend_servers' => {
-                               '/images' => {
-                                 'additional_acls' => ['method GET', 'path_end /foo']
-                               }
-                             }
-                           })
+          'routed_backend_servers' => {
+            '/images' => {
+              'additional_acls' => ['method GET', 'path_end /foo']
+            }
+          }
+        })
       end
 
       it 'includes additional acls' do

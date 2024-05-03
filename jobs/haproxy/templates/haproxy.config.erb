@@ -525,18 +525,20 @@ frontend https-in
     http-request del-header X-SSL-Client-Subject-DN
     http-request del-header X-SSL-Client-Subject-CN
     http-request del-header X-SSL-Client-Issuer-DN
+    http-request del-header X-SSL-Client-Root-CA-DN
     http-request del-header X-SSL-Client-NotBefore
     http-request del-header X-SSL-Client-NotAfter
   <%- when :non_mtls_only -%>
-    http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }
-    http-request del-header X-SSL-Client            if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-Session-ID if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-Verify     if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }
-    http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
+    http-request del-header X-Forwarded-Client-Cert  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client             if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Session-ID  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Verify      if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Subject-DN  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Subject-CN  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Issuer-DN   if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Root-CA-DN  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-NotBefore   if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-NotAfter    if ! { ssl_c_used }
   <%- when :non_route_service_only -%>
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
     http-request del-header X-Forwarded-Client-Cert if !route_service_request
@@ -546,6 +548,7 @@ frontend https-in
     http-request del-header X-SSL-Client-Subject-DN if !route_service_request
     http-request del-header X-SSL-Client-Subject-CN if !route_service_request
     http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request
+    http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request
     http-request del-header X-SSL-Client-NotBefore  if !route_service_request
     http-request del-header X-SSL-Client-NotAfter   if !route_service_request
   <%- end -%>
@@ -680,6 +683,7 @@ frontend wss-in
     http-request del-header X-SSL-Client-Subject-DN
     http-request del-header X-SSL-Client-Subject-CN
     http-request del-header X-SSL-Client-Issuer-DN
+    http-request del-header X-SSL-Client-Root-CA-DN
     http-request del-header X-SSL-Client-NotBefore
     http-request del-header X-SSL-Client-NotAfter
   <%- when :non_mtls_only -%>
@@ -690,6 +694,7 @@ frontend wss-in
     http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }
     http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }
     http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }
     http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }
     http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
   <%- when :non_route_service_only -%>
@@ -701,6 +706,7 @@ frontend wss-in
     http-request del-header X-SSL-Client-Subject-DN if !route_service_request
     http-request del-header X-SSL-Client-Subject-CN if !route_service_request
     http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request
+    http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request
     http-request del-header X-SSL-Client-NotBefore  if !route_service_request
     http-request del-header X-SSL-Client-NotAfter   if !route_service_request
   <%- end -%>

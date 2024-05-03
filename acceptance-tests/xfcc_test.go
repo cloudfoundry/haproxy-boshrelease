@@ -111,7 +111,7 @@ var _ = Describe("forwarded_client_cert", func() {
 		"X-SSL-Client-Subject-Cn": "app.mycert.com",
 		"X-SSL-Client-Issuer-Dn":  "ACME inc, USA",
 		"X-SSL-Client-Issuer-Cn":  "mycert.com",
-		"X-SSL-Client-Root-CA-DN": "/C=X/ST=Y/L=xyz/O=ABC/CN=*.example.com"
+		"X-SSL-Client-Root-CA-DN": "/C=X/ST=Y/L=xyz/O=ABC/CN=*.example.com",
 		"X-SSL-Client-Notbefore":  "Wednesday",
 		"X-SSL-Client-Notafter":   "Thursday",
 		"X-SSL-Client-Cert":       "ABC",

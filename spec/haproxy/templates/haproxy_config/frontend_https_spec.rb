@@ -187,6 +187,7 @@ describe 'config/haproxy.config HTTPS frontend' do
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Root-CA-DN')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter')
       end
@@ -212,6 +213,7 @@ describe 'config/haproxy.config HTTPS frontend' do
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN if ! { ssl_c_used }')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN if ! { ssl_c_used }')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }')
         end
@@ -232,6 +234,7 @@ describe 'config/haproxy.config HTTPS frontend' do
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Root-CA-DN')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter')
       end
@@ -254,6 +257,7 @@ describe 'config/haproxy.config HTTPS frontend' do
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Root-CA-DN')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter')
         end
@@ -300,6 +304,7 @@ describe 'config/haproxy.config HTTPS frontend' do
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN if !route_service_request')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN if !route_service_request')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
+        expect(frontend_https).to include('http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
         expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
       end
@@ -326,6 +331,7 @@ describe 'config/haproxy.config HTTPS frontend' do
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-DN if !route_service_request')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Subject-CN if !route_service_request')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
+          expect(frontend_https).to include('http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
           expect(frontend_https).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
         end
