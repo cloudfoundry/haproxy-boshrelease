@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -30,6 +30,7 @@ docker_mac_check_cgroupsv1() {
 }
 
 check_required_files() {
+  PIDS=""
   REQUIRED_FILE_PATTERNS=(
     ../ci/scripts/bpm/bpm-release-*.tgz!https://bosh.io/d/github.com/cloudfoundry/bpm-release
     ../ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
@@ -63,7 +64,7 @@ check_required_files() {
   done
   # shellcheck disable=SC2086
   # expansion is desired, as $PIDS is a list of PIDs. Wait on all of those PIDs.
-  [ -n "$PIDS" ] && wait $PIDS
+  wait $PIDS
 }
 
 check_required_files
