@@ -7,6 +7,7 @@ import (
 	proxyproto "github.com/pires/go-proxyproto"
 	"net"
 	"net/http"
+	"time"
 )
 
 var _ = Describe("Proxy Protocol", func() {
@@ -29,7 +30,7 @@ var _ = Describe("Proxy Protocol", func() {
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileProxyProtocol}, map[string]interface{}{}, true)
+		}, []string{opsfileProxyProtocol}, map[string]interface{}{}, false)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -37,19 +38,29 @@ var _ = Describe("Proxy Protocol", func() {
 		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 		defer closeTunnel()
 
+		By("Waiting for monit to report that HAProxy is healthy")
+		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
+		// and monit should in turn start reporting a healthy process
+		// We will up to wait one minute for the status to stabilise
+		Eventually(func() string {
+			return boshInstances(deploymentNameForTestNode())[0].ProcessState
+		}, time.Minute, time.Second).Should(Equal("running"))
+
 		By("Sending a request with Proxy Protocol Header to HAProxy traffic port")
 		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Sending a request without Proxy Protocol Header to HAProxy")
-		expect400(http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP)))
+		_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
+		expectConnectionResetErr(err)
 
-		By("Sending a request with Proxy Protocol Header to HAProxy healthcheck port")
+		By("Sending a request with Proxy Protocol Header to HAProxy health check port")
 		err = performProxyProtocolRequest(haproxyInfo.PublicIP, 8080, "/health")
 		Expect(err).NotTo(HaveOccurred())
 
-		By("Sending a request without Proxy Protocol Header to HAProxy healthcheck port")
-		expect400(http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP)))
+		By("Sending a request without Proxy Protocol Header to HAProxy health check port")
+		_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
+		expectConnectionResetErr(err)
 	})
 })
 

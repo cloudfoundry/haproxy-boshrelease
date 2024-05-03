@@ -229,6 +229,10 @@ func expectConnectionRefusedErr(err error) {
 	checkNetOpErr(err, "connect: connection refused")
 }
 
+func expectConnectionResetErr(err error) {
+	checkNetOpErr(err, "read: connection reset by peer")
+}
+
 func checkNetOpErr(err error, expectString string) {
 	Expect(err).To(HaveOccurred())
 	urlErr, ok := err.(*url.Error)
