@@ -2,8 +2,6 @@ module github.com/cloudfoundry/haproxy-boshrelease/acceptance-tests
 
 go 1.21
 
-toolchain go1.22.2
-
 require (
 	github.com/bramvdbogaerde/go-scp v1.4.0
 	github.com/gorilla/websocket v1.5.1
