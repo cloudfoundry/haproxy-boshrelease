@@ -76,7 +76,7 @@ describe 'config/haproxy.config healthcheck listeners' do
           {
             'enable_health_check_http' => true,
             'accept_proxy' => true,
-            'disable_health_check_proxy' => true,
+            'disable_health_check_proxy' => true
           }
         end
 
@@ -84,7 +84,6 @@ describe 'config/haproxy.config healthcheck listeners' do
           expect(healthcheck_listener).not_to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
         end
       end
-
     end
   end
 end
