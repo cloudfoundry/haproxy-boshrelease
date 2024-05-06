@@ -58,7 +58,7 @@ properties:
       echo "MTU: $CURR_MTU, interface: $INTERFACE"
   ha_proxy.config_mode:
     description: |
-      'auto' - utilizes raw_config if defined; otherwise, it uses traditional configuration mixed with raw_blocks,
+      'auto' - utilizes raw_config if defined and mixes it with raw_blocks; otherwise, it uses traditional configuration mixed with raw_blocks
       'raw_blocks_only' - uses only raw_blocks, ignoring other configurations.
     default: auto
   ha_proxy.nbthread:
