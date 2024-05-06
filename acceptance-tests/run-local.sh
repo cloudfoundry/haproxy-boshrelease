@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -28,6 +28,46 @@ docker_mac_check_cgroupsv1() {
         exit 1
     fi
 }
+
+check_required_files() {
+  PIDS=""
+  REQUIRED_FILE_PATTERNS=(
+    ../ci/scripts/bpm/bpm-release-*.tgz!https://bosh.io/d/github.com/cloudfoundry/bpm-release
+    ../ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
+    ../ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
+  )
+
+  for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
+    pattern=$(cut -f1 -d! <<<"$entry")
+    url=$(cut -f2 -d! <<<"$entry")
+    folder=$(realpath "$(dirname "$SCRIPT_DIR/$pattern")")
+    filepattern=$(basename "$pattern")
+    pattern=$folder/$filepattern
+
+    # shellcheck disable=SC2086
+    # glob resolution is desired here.
+    if [ -f $pattern ]; then
+      continue
+    fi
+
+    (
+      echo "$filepattern not found, downloading latest."
+      cd "$folder" && \
+      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1) && \
+      curl -s --remote-name --remote-header-name --location "$resolved" && \
+      echo "Downloaded '$url' successfully." && \
+      ls -1lh "$folder/"$filepattern
+    )&
+
+    PIDS="$PIDS $!"
+
+  done
+  # shellcheck disable=SC2086
+  # expansion is desired, as $PIDS is a list of PIDs. Wait on all of those PIDs.
+  wait $PIDS
+}
+
+check_required_files
 
 if [ "$(uname)" == "Darwin" ]; then
     docker_mac_check_cgroupsv1
