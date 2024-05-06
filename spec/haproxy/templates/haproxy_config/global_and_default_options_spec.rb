@@ -132,9 +132,9 @@ describe 'config/haproxy.config global and default options' do
       }
     end
 
-    it 'enables ssl-min-ver and ignores tls_disable_ properties' do
-      expect(global).to include('ssl-default-server-options ssl-min-ver TLSv1.2')
-      expect(global).to include('ssl-default-bind-options ssl-min-ver TLSv1.2')
+    it 'enables ssl-min-ver and ignores tls_disable_1* properties' do
+      expect(global).to include('ssl-default-server-options ssl-min-ver TLSv1.2 no-tls-tickets')
+      expect(global).to include('ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets')
     end
   end
 
@@ -150,13 +150,13 @@ describe 'config/haproxy.config global and default options' do
       }
     end
 
-    it 'ignores ssl-min/max-ver properties, tls_disable_ properties are used' do
+    it 'ignores ssl-min/max-ver properties, tls_disable_1* properties are used' do
       expect(global).to include('ssl-default-server-options no-sslv3')
       expect(global).to include('ssl-default-bind-options no-sslv3')
     end
   end
 
-  context 'when ha_proxy.ssl_min_ver and ha_proxy.ssl_max_ver are provided' do
+  context 'when ha_proxy.ssl_min_ver and ha_proxy.ssl_max_ver are provided, disable_tls_tickets=true by default' do
     let(:properties) do
       {
         'ssl_min_ver' => 'TLSv1.2',
@@ -164,9 +164,24 @@ describe 'config/haproxy.config global and default options' do
       }
     end
 
-    it 'enables ssl-min/max-ver and ignores tls_disable_ properties' do
-      expect(global).to include('ssl-default-server-options ssl-min-ver TLSv1.2 ssl-max-ver TLSv1.3')
-      expect(global).to include('ssl-default-bind-options ssl-min-ver TLSv1.2 ssl-max-ver TLSv1.3')
+    it 'enables ssl-min/max-ver and ignores tls_disable_1* properties' do
+      expect(global).to include('ssl-default-server-options ssl-min-ver TLSv1.2 ssl-max-ver TLSv1.3 no-tls-tickets')
+      expect(global).to include('ssl-default-bind-options ssl-min-ver TLSv1.2 ssl-max-ver TLSv1.3 no-tls-tickets')
+    end
+  end
+
+  context 'when ha_proxy.ssl_min_ver and ha_proxy.ssl_max_ver are provided, disable_tls_tickets=false' do
+    let(:properties) do
+      {
+        'ssl_min_ver' => 'TLSv1.1',
+        'ssl_max_ver' => 'TLSv1.2',
+        'disable_tls_tickets' => false
+      }
+    end
+
+    it 'enables ssl-min/max-ver and ignores tls_disable_1* properties' do
+      expect(global).to include('ssl-default-server-options ssl-min-ver TLSv1.1 ssl-max-ver TLSv1.2')
+      expect(global).to include('ssl-default-bind-options ssl-min-ver TLSv1.1 ssl-max-ver TLSv1.2')
     end
   end
 

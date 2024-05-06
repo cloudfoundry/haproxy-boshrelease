@@ -259,20 +259,20 @@ properties:
   ha_proxy.default_dh_param:
     default: 2048
     description: "Maximum size of DH params when generating ephemeral keys during key exchange"
+  ha_proxy.disable_tls_tickets:
+    default: true
+    description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets."
   ha_proxy.ssl_min_ver:
     example: "TLSv1.2"
     description: |
       This option enforces the use of 'version' or higher for SSL connections initiated from this listener.
       The recommended value is 'TLSv1.2'. It is not the default due to backward compatibility concerns with
-      the 'disable_tls_*' options. If this option is set, the 'disable_tls_*' options will be ignored.
+      the 'disable_tls_*' options. If this option is set, the 'disable_tls_1*' options will be ignored.
   ha_proxy.ssl_max_ver:
     example: "TLSv1.3"
     description: |
       This option enforces the use of 'version' or lower for SSL connections initiated from this listener.
       It will only be set if 'ssl_min_ver' is specified, as the default HAProxy ssl-min-ver may change in future.
-  ha_proxy.disable_tls_tickets:
-    default: true
-    description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets. Use 'ssl_min_ver' and 'ssl_max_ver' instead."
   ha_proxy.disable_tls_10:
     default: false
     description: "Disable TLS 1.0 in HA Proxy. Use 'ssl_min_ver' and 'ssl_max_ver' instead."

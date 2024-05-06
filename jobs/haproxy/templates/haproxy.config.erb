@@ -64,9 +64,9 @@ if use_disable_ssl
   if p("ha_proxy.disable_tls_13")
     ssl_flags = "#{ssl_flags} no-tlsv13"
   end
-  if p("ha_proxy.disable_tls_tickets")
-    ssl_flags = "#{ssl_flags} no-tls-tickets"
-  end
+end
+if p("ha_proxy.disable_tls_tickets")
+  ssl_flags = "#{ssl_flags} no-tls-tickets"
 end
 # }}}
 # TLS Bind Options {{{
