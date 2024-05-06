@@ -41,7 +41,7 @@ var _ = Describe("Proxy Protocol", func() {
 		By("Waiting for monit to report that HAProxy is healthy")
 		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
 		// and monit should in turn start reporting a healthy process
-		// We will up to wait one minute for the status to stabilise
+		// We will wait up to one minute for the status to stabilise
 		Eventually(func() string {
 			return boshInstances(deploymentNameForTestNode())[0].ProcessState
 		}, time.Minute, time.Second).Should(Equal("running"))
