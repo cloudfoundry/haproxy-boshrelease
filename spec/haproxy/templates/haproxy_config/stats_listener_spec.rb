@@ -85,6 +85,5 @@ describe 'config/haproxy.config stats listener' do
         expect(stats_listener).not_to include(a_string_starting_with('stats auth'))
       end
     end
-
   end
 end

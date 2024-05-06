@@ -89,5 +89,4 @@ describe 'config/haproxy.config ha_proxy.raw_blocks' do
                               'unknown raw-test-1', 'unknown raw-test-2'])
     end
   end
-
 end
