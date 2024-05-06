@@ -359,6 +359,9 @@ listen health_check_http_url
     mode http
     option httpclose
     monitor-uri /health
+    <% if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
+    tcp-request connection expect-proxy layer4 unless LOCALHOST
+    <%- end -%>
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
 <% end -%>
@@ -375,12 +378,12 @@ resolvers default
 
 <% if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do |table_size, window_size| %>
 backend st_http_req_rate
-    stick-table type ip size <%= table_size %> expire <%= window_size %> store http_req_rate(<%= window_size %>)
+    stick-table type ipv6 size <%= table_size %> expire <%= window_size %> store http_req_rate(<%= window_size %>)
 <% end %>
 
 <% if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do |table_size, window_size| %>
 backend st_tcp_conn_rate
-    stick-table type ip size <%= table_size %> expire <%= window_size %> store conn_rate(<%= window_size %>)
+    stick-table type ipv6 size <%= table_size %> expire <%= window_size %> store conn_rate(<%= window_size %>)
 <% end %>
 
 <% unless p("ha_proxy.disable_http") -%>

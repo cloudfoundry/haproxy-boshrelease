@@ -37,7 +37,7 @@ describe 'config/haproxy.config rate limiting' do
     let(:properties) { temp_properties }
 
     it 'sets up stick-tables' do
-      expect(backend_req_rate).to include('stick-table type ip size 10m expire 10s store http_req_rate(10s)')
+      expect(backend_req_rate).to include('stick-table type ipv6 size 10m expire 10s store http_req_rate(10s)')
     end
 
     it 'tracks requests in stick tables' do
@@ -78,7 +78,7 @@ describe 'config/haproxy.config rate limiting' do
     let(:properties) { temp_properties }
 
     it 'sets up stick-tables' do
-      expect(backend_conn_rate).to include('stick-table type ip size 10m expire 10s store conn_rate(10s)')
+      expect(backend_conn_rate).to include('stick-table type ipv6 size 10m expire 10s store conn_rate(10s)')
     end
 
     it 'tracks connections in stick tables' do
