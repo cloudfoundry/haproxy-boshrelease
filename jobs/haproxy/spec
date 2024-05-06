@@ -49,12 +49,12 @@ properties:
       # customize MTU
       CUST_MTU=((custom_mtu))
       INTERFACE=$(ip -4 route get 8.8.8.8 | grep -Po '(?<=dev )\S+') #'
-      CURR_MTU=$(ip link show $INTERFACE | grep -Po 'mtu \K\d+')
+      CURR_MTU=$(ip link show "$INTERFACE" | grep -Po 'mtu \K\d+')
       if [[ $CURR_MTU -ne $CUST_MTU ]]; then
-        sudo ip link set dev $INTERFACE mtu $CUST_MTU
+        sudo ip link set dev "$INTERFACE" mtu "$CUST_MTU"
         echo "MTU changed from $CURR_MTU to $CUST_MTU, interface: $INTERFACE."
       fi
-      CURR_MTU=$(ip link show $INTERFACE | grep -Po 'mtu \K\d+')
+      CURR_MTU=$(ip link show "$INTERFACE" | grep -Po 'mtu \K\d+')
       echo "MTU: $CURR_MTU, interface: $INTERFACE"
   ha_proxy.config_mode:
     description: |
