@@ -63,5 +63,27 @@ describe 'config/haproxy.config stats listener' do
         expect(stats_listener).to include('bind 1.2.3.4:5000')
       end
     end
+
+    context 'when ha_proxy.stats_user is empty' do
+      let(:properties) do
+        default_properties.merge({ 'stats_user' => '' })
+      end
+
+      it 'removes stats auth' do
+        expect(stats_listener).to include('stats enable')
+        expect(stats_listener).not_to include(a_string_starting_with('stats auth'))
+      end
+    end
+
+    context 'when there is no ha_proxy.stats_user key' do
+      let(:properties) do
+        default_properties.reject { |key| key == 'stats_user' }
+      end
+
+      it 'removes stats auth' do
+        expect(stats_listener).to include('stats enable')
+        expect(stats_listener).not_to include(a_string_starting_with('stats auth'))
+      end
+    end
   end
 end

@@ -39,6 +39,28 @@ consumes:
     optional: true
 
 properties:
+  ha_proxy.pre_start_script:
+    description: |
+      This script will be appended to the pre-start script and run before the job starts.
+      The pre-start script allows the job to prepare the machine before starting HAProxy,
+      for example, by setting the MTU to a custom value.
+    default: ~
+    example: |
+      # customize MTU
+      CUST_MTU=((custom_mtu))
+      INTERFACE=$(ip -4 route get 8.8.8.8 | grep -Po '(?<=dev )\S+') #'
+      CURR_MTU=$(ip link show "$INTERFACE" | grep -Po 'mtu \K\d+')
+      if [[ $CURR_MTU -ne $CUST_MTU ]]; then
+        sudo ip link set dev "$INTERFACE" mtu "$CUST_MTU"
+        echo "MTU changed from $CURR_MTU to $CUST_MTU, interface: $INTERFACE."
+      fi
+      CURR_MTU=$(ip link show "$INTERFACE" | grep -Po 'mtu \K\d+')
+      echo "MTU: $CURR_MTU, interface: $INTERFACE"
+  ha_proxy.config_mode:
+    description: |
+      'auto' - utilizes raw_config if defined and mixes it with raw_blocks; otherwise, it uses traditional configuration mixed with raw_blocks
+      'raw_blocks_only' - uses only raw_blocks, ignoring other configurations.
+    default: auto
   ha_proxy.nbthread:
     description: "Optional number of threads per VM"
     default: 1
@@ -239,19 +261,30 @@ properties:
     description: "Maximum size of DH params when generating ephemeral keys during key exchange"
   ha_proxy.disable_tls_tickets:
     default: true
-    description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets"
+    description: "Improve (Perfect) Forward Secrecy by disabling TLS tickets."
+  ha_proxy.ssl_min_ver:
+    example: "TLSv1.2"
+    description: |
+      This option enforces the use of 'version' or higher for SSL connections initiated from this listener.
+      The recommended value is 'TLSv1.2'. It is not the default due to backward compatibility concerns with
+      the 'disable_tls_*' options. If this option is set, the 'disable_tls_1*' options will be ignored.
+  ha_proxy.ssl_max_ver:
+    example: "TLSv1.3"
+    description: |
+      This option enforces the use of 'version' or lower for SSL connections initiated from this listener.
+      It will only be set if 'ssl_min_ver' is specified, as the default HAProxy ssl-min-ver may change in future.
   ha_proxy.disable_tls_10:
     default: false
-    description: "Disable TLS 1.0 in HA Proxy"
+    description: "Disable TLS 1.0 in HA Proxy. Use 'ssl_min_ver' and 'ssl_max_ver' instead."
   ha_proxy.disable_tls_11:
     default: false
-    description: "Disable TLS 1.1 in HA Proxy"
+    description: "Disable TLS 1.1 in HA Proxy. Use 'ssl_min_ver' and 'ssl_max_ver' instead."
   ha_proxy.disable_tls_12:
     default: false
-    description: "Disable TLS 1.2 in HA Proxy"
+    description: "Disable TLS 1.2 in HA Proxy. Use 'ssl_min_ver' and 'ssl_max_ver' instead."
   ha_proxy.disable_tls_13:
     default: false
-    description: "Disable TLS 1.3 in HA Proxy"
+    description: "Disable TLS 1.3 in HA Proxy. Use 'ssl_min_ver' and 'ssl_max_ver' instead."
   ha_proxy.backend_match_http_protocol:
     default: false
     description: Uses the same version of HTTP for backend connections that was used for frontend connections (ie HTTP 1.1 or HTTP 2). Ignores the value of enable_http2. HTTP2 backend connections require that `ha_proxy.backend_ssl` is not `off`.
@@ -294,9 +327,9 @@ properties:
     description: "Define listening address and port for the stats frontend. If multithreading is enabled (`ha_proxy.threads > 1`) multiple stat pages are available - one for each thread. You can see the stat page for each thread on a separate port - starting at the defined port number."
     default: "*:9000"
   ha_proxy.stats_user:
-    description: "User name to authenticate haproxy stats"
+    description: "User name to authenticate haproxy stats, leave empty if you want the statistics to be available without authentication"
   ha_proxy.stats_password:
-    description: "Password to authenticate haproxy stats"
+    description: "Password to authenticate haproxy stats, ignored when 'stats_user' is empty"
   ha_proxy.stats_uri:
     description: "URI used to access the stats UI."
     default: "haproxy_stats"
@@ -678,11 +711,15 @@ properties:
       you want. Use at your own risk.
   ha_proxy.raw_blocks:
     description: |
-      A hash of block types, where each type contains a hash of specific block names with their respective configurations.
+      A hash of block types, where each type contains either a configuration
+      or a hash of specific block names with their respective configurations.
       The configurations are provided as either multiline text blobs or arrays of lines.
       This structure will be appended to the end of the HAProxy configuration file.
       Use at your own risk.
     example:
+      defaults: |
+        log global
+        timeout http-request 10s
       listen:
         my-listen-x: |
           bind :81
@@ -692,20 +729,6 @@ properties:
           - bind :82
           - mode http
           - server-template srv 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
-      frontend:
-        my-frontend-x: |
-          bind :83
-          use_backend my-backend-x if { hdr(host) -i x.example.com }
-        my-frontend-y:
-          - bind :84
-          - use_backend my-backend-y if { hdr(host) -i y.example.com }
-      backend:
-        my-backend-x: |
-          mode http
-          server-template srv-x 1-3 q-s0.web.default.deployment-x.bosh:8080 check inter 1000
-        my-backend-y:
-          - mode http
-          - server-template srv-y 1-3 q-s0.web.default.deployment-y.bosh:8080 check inter 1000
 
   ha_proxy.max_open_files:
     description: The number of file descriptors HAProxy can have open at one time
