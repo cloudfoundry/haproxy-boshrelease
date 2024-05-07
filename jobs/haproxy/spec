@@ -410,6 +410,8 @@ properties:
 
             - X-SSL-Client-Issuer-DN: Contains the base64-encoded issuer distinguished name of the client certificate
 
+            - X-SSL-Client-Root-CA-DN: X-SSL-Client-Root-CA-DN: Contains base64-encoded subject DN of the root CA which signed the client certificate
+
             - X-SSL-Client-NotBefore: Contains the start date of the client certificate in YYMMDDhhmmss[Z] format.
 
             - X-SSL-Client-NotAfter: Contains the expiration date of the client certificate in YYMMDDhhmmss[Z] format.

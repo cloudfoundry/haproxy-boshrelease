@@ -530,6 +530,7 @@ frontend https-in
     http-request del-header X-SSL-Client-Issuer-DN
     http-request del-header X-SSL-Client-NotBefore
     http-request del-header X-SSL-Client-NotAfter
+    http-request del-header X-SSL-Client-Root-CA-DN
   <%- when :non_mtls_only -%>
     http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }
     http-request del-header X-SSL-Client            if ! { ssl_c_used }
@@ -540,6 +541,7 @@ frontend https-in
     http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }
     http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }
     http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }
   <%- when :non_route_service_only -%>
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
     http-request del-header X-Forwarded-Client-Cert if !route_service_request
@@ -551,6 +553,7 @@ frontend https-in
     http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request
     http-request del-header X-SSL-Client-NotBefore  if !route_service_request
     http-request del-header X-SSL-Client-NotAfter   if !route_service_request
+    http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request
   <%- end -%>
 
   <%- if write_mtls_headers -%>
@@ -564,10 +567,12 @@ frontend https-in
     http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]            if { ssl_c_used }
     http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]        if { ssl_c_used }
     http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }
+    http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn]            if { ssl_c_used }
     <%- else %>
     http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }
     http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }
     http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }
+    http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn,base64]     if { ssl_c_used }
     <%- end %>
   <%- end -%>
 
@@ -683,6 +688,7 @@ frontend wss-in
     http-request del-header X-SSL-Client-Issuer-DN
     http-request del-header X-SSL-Client-NotBefore
     http-request del-header X-SSL-Client-NotAfter
+    http-request del-header X-SSL-Client-Root-CA-DN
   <%- when :non_mtls_only -%>
     http-request del-header X-Forwarded-Client-Cert if ! { ssl_c_used }
     http-request del-header X-SSL-Client            if ! { ssl_c_used }
@@ -693,6 +699,7 @@ frontend wss-in
     http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }
     http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }
     http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
+    http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }
   <%- when :non_route_service_only -%>
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
     http-request del-header X-Forwarded-Client-Cert if !route_service_request
@@ -704,6 +711,7 @@ frontend wss-in
     http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request
     http-request del-header X-SSL-Client-NotBefore  if !route_service_request
     http-request del-header X-SSL-Client-NotAfter   if !route_service_request
+    http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request
   <%- end -%>
 
   <%- if write_mtls_headers -%>
@@ -717,10 +725,12 @@ frontend wss-in
     http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]            if { ssl_c_used }
     http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]        if { ssl_c_used }
     http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }
+    http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn]            if { ssl_c_used }
     <%- else %>
     http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }
     http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }
     http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }
+    http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn,base64]     if { ssl_c_used }
     <%- end %>
   <%- end -%>
 

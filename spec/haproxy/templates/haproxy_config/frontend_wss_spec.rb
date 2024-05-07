@@ -164,6 +164,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-Issuer-DN')
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-NotAfter')
+        expect(frontend_wss).not_to include('http-request del-header X-SSL-Client-Root-CA-DN')
       end
 
       it 'does not add mTLS headers' do
@@ -187,6 +188,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter')
+        expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN')
       end
 
       it 'does not add mTLS headers' do
@@ -212,6 +214,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN  if ! { ssl_c_used }')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore  if ! { ssl_c_used }')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }')
+          expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }')
         end
 
         it 'does not add mTLS headers' do
@@ -232,6 +235,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter')
+        expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN')
       end
 
       it 'does not add mTLS headers' do
@@ -254,6 +258,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter')
+          expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN')
         end
 
         it 'writes mTLS headers when mTLS is used' do
@@ -266,6 +271,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }')
           expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }')
           expect(frontend_wss).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }')
+          expect(frontend_wss).to include('http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn,base64]     if { ssl_c_used }')
         end
 
         context 'when ha_proxy.legacy_xfcc_header_mapping is true' do
@@ -277,6 +283,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
             expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]            if { ssl_c_used }')
             expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]        if { ssl_c_used }')
             expect(frontend_wss).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }')
+            expect(frontend_wss).to include('http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn]            if { ssl_c_used }')
           end
         end
       end
@@ -298,6 +305,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
         expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
+        expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request')
       end
 
       it 'does not add mTLS headers' do
@@ -324,6 +332,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-Issuer-DN  if !route_service_request')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotBefore  if !route_service_request')
           expect(frontend_wss).to include('http-request del-header X-SSL-Client-NotAfter   if !route_service_request')
+          expect(frontend_wss).to include('http-request del-header X-SSL-Client-Root-CA-DN if !route_service_request')
         end
 
         it 'overwrites mTLS headers when mTLS is used' do
@@ -336,6 +345,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }')
           expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }')
           expect(frontend_wss).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }')
+          expect(frontend_wss).to include('http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn,base64]     if { ssl_c_used }')
         end
 
         context 'when ha_proxy.legacy_xfcc_header_mapping is true' do
@@ -351,6 +361,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
             expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn]            if { ssl_c_used }')
             expect(frontend_wss).to include('http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn)]        if { ssl_c_used }')
             expect(frontend_wss).to include('http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }')
+            expect(frontend_wss).to include('http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn]            if { ssl_c_used }')
           end
         end
       end
