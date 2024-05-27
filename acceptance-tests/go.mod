@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/bramvdbogaerde/go-scp v1.4.0
 	github.com/gorilla/websocket v1.5.1
-	github.com/onsi/ginkgo/v2 v2.18.0
+	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
 	github.com/pires/go-proxyproto v0.7.0
 	golang.org/x/crypto v0.23.0
