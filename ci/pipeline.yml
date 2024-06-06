@@ -458,10 +458,10 @@ resources:
   - name: git
     type: git
     source:
-      uri:         https://github.com/cloudfoundry/haproxy-boshrelease
+      uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
       branch:      master
-      username:    ((github.bot_user))
-      password:    ((github.access_token))
+      private_key_user:    ((github.bot_user))
+      private_key:         ((github.bot_deploy_key_private))
 
   - name: git-pull-requests
     type: pull-request
