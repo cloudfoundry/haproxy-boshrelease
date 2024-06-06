@@ -1,0 +1,15 @@
+#!/bin/bash
+# abort script on failures
+set -euxo pipefail
+
+source meta-info/blobs-versions.env
+mkdir "${BOSH_INSTALL_TARGET}/bin"
+
+source packaging-tools/installation.sh
+
+install_hatop "$BOSH_INSTALL_TARGET" "$HATOP_VERSION"
+install_lua "$BOSH_INSTALL_TARGET" "$LUA_VERSION"
+install_pcre2 "$BOSH_INSTALL_TARGET" "$PCRE2_VERSION"
+install_socat "$BOSH_INSTALL_TARGET" "$SOCAT_VERSION"
+
+install_haproxy "$BOSH_INSTALL_TARGET" "$HAPROXY_1_9_VERSION"

@@ -4,5 +4,6 @@ name: keepalived
 dependencies: []
 
 files:
+- meta-info/blobs-versions.env
 - common/utils.sh
 - keepalived/keepalived-*.tar.gz

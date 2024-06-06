@@ -1,6 +1,28 @@
 #!/bin/bash -e
 
+export HAPROXY_FEATURE_VERSION='<%= p("ha_proxy.haproxy_feature_version") -%>'
 mkdir -p /var/vcap/jobs/haproxy/errorfiles
+
+create_or_update_link() {
+  local target="$1"
+  local link="$2"
+
+  if [ -L "$link" ]; then
+    if [ "$(readlink "$link")" != "$target" ]; then
+      echo "Updating symbolic link..."
+      sudo ln -sf "$target" "$link"
+    fi
+  else
+    if [ -e "$link" ]; then
+      echo "Removing existing file and creating a new symbolic link..."
+      sudo rm "$link"
+    else
+      echo "Creating new symbolic link..."
+      sudo ln -s "$target" "$link"
+    fi
+  fi
+}
+
 
 <% p('ha_proxy.custom_http_error_files', {}).each do |status_code, http_content| -%>
 
@@ -9,17 +31,9 @@ cat > <%= "/var/vcap/jobs/haproxy/errorfiles/custom#{status_code}.http" %> << EO
 EOF
 <% end -%>
 
-if [ ! -e /usr/bin/python ] && [ -e /usr/bin/python3 ]; then
-  sudo ln -s /usr/bin/python3 /usr/bin/python
-fi
-
-if [ ! -e /usr/local/bin/hatop ]; then
-  sudo ln -s /var/vcap/packages/haproxy/hatop-wrapper /usr/local/bin/hatop
-fi
-
-if [ ! -e /usr/local/bin/socat ]; then
-  sudo ln -s /var/vcap/packages/haproxy/bin/socat /usr/local/bin/socat
-fi
+create_or_update_link /usr/bin/python3 /usr/bin/python
+create_or_update_link "/var/vcap/packages/haproxy-$HAPROXY_FEATURE_VERSION/hatop-wrapper" /usr/local/bin/hatop
+create_or_update_link "/var/vcap/packages/haproxy-$HAPROXY_FEATURE_VERSION/bin/socat" /usr/local/bin/socat
 
 <%- if_p("ha_proxy.pre_start_script") do |script| -%>
 # ha_proxy.pre_start_script {{{

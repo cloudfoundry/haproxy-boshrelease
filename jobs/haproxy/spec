@@ -3,8 +3,14 @@ name: haproxy
 
 description: "The HAProxy server can be used to terminate SSL in front of the Routers. Each HAProxy instance should point to multiple Routers."
 
+# LTS - Long Term Support
+# STS - Short Term Support
 packages:
-- haproxy
+# - haproxy-1.8 # LTS
+# - haproxy-1.9 # STS
+- haproxy-2.8 # LTS
+- haproxy-2.9 # STS
+- haproxy-3.0 # LTS
 - ttar
 
 templates:
@@ -39,6 +45,12 @@ consumes:
     optional: true
 
 properties:
+  ha_proxy.haproxy_feature_version:
+    description: |
+        You can select an HAProxy feature version by specifying the 'major.minor' version number, one of several HAProxy packages included in this release.
+        This release has been tested only with the default HAProxy feature version.
+        Use other version lines with raw configurations at your own risk.
+    default: '2.8' # LTS
   ha_proxy.pre_start_script:
     description: |
       This script will be appended to the pre-start script and run before the job starts.
