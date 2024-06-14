@@ -14,10 +14,10 @@ haproxy/pcre2-10.43.tar.gz:
   size: 2522928
   object_id: b712245c-72ec-43bb-462c-b15e2fbe7f07
   sha: sha256:889d16be5abb8d05400b33c25e151638b8d4bac0e2d9c76e9d6923118ae8a34e
-haproxy/socat-1.7.4.4.tar.gz:
-  size: 662968
-  object_id: 674c1075-b8d9-4b29-5af3-d0d0ed1cbb09
-  sha: sha256:0f8f4b9d5c60b8c53d17b60d79ababc4a0f51b3bb6d2bd3ae8a6a4b9d68f195e
+haproxy/socat-1.8.0.0.tar.gz:
+  size: 712469
+  object_id: 0414b64a-b098-4994-54a8-95453116e38e
+  sha: sha256:6010f4f311e5ebe0e63c77f78613d264253680006ac8979f52b0711a9a231e82
 keepalived/keepalived-2.2.8.tar.gz:
   size: 1202602
   object_id: ce994b90-fe7b-4563-71f2-a93a515eb5b0
