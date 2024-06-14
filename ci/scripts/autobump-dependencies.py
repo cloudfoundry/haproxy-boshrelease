@@ -18,6 +18,13 @@ from packaging import version
 from bs4 import BeautifulSoup
 from git import Repo
 
+# Pinned versions for the resolvers. See use at the bottom.
+KEEPALIVED_VERSION = "2.2"
+SOCAT_VERSION = "1.7"
+HAPROXY_VERSION = "2.8"
+LUA_VERSION = "5.4"
+PCRE_VERSION = "10"
+HATOP_VERSION = "0"
 
 # Required Environment Vars
 BLOBSTORE_SECRET_ACCESS_KEY = os.environ["GCP_SERVICE_KEY"]
@@ -378,7 +385,7 @@ def main() -> None:
         WebLinkDependency(
             "keepalived",
             "KEEPALIVED_VERSION",
-            "2.2",
+            KEEPALIVED_VERSION,
             "https://keepalived.org/download.html",
             package="keepalived",
             selector="div.content a",
@@ -386,32 +393,32 @@ def main() -> None:
         WebLinkDependency(
             "socat",
             "SOCAT_VERSION",
-            "1.7",
+            SOCAT_VERSION,
             "http://www.dest-unreach.org/socat/download/",
         ),
         HaproxyDependency(
             "haproxy",
             "HAPROXY_VERSION",
-            "2.8",
+            HAPROXY_VERSION,
             "https://www.haproxy.org/download/{}/src",
         ),
         WebLinkDependency(
             "lua",
             "LUA_VERSION",
-            "5.4",
+            LUA_VERSION,
             "https://www.lua.org/versions.html",
         ),
         GithubDependency(
             "pcre2",
             "PCRE_VERSION",
-            "10",
+            PCRE_VERSION,
             "https://github.com/PCRE2Project/pcre2",
             tagname_prefix="pcre2-",
         ),
         GithubDependency(
             "hatop",
             "HATOP_VERSION",
-            "0",
+            HATOP_VERSION,
             "https://github.com/jhunt/hatop",
             tagname_prefix="v",
             filename_suffix="",
