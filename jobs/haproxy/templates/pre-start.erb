@@ -1,6 +1,32 @@
 #!/bin/bash -e
 
+export HAPROXY_FEATURE_VERSION='<%= p("ha_proxy.haproxy_feature_version") -%>'
 mkdir -p /var/vcap/jobs/haproxy/errorfiles
+
+create_or_update_link() {
+  local target="$1"
+  local link="$2"
+
+  # check if the symlink already exists
+  if [ -L "$link" ]; then
+    # symlink already exists
+    # check if the existing symlink does not point to the target
+    if [ "$(readlink "$link")" != "$target" ]; then
+      echo "Updating symbolic link ($link -> $target)..."
+      sudo ln -sf "$target" "$link"
+    fi
+  else
+    # symlink doesn't exist
+    # If the path exists but is not a symlink, remove it (could be a regular file or directory)
+    if [ -e "$link" ]; then
+      echo "Removing existing path ($link)..."
+      sudo rm "$link"
+    fi
+    echo "Creating new symbolic link ($link -> $target)..."
+    sudo ln -s "$target" "$link"
+  fi
+}
+
 
 <% p('ha_proxy.custom_http_error_files', {}).each do |status_code, http_content| -%>
 
@@ -9,17 +35,9 @@ cat > <%= "/var/vcap/jobs/haproxy/errorfiles/custom#{status_code}.http" %> << EO
 EOF
 <% end -%>
 
-if [ ! -e /usr/bin/python ] && [ -e /usr/bin/python3 ]; then
-  sudo ln -s /usr/bin/python3 /usr/bin/python
-fi
-
-if [ ! -e /usr/local/bin/hatop ]; then
-  sudo ln -s /var/vcap/packages/haproxy/hatop-wrapper /usr/local/bin/hatop
-fi
-
-if [ ! -e /usr/local/bin/socat ]; then
-  sudo ln -s /var/vcap/packages/haproxy/bin/socat /usr/local/bin/socat
-fi
+create_or_update_link /usr/bin/python3 /usr/bin/python
+create_or_update_link "/var/vcap/packages/haproxy-$HAPROXY_FEATURE_VERSION/hatop-wrapper" /usr/local/bin/hatop
+create_or_update_link "/var/vcap/packages/haproxy-$HAPROXY_FEATURE_VERSION/bin/socat" /usr/local/bin/socat
 
 <%- if_p("ha_proxy.pre_start_script") do |script| -%>
 # ha_proxy.pre_start_script {{{

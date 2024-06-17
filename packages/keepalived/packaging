@@ -1,13 +1,14 @@
 # abort script on any command that exits with a non zero value
 set -e -x
 
+source meta-info/blobs-versions.env
+
 # Copy common utils
 mkdir -p ${BOSH_INSTALL_TARGET}/common
 cp -a ${BOSH_COMPILE_TARGET}/common/* ${BOSH_INSTALL_TARGET}/common
 
-KEEPALIVED_VERSION=2.2.8  # https://keepalived.org/software/keepalived-2.2.8.tar.gz
-tar xzvf keepalived/keepalived-${KEEPALIVED_VERSION}.tar.gz
-cd keepalived-${KEEPALIVED_VERSION}/
+tar xzvf keepalived/keepalived-${KEEPALIVED_VER}.tar.gz
+cd keepalived-${KEEPALIVED_VER}/
 
 #compile keepalive
 ./configure --prefix=${BOSH_INSTALL_TARGET}

@@ -1,0 +1,11 @@
+---
+name: haproxy-2.9
+files:
+- meta-info/blobs-versions.env
+- packaging-tools/installation.sh
+- haproxy/haproxy-*.tar.gz
+- haproxy/pcre2-*.tar.gz
+- haproxy/socat-*.tar.gz
+- haproxy/lua-*.tar.gz
+- haproxy/hatop-*
+- hatop-wrapper

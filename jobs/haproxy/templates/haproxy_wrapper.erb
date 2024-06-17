@@ -1,9 +1,7 @@
-#!/bin/bash
-#
+#!/bin/bash -e
 
-set -e
-
-export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
+export HAPROXY_FEATURE_VERSION='<%= p("ha_proxy.haproxy_feature_version") -%>'
+export PATH="$PATH:/var/vcap/packages/haproxy-$HAPROXY_FEATURE_VERSION/bin:/var/vcap/packages/ttar/bin"
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock
