@@ -944,7 +944,7 @@ frontend tcp-frontend_<%= tcp_proxy["name"]%>
   <%- if tcp_proxy["ssl"] -%>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tcp_accept_proxy %> <%= tls_bind_options %> <%= v4v6 %>
   <%- else -%>
-    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= v4v6 %>
+    bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tcp_accept_proxy %> <%= v4v6 %>
   <%- end -%>
     default_backend tcp-<%= tcp_proxy["name"] %>
 
