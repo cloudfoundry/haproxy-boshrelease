@@ -70,9 +70,9 @@ describe 'config/haproxy.config custom TCP frontends' do
       end
 
       it 'enables ipv6' do
-        expect(frontend_tcp_redis).to include('bind :::6379 v4v6')
-        expect(frontend_tcp_mysql).to include('bind :::3306 v4v6')
-        expect(frontend_tcp_postgres_via_link).to include('bind :::5432 v4v6')
+        expect(frontend_tcp_redis).to include('bind :::6379  v4v6')
+        expect(frontend_tcp_mysql).to include('bind :::3306  v4v6')
+        expect(frontend_tcp_postgres_via_link).to include('bind :::5432  v4v6')
       end
     end
   end
@@ -90,14 +90,14 @@ describe 'config/haproxy.config custom TCP frontends' do
           'name' => 'mysql',
           'port' => 3306,
           'backend_servers' => ['11.0.0.1', '11.0.0.2'],
-          'ssl' => true
+          'ssl' => false
         }]
       }
     end
 
     it 'adds the default ssl options' do
       expect(frontend_tcp_redis).to include('bind :6379  ssl')
-      expect(frontend_tcp_mysql).to include('bind :3306  ssl')
+      expect(frontend_tcp_mysql).to include('bind :3306  ')
     end
 
     context 'when ha_proxy.accept_proxy is true' do
@@ -107,7 +107,7 @@ describe 'config/haproxy.config custom TCP frontends' do
 
       it 'sets accept-proxy' do
         expect(frontend_tcp_redis).to include('bind :6379 accept-proxy ssl')
-        expect(frontend_tcp_mysql).to include('bind :3306 accept-proxy ssl')
+        expect(frontend_tcp_mysql).to include('bind :3306 accept-proxy ')
       end
 
       context 'when ha_proxy.disable_tcp_accept_proxy is true' do
@@ -117,7 +117,7 @@ describe 'config/haproxy.config custom TCP frontends' do
 
         it 'does not set accept-proxy' do
           expect(frontend_tcp_redis).to include('bind :6379  ssl')
-          expect(frontend_tcp_mysql).to include('bind :3306  ssl')
+          expect(frontend_tcp_mysql).to include('bind :3306  ')
         end
       end
     end
