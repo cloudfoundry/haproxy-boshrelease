@@ -385,7 +385,6 @@ properties:
 
   ha_proxy.strip_headers:
     description: "List of custom headers to delete on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
-    default: ~
     example: |
       strip_headers:
         - MyHeader
