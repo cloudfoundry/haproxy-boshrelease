@@ -1,7 +1,6 @@
 package acceptance_tests
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	. "github.com/onsi/ginkgo/v2"
@@ -14,15 +13,40 @@ var _ = Describe("headers", func() {
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/strip_headers?
   value: ["CustomHeaderToDelete", "CustomHeaderToReplace"]
-
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/headers?
   value: 
-    X-Application-ID: my-custom-header
+    X-Application-Id: my-custom-header
     CustomHeaderToReplace: header-value
+# Configure CA and cert chain
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/crt_list?/-
+  value:
+    snifilter:
+    - haproxy.internal
+    ssl_pem:
+      cert_chain: ((https_frontend.certificate))((https_frontend_ca.certificate))
+      private_key: ((https_frontend.private_key))
+# Declare certs
+- type: replace
+  path: /variables?/-
+  value:
+    name: https_frontend_ca
+    type: certificate
+    options:
+      is_ca: true
+      common_name: bosh
+- type: replace
+  path: /variables?/-
+  value:
+    name: https_frontend
+    type: certificate
+    options:
+      ca: https_frontend_ca
+      common_name: haproxy.internal
+      alternative_names: [haproxy.internal]
 `
 	var closeLocalServer func()
-	var closeSSHTunnel context.CancelFunc
 	var creds struct {
 		HTTPSFrontend struct {
 			Certificate string `yaml:"certificate"`
@@ -30,46 +54,32 @@ var _ = Describe("headers", func() {
 			CA          string `yaml:"ca"`
 		} `yaml:"https_frontend"`
 	}
-	var haproxyInfo haproxyInfo
-	var deployVars map[string]interface{}
-	var nonMTLSClient *http.Client
+	var client *http.Client
 	var recordedHeaders http.Header
 	var request *http.Request
 
 	// These headers will be forwarded, overwritten or deleted
 	incomingRequestHeaders := map[string]string{
-		"CustomHeaderToDelete":  "custom-header",
-		"CustomHeaderToReplace": "custom-header-2",
+		"Custom-Header-To-Delete":  "custom-header",
+		"custom-header-to-replace": "custom-header-2",
 	}
+
 	// These headers will be added
 	additionalRequestHeaders := map[string]string{
-		"X-Application-ID":      "my-custom-header",
-		"CustomHeaderToReplace": "header-value",
+		"Custom-Header-To-Add":     "my-custom-header",
+		"Custom-Header-To-Replace": "header-value",
 	}
 
-	AfterEach(func() {
-		if closeLocalServer != nil {
-			defer closeLocalServer()
-		}
-
-		if closeSSHTunnel != nil {
-			defer closeSSHTunnel()
-		}
-	})
-
-	JustBeforeEach(func() {
+	It("Check correct headers handling", func() {
 		haproxyBackendPort := 12000
 		var varsStoreReader varsStoreReader
-
-		var err error
-
-		haproxyInfo, varsStoreReader = deployHAProxy(baseManifestVars{
+		haproxyInfo, varsStoreReader := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileHeaders}, deployVars, true)
+		}, []string{opsfileHeaders}, map[string]interface{}{}, true)
 
-		err = varsStoreReader(&creds)
+		err := varsStoreReader(&creds)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Starting a local http server to act as a backend")
@@ -80,10 +90,11 @@ var _ = Describe("headers", func() {
 			_, _ = w.Write([]byte("OK"))
 		})
 		Expect(err).NotTo(HaveOccurred())
+		defer closeLocalServer()
 
-		closeSSHTunnel = setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
-
-		nonMTLSClient = buildHTTPClient(
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
+		client = buildHTTPClient(
 			[]string{creds.HTTPSFrontend.CA},
 			map[string]string{"haproxy.internal:443": fmt.Sprintf("%s:443", haproxyInfo.PublicIP)},
 			[]tls.Certificate{}, "",
@@ -94,34 +105,20 @@ var _ = Describe("headers", func() {
 		for key, value := range incomingRequestHeaders {
 			request.Header.Set(key, value)
 		}
-	})
 
-	Describe("When strip_headers are set", func() {
-		It("Correctly removes the related strip headers", func() {
-			resp, err := nonMTLSClient.Do(request)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			for key := range incomingRequestHeaders {
-				Expect(recordedHeaders).NotTo(HaveKey(key))
-			}
-		})
-	})
-	Describe("When custom headers are set", func() {
-		It("Correctly adds related headers", func() {
-			resp, err := nonMTLSClient.Do(request)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			for key := range additionalRequestHeaders {
-				Expect(recordedHeaders).To(HaveKey(key))
-			}
-		})
-		It("Correctly replace header", func() {
-			resp, err := nonMTLSClient.Do(request)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			for key := range additionalRequestHeaders {
-				Expect(recordedHeaders).To(HaveKeyWithValue(key, additionalRequestHeaders[key]))
-			}
-		})
+		By("Gets successful request")
+		resp, err := client.Do(request)
+		expect200(resp, err)
+
+		By("Correctly removes related headers")
+		Expect(recordedHeaders).NotTo(HaveKey("Custom-Header-To-Delete"))
+
+		By("Correctly adds related headers")
+		Expect(recordedHeaders).To(HaveKey("Custom-Header-To-Add"))
+		Expect(recordedHeaders["Custom-Header-To-Add"]).To(ContainElements(additionalRequestHeaders["Custom-Header-To-Add"]))
+
+		By("Correctly replaces related headers")
+		Expect(recordedHeaders["Custom-Header-To-Replace"]).NotTo(ContainElements(incomingRequestHeaders["custom-header-to-replace"]))
+		Expect(recordedHeaders["Custom-Header-To-Replace"]).To(ContainElements(additionalRequestHeaders["Custom-Header-To-Replace"]))
 	})
 })
