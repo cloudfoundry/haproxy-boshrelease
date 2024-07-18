@@ -58,14 +58,15 @@ var _ = Describe("headers", func() {
 	var recordedHeaders http.Header
 	var request *http.Request
 
-	// These headers will be forwarded, overwritten or deleted
-	incomingRequestHeaders := map[string]string{
-		"Custom-Header-To-Delete":  "custom-header",
+	headersToDelete := []string{"header-to-delete"}
+
+	// These headers will be replaced
+	headersToReplace := map[string]string{
 		"custom-header-to-replace": "custom-header-2",
 	}
 
 	// These headers will be added
-	additionalRequestHeaders := map[string]string{
+	headersToAdd := map[string]string{
 		"Custom-Header-To-Add":     "my-custom-header",
 		"Custom-Header-To-Replace": "header-value",
 	}
@@ -102,7 +103,7 @@ var _ = Describe("headers", func() {
 
 		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
 		Expect(err).NotTo(HaveOccurred())
-		for key, value := range incomingRequestHeaders {
+		for key, value := range headersToReplace {
 			request.Header.Set(key, value)
 		}
 
@@ -111,14 +112,21 @@ var _ = Describe("headers", func() {
 		expect200(resp, err)
 
 		By("Correctly removes related headers")
-		Expect(recordedHeaders).NotTo(HaveKey("Custom-Header-To-Delete"))
+		for headerKey := range headersToDelete {
+			Expect(recordedHeaders).NotTo(HaveKey(headerKey))
+		}
 
 		By("Correctly adds related headers")
-		Expect(recordedHeaders).To(HaveKey("Custom-Header-To-Add"))
-		Expect(recordedHeaders["Custom-Header-To-Add"]).To(ContainElements(additionalRequestHeaders["Custom-Header-To-Add"]))
+		for headerKey, headerValue := range headersToAdd {
+			Expect(recordedHeaders).To(HaveKey(headerKey))
+			Expect(recordedHeaders[headerKey]).To(ContainElements(headerValue))
+		}
 
 		By("Correctly replaces related headers")
-		Expect(recordedHeaders["Custom-Header-To-Replace"]).NotTo(ContainElements(incomingRequestHeaders["custom-header-to-replace"]))
-		Expect(recordedHeaders["Custom-Header-To-Replace"]).To(ContainElements(additionalRequestHeaders["Custom-Header-To-Replace"]))
+		for headerKey, headerValue := range headersToAdd {
+			Expect(recordedHeaders).To(HaveKey(headerKey))
+			Expect(recordedHeaders[headerKey]).NotTo(ContainElements(headerValue))
+		}
+
 	})
 })
