@@ -16,7 +16,7 @@ var _ = Describe("headers", func() {
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/headers?
   value: 
-    X-Application-Id: my-custom-header
+    Custom-Header-To-Add: my-custom-header
     Custom-Header-To-Replace: header-value
 # Configure CA and cert chain
 - type: replace
