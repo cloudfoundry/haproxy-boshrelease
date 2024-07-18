@@ -12,12 +12,12 @@ var _ = Describe("headers", func() {
 	opsfileHeaders := `---
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/strip_headers?
-  value: ["CustomHeaderToDelete", "CustomHeaderToReplace"]
+  value: ["Custom-Header-To-Delete", "Custom-Header-To-Replace"]
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/headers?
   value: 
     X-Application-Id: my-custom-header
-    CustomHeaderToReplace: header-value
+    Custom-Header-To-Replace: header-value
 # Configure CA and cert chain
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/crt_list?/-
