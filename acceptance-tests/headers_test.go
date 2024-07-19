@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-var _ = Describe("headers", func() {
+var _ = Describe("Headers", func() {
 	opsfileHeaders := `---
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/strip_headers?
@@ -16,8 +16,8 @@ var _ = Describe("headers", func() {
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/headers?
   value: 
-    Custom-Header-To-Add: my-custom-header
-    Custom-Header-To-Replace: header-value
+    Custom-Header-To-Add: add-value
+    Custom-Header-To-Replace: replace-value
 # Configure CA and cert chain
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/crt_list?/-
@@ -58,19 +58,6 @@ var _ = Describe("headers", func() {
 	var recordedHeaders http.Header
 	var request *http.Request
 
-	headersToDelete := []string{"header-to-delete"}
-
-	// These headers will be replaced
-	headersToReplace := map[string]string{
-		"custom-header-to-replace": "custom-header-2",
-	}
-
-	// These headers will be added
-	headersToAdd := map[string]string{
-		"Custom-Header-To-Add":     "my-custom-header",
-		"Custom-Header-To-Replace": "header-value",
-	}
-
 	It("Check correct headers handling", func() {
 		haproxyBackendPort := 12000
 		var varsStoreReader varsStoreReader
@@ -103,27 +90,48 @@ var _ = Describe("headers", func() {
 
 		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
 		Expect(err).NotTo(HaveOccurred())
-		for key, value := range headersToReplace {
+
+		// These headers are defined in 'strip_headers' and 'headers', so their value will be replaced
+		headersToSend := map[string]string{
+			"Custom-Header-To-Replace": "old-value",
+			"Custom-Header-To-Delete":  "some-value",
+		}
+
+		for key, value := range headersToSend {
 			request.Header.Set(key, value)
+		}
+
+		// These headers are removed, as they are defined in 'strip_headers'
+		headerKeysNotToExpect := []string{"Custom-Header-To-Delete"}
+
+		// These headers are added, as they are defined in 'headers'
+		headersWithKeysToExpect := map[string]string{
+			"Custom-Header-To-Add":     "add-value",
+			"Custom-Header-To-Replace": "replace-value",
+		}
+
+		// These headers are defined in 'strip_headers' and 'headers', so their value is replaced
+		headersWithKeysNotToExpect := map[string]string{
+			"custom-header-to-replace": "old-value",
 		}
 
 		By("Gets successful request")
 		resp, err := client.Do(request)
 		expect200(resp, err)
 
-		By("Correctly removes related headers")
-		for headerKey := range headersToDelete {
+		By("Correctly removes headers in 'strip_headers'")
+		for headerKey := range headerKeysNotToExpect {
 			Expect(recordedHeaders).NotTo(HaveKey(headerKey))
 		}
 
-		By("Correctly adds related headers")
-		for headerKey, headerValue := range headersToAdd {
+		By("Correctly adds headers in 'headers'")
+		for headerKey, headerValue := range headersWithKeysToExpect {
 			Expect(recordedHeaders).To(HaveKey(headerKey))
 			Expect(recordedHeaders[headerKey]).To(ContainElements(headerValue))
 		}
 
-		By("Correctly replaces related headers")
-		for headerKey, headerValue := range headersToAdd {
+		By("Correctly replaces the value in 'strip_headers' when 'headers' with same key is present")
+		for headerKey, headerValue := range headersWithKeysNotToExpect {
 			Expect(recordedHeaders).To(HaveKey(headerKey))
 			Expect(recordedHeaders[headerKey]).NotTo(ContainElements(headerValue))
 		}
