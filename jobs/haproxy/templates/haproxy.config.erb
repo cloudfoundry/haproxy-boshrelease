@@ -779,6 +779,11 @@ frontend wss-in
     http-request deny if <%= acl_names %>
     <%- end -%>
   <%- end -%>
+  <%- if_p("ha_proxy.strip_headers") do |headers| -%>
+    <%- headers.each do |header| -%>
+      http-request del-header <%= header.gsub(/(?!:\\)( )/, '\ ') %>
+    <%- end -%>
+  <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
