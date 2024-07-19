@@ -112,7 +112,7 @@ var _ = Describe("Headers", func() {
 
 		// These headers are defined in 'strip_headers' and 'headers', so their value is replaced
 		headersWithKeysNotToExpect := map[string]string{
-			"custom-header-to-replace": "old-value",
+			"Custom-Header-To-Replace": "old-value",
 		}
 
 		By("Gets successful request")
