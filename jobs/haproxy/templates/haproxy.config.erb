@@ -437,6 +437,11 @@ frontend http-in
     http-request deny if <%= acl_names %>
     <%- end -%>
   <%- end -%>
+  <%- if_p("ha_proxy.strip_headers") do |headers| -%>
+    <%- headers.each do |header| -%>
+     http-request del-header <%= header.gsub(/(?!:\\)( )/, '\ ') %>
+    <%- end -%>
+  <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
@@ -611,6 +616,11 @@ frontend https-in
     http-request deny if <%= acl_names %>
     <%- end -%>
   <%- end -%>
+  <%- if_p("ha_proxy.strip_headers") do |strip_headers| -%>
+    <%- strip_headers.each do |strip_header| -%>
+    http-request del-header <%= strip_header.gsub(/(?!:\\)( )/, '\ ') %>
+    <%- end -%>
+  <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
     <%- headers.each do |header, value| -%>
     http-request add-header <%= header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
@@ -767,6 +777,11 @@ frontend wss-in
         <%- end -%>
       <%- end -%>
     http-request deny if <%= acl_names %>
+    <%- end -%>
+  <%- end -%>
+  <%- if_p("ha_proxy.strip_headers") do |headers| -%>
+    <%- headers.each do |header| -%>
+      http-request del-header <%= header.gsub(/(?!:\\)( )/, '\ ') %>
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.headers") do |headers| -%>
