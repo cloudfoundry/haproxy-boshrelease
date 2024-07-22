@@ -538,6 +538,32 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
   end
 
+  context 'when ha_proxy.strip_headers are provided' do
+    let(:properties) do
+      default_properties.merge({ 'strip_headers' => %w[MyHeader MySecondHeader] })
+    end
+
+    it 'deletes the headers' do
+      expect(frontend_https).to include('http-request del-header MyHeader')
+      expect(frontend_https).to include('http-request del-header MySecondHeader')
+    end
+  end
+
+  context 'when ha_proxy.strip_headers and ha_proxy.headers are provided' do
+    let(:properties) do
+      default_properties.merge({
+        'strip_headers' => %w[MyHeader MySecondHeader],
+        'headers' => ['MyHeader: my-custom-header']
+      })
+    end
+
+    it 'contains the headers' do
+      expect(frontend_https).to include('http-request del-header MyHeader')
+      expect(frontend_https).to include('http-request del-header MySecondHeader')
+      expect(frontend_https).to include('http-request add-header MyHeader:\ my-custom-header ""')
+    end
+  end
+
   context 'when ha_proxy.headers are provided' do
     let(:properties) do
       default_properties.merge({ 'headers' => ['X-Application-ID: my-custom-header', 'MyCustomHeader: 3'] })

@@ -383,6 +383,13 @@ properties:
           backend_health_rise: 2  # optional, ignored if backend_use_http_health is false. Defaults to 2 if not set. Number of consecutive successful health checks required before the server is considered healthy from an unhealthy state.
           additional_acls: ["method GET"] # optional, defaults to []. Include additional ACLs that are required for this backend to be used. ACLs are combined with logical AND
 
+  ha_proxy.strip_headers:
+    description: "List of custom headers to delete on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
+    example: |
+      strip_headers:
+        - MyHeader
+        - MyCustomHeaderToDelete
+
   ha_proxy.headers:
     description: "Hash of custom headers you wish you have set on each request. Spaces are automatically escaped, but any other haproxy delimiters will need to be escaped manually"
     example: |
