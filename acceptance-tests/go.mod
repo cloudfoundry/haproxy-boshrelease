@@ -6,7 +6,7 @@ require (
 	github.com/bramvdbogaerde/go-scp v1.5.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/onsi/ginkgo/v2 v2.19.0
-	github.com/onsi/gomega v1.33.1
+	github.com/onsi/gomega v1.34.0
 	github.com/pires/go-proxyproto v0.7.0
 	golang.org/x/crypto v0.25.0
 	golang.org/x/net v0.27.0
