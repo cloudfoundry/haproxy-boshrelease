@@ -677,7 +677,9 @@ properties:
   ha_proxy.backend_health_rise:
     description: Number of consecutive successful health checks required before the server is considered healthy from an unhealthy state. The default value of 2 matches the default if the parameter is undefined. This parameter will be ignored if ha_proxy.backend_use_http_health is false.
     default: 2
-
+  ha_proxy.backend_https_check:
+    description: Set to true if the backend uses TLS on the health endpoint. Adds the check-ssl option to the backend configs. If backend certificate on traffic port is verified the Health endpoint cert will also be verified.  
+    default: false
   ha_proxy.global_config:
     description: |
       Raw HAProxy config that will be added to the HA proxy global section, provided either as a multiline text blob or as an array of lines.
