@@ -146,6 +146,26 @@ describe 'config/haproxy.config backend http-routers' do
         expect(backend_http1).to include('server node1 10.0.0.2:80 check inter 1000 port 8080 fall 3 rise 99')
       end
     end
+
+    context 'when tls health checks for backend are enabled' do
+      let(:properties) do
+        {
+          'backend_use_http_health' => true,
+          'backend_http_health_uri' => '1.2.3.5/health',
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'backend_https_check' => true
+        }
+      end
+
+      it 'configures the healthcheck' do
+        expect(backend_http1).to include('option httpchk GET 1.2.3.5/health')
+      end
+
+      it 'configures the servers' do
+        expect(backend_http1).to include('server node0 10.0.0.1:80 check check-ssl inter 1000 port 8080 fall 3 rise 2')
+        expect(backend_http1).to include('server node1 10.0.0.2:80 check check-ssl inter 1000 port 8080 fall 3 rise 2')
+      end
+    end
   end
 
   context 'when backend servers are provided via ha_proxy.backend_servers' do
