@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-ruby '~>3.2.0'
+ruby '~>3.3.0'
 gem 'bosh-template'
 gem 'deep_merge'
 gem 'guard-rspec'
