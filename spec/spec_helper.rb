@@ -59,7 +59,7 @@ end
 # }
 def parse_haproxy_config(config) # rubocop:disable Metrics/AbcSize
   # remove comments and empty lines
-  config = config.split(/\n/).reject { |l| l.empty? || l =~ /^\s*#.*$/ }.join("\n")
+  config = config.split("\n").reject { |l| l.empty? || l =~ /^\s*#.*$/ }.join("\n")
 
   # split into top-level groups
   config.split(/^([^\s].*)/).drop(1).each_slice(2).to_h do |group|
@@ -67,10 +67,10 @@ def parse_haproxy_config(config) # rubocop:disable Metrics/AbcSize
     properties = group[1]
 
     # remove empty lines
-    properties = properties.split(/\n/).reject(&:empty?).join("\n")
+    properties = properties.split("\n").reject(&:empty?).join("\n")
 
     # split and strip leading/trailing whitespace
-    properties = properties.split(/\n/).map(&:strip)
+    properties = properties.split("\n").map(&:strip)
 
     [key, properties]
   end
