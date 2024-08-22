@@ -15,5 +15,4 @@ RUN /usr/bin/python3 -m pip install -r /requirements.txt
 
 # Install go dependencies
 ENV GOBIN=/usr/local/bin
-RUN go install github.com/onsi/ginkgo/v2/ginkgo@latest && \
-    go install github.com/geofffranks/spruce/cmd/spruce@latest
+RUN go install github.com/geofffranks/spruce/cmd/spruce@latest
