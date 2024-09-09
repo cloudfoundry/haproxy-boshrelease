@@ -369,6 +369,10 @@ listen health_check_http_url
     monitor fail if http-routers_down
 <% end -%>
 
+<% if p("ha_proxy.expect_proxy") -%>
+    tcp-request connection expect-proxy layer4 if { src -f proxies.lst }
+<%- end -%>
+
 <% if_p("ha_proxy.resolvers") do |resolvers| -%>
 resolvers default
     hold valid <%= p("ha_proxy.dns_hold") %>
