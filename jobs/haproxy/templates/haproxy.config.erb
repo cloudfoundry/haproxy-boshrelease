@@ -169,6 +169,9 @@ end
 # }}}
 
 # Error checking
+  if !p("ha_proxy.accept_proxy", true) && p("ha_proxy.expect_proxy", true)
+    abort "Conflicting configuration: accept_proxy and expect_proxy are mutually exclusive"
+  end
   if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
     abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
   end
