@@ -370,7 +370,7 @@ listen health_check_http_url
 <% end -%>
 
 <% if p("ha_proxy.expect_proxy") -%>
-    tcp-request connection expect-proxy layer4 if { src -f proxies.lst }
+    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
 <%- end -%>
 
 <% if_p("ha_proxy.resolvers") do |resolvers| -%>
