@@ -369,6 +369,11 @@ listen health_check_http_url
     monitor fail if http-routers_down
 <% end -%>
 
+<%- if_p("ha_proxy.expect_proxy") do -%>
+    acl proxies src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt
+    tcp-request content accept if proxies
+<%- end -%>
+
 <% if p("ha_proxy.expect_proxy") -%>
     tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
 <%- end -%>
