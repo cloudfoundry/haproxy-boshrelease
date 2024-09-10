@@ -586,8 +586,8 @@ properties:
       default: ~
       example:
         expect_proxy:
-        - 10.0.1.32/27
-        - 2600:1f18:4c0b:3207::/64
+        - 10.6.7.8/27
+        - 2001:db8::/32
   ha_proxy.block_all:
     description: "Optionally block all incoming traffic to http(s). Use in conjunction with whitelist."
     default: false

@@ -369,15 +369,6 @@ listen health_check_http_url
     monitor fail if http-routers_down
 <% end -%>
 
-<%- if_p("ha_proxy.expect_proxy") do -%>
-    acl proxies src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt
-    tcp-request content accept if proxies
-<%- end -%>
-
-<% if p("ha_proxy.expect_proxy") -%>
-    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
-<%- end -%>
-
 <% if_p("ha_proxy.resolvers") do |resolvers| -%>
 resolvers default
     hold valid <%= p("ha_proxy.dns_hold") %>
@@ -539,6 +530,9 @@ frontend https-in
     http-request deny status 429 if { sc_http_req_rate(1) gt <%= requests %> }
       <%- end -%>
     <%- end -%>
+  <%- end -%>
+  <% if p("ha_proxy.expect_proxy") -%>
+      tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -702,6 +696,9 @@ frontend wss-in
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
+  <%- end -%>
+  <% if p("ha_proxy.expect_proxy") -%>
+      tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt

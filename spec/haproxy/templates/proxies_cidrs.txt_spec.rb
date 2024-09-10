@@ -12,8 +12,8 @@ describe 'config/proxies_cidrs.txt' do
         expect(template.render({
           'ha_proxy' => {
             'expect_proxy' => [
-              '10.0.1.32/27',
-              '2600:1f18:4c0b:3207::/64'
+              '10.5.6.7/27',
+              '2001:db8::/32'
             ]
           }
         })).to eq(<<~EXPECTED)
@@ -21,8 +21,8 @@ describe 'config/proxies_cidrs.txt' do
 
           # BEGIN proxies cidrs
           # detected cidrs provided as array in cleartext format
-            10.0.1.32/27
-            2600:1f18:4c0b:3207::/64
+            10.5.6.7/27
+            2001:db8::/32
           # END proxies cidrs
 
         EXPECTED
