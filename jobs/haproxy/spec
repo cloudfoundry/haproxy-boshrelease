@@ -584,6 +584,13 @@ properties:
       cidr_whitelist:
       - 172.168.4.1/32
       - 10.2.0.0/16
+    ha_proxy.cidr_proxies:
+      description: "List of CIDRs to enable proxy protocol for. This enables forwarding of the client source IP for hyperscalers not supporting IP dual stack (v4 & v6)"
+      default: ~
+      example:
+        cidr_proxies:
+        - 10.0.1.32/27
+        - 2600:1f18:4c0b:3207::/64
   ha_proxy.block_all:
     description: "Optionally block all incoming traffic to http(s). Use in conjunction with whitelist."
     default: false
