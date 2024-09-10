@@ -29,14 +29,14 @@ describe 'config/proxies_cidrs.txt' do
       it 'has the correct contents' do
         expect(template.render({
           'ha_proxy' => {
-            'proxies_cidrs' => gzip_and_b64_encode("10.0.1.32/27\n2600:1f18:4c0b:3207::/64")
+            'proxies_cidrs' => gzip_and_b64_encode("10.0.1.32/27\n2001:db8::/32")
           }
         })).to eq(<<~EXPECTED)
           # generated from proxies_cidrs.txt.erb
 
           # BEGIN proxies cidrs
           10.0.1.32/27
-          2600:1f18:4c0b:3207::/64
+          2001:db8::/32
           # END proxies cidrs
 
         EXPECTED
