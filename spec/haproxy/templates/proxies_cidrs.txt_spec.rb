@@ -11,14 +11,14 @@ describe 'config/proxies_cidrs.txt' do
         expect(template.render({
           'ha_proxy' => {
             'proxies_cidrs' => '10.0.1.32/27
-                                2600:1f18:4c0b:3207::/64
+                                2001:db8::/32
           }
         })).to eq(<<~EXPECTED)
           # generated from proxies_cidrs.txt.erb
 
           # BEGIN proxies cidrs
             10.0.1.32/27
-            2600:1f18:4c0b:3207::/64
+            2001:db8::/32
           # END proxies cidrs
 
         EXPECTED
