@@ -48,6 +48,30 @@ describe 'config/haproxy.config HTTPS frontend' do
         expect(frontend_https).to include('bind :443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl')
       end
     end
+
+    context 'when ha_proxy.expect_proxy is not empty/nil and ha_proxy.accept_proxy is false' do
+      let(:properties) do
+        default_properties.merge({ 'accept_proxy' => false,
+                                   'expect_proxy' => '127.0.0.1/8' })
+      end
+
+      it 'sets expect-proxy of tcp connection to the file proxies_cidrs.txt contents' do
+        expect(frontend_https).to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt')
+      end
+    end
+
+    context 'when ha_proxy.expect_proxy is true and ha_proxy.expect_proxy is not empty/nil' do
+        let(:properties) do
+          default_properties.merge({ 'accept_proxy' => true,
+                                     'expect_proxy' => '127.0.0.1/8' })
+        end
+
+        it 'aborts with a meaningful error message' do
+          expect do
+            frontend_https
+          end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy are mutually exclusive/)
+        end
+    end
   end
 
   context 'when ha_proxy.disable_domain_fronting is true' do
