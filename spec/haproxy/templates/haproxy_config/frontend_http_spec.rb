@@ -42,6 +42,28 @@ describe 'config/haproxy.config HTTP frontend' do
         expect(frontend_http).to include('bind :80 accept-proxy')
       end
     end
+
+    context 'when ha_proxy.expect_proxy is not empty/nil and ha_proxy.accept_proxy is false' do
+      let(:properties) do { 'accept_proxy' => false,
+                            'expect_proxy' => ['127.0.0.1/8'] }
+      end
+
+      it 'sets expect-proxy of tcp connection to the file proxies_cidrs.txt contents' do
+        expect(frontend_http).to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }')
+      end
+    end
+
+    context 'when ha_proxy.accept_proxy is true and ha_proxy.expect_proxy is not empty/nil' do
+      let(:properties) do { 'accept_proxy' => true,
+                            'expect_proxy' => ['127.0.0.1/8'] }
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect do
+          frontend_http
+        end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy are mutually exclusive/)
+      end
+    end
   end
 
   context 'when a custom ha_proxy.frontend_config is provided' do

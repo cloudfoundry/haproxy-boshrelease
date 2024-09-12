@@ -169,7 +169,7 @@ end
 # }}}
 
 # Error checking
-  if !p("ha_proxy.accept_proxy", true) && !p("ha_proxy.expect_proxy", nil)
+  if p("ha_proxy.accept_proxy",false) && p("ha_proxy.expect_proxy",nil)
     abort "Conflicting configuration: accept_proxy and expect_proxy are mutually exclusive"
   end
   if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
@@ -413,6 +413,9 @@ frontend http-in
       <%- end -%>
     <%- end -%>
   <%- end -%>
+  <% if_p("ha_proxy.expect_proxy") do -%>
+    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
+  <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
     tcp-request content accept if whitelist
@@ -531,8 +534,8 @@ frontend https-in
       <%- end -%>
     <%- end -%>
   <%- end -%>
-  <% if p("ha_proxy.expect_proxy") -%>
-      tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
+  <% if_p("ha_proxy.expect_proxy") do -%>
+      tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -697,8 +700,8 @@ frontend wss-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
-  <% if p("ha_proxy.expect_proxy") -%>
-      tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/proxies_cidrs.txt }
+  <% if_p("ha_proxy.expect_proxy") do -%>
+    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt

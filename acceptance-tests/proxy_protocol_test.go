@@ -64,19 +64,19 @@ var _ = Describe("Proxy Protocol", func() {
 	})
 })
 
-var _ = Describe("Proxy Protocol with specified expect_proxy and accept_proxy=false", func() {
+var _ = Describe("expect-proxy requests", func() {
 	opsfileProxyProtocol := `---
-# Enable Proxy Protocol for specified CIDRs
+# Enable Proxy Protocol
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
   value: false
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
   value:
-    - 127.0.0.1/8
-    - ::1/128
+   - 127.0.0.1/8
+   - ::1/128
 `
-	It("Correctly proxies Proxy Protocol requests", func() {
+	It("Correctly handles expect-proxy requests", func() {
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
@@ -101,9 +101,13 @@ var _ = Describe("Proxy Protocol with specified expect_proxy and accept_proxy=fa
 		By("Sending a request with Proxy Protocol Header to HAProxy traffic port")
 		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
 		Expect(err).NotTo(HaveOccurred())
+
+		//By("Sending a request without Proxy Protocol and expect-proxy list")
+		//_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
+		//Expect(err).NotTo(HaveOccurred())
+
 	})
 })
-
 
 func performProxyProtocolRequest(ip string, port int, endpoint string) error {
 	// Create a connection to the HAProxy instance
