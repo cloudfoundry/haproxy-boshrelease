@@ -10,20 +10,25 @@ import (
 	"time"
 )
 
-var _ = Describe("Proxy Protocol", func() {
+var _ = Describe("expect-proxy requests", func() {
 	opsfileProxyProtocol := `---
 # Enable Proxy Protocol
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
-  value: true
+  value: false
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/enable_health_check_http?
   value: true
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/disable_health_check_proxy?
   value: false
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
+  value:
+   - 127.0.0.1/8
+   - ::1/128
 `
-	It("Correctly proxies Proxy Protocol requests", func() {
+	It("Correctly handles expect-proxy requests with expect_proxy property", func() {
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
@@ -48,19 +53,6 @@ var _ = Describe("Proxy Protocol", func() {
 		By("Sending a request with Proxy Protocol Header to HAProxy traffic port")
 		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
 		Expect(err).NotTo(HaveOccurred())
-
-		By("Sending a request without Proxy Protocol Header to HAProxy")
-		_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		expectConnectionResetErr(err)
-
-		By("Sending a request with Proxy Protocol Header to HAProxy health check port")
-		err = performProxyProtocolRequest(haproxyInfo.PublicIP, 8080, "/health")
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Sending a request without Proxy Protocol Header to HAProxy health check port")
-		_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
-		expectConnectionResetErr(err)
-
 	})
 })
 
