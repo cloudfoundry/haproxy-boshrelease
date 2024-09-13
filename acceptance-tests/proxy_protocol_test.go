@@ -76,7 +76,7 @@ var _ = Describe("expect-proxy requests", func() {
    - 127.0.0.1/8
    - ::1/128
 `
-	It("Correctly handles expect-proxy requests", func() {
+	It("Correctly handles expect-proxy requests with expect_proxy property", func() {
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
