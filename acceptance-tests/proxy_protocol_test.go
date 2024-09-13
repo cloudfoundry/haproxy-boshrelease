@@ -71,6 +71,12 @@ var _ = Describe("expect-proxy requests", func() {
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
   value: false
 - type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/enable_health_check_http?
+  value: true
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/disable_health_check_proxy?
+  value: false
+- type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
   value:
    - 127.0.0.1/8
@@ -101,11 +107,6 @@ var _ = Describe("expect-proxy requests", func() {
 		By("Sending a request with Proxy Protocol Header to HAProxy traffic port")
 		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
 		Expect(err).NotTo(HaveOccurred())
-
-		//By("Sending a request without Proxy Protocol and expect-proxy list")
-		//_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		//Expect(err).NotTo(HaveOccurred())
-
 	})
 })
 
