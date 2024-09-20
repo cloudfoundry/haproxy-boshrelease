@@ -64,6 +64,84 @@ var _ = Describe("Proxy Protocol", func() {
 	})
 })
 
+var _ = Describe("expect_proxy Protocol with local host cidrs", func() {
+	opsfileExpectProxyProtocol := `---
+# Enable Proxy Protocol
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  value: false
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
+  value: 
+	- 127.0.0.1/8
+	- ::1/128
+`
+	It("Correctly proxies request with Expect Proxy allowed CIDRs list", func() {
+		haproxyBackendPort := 12000
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileExpectProxyProtocol}, map[string]interface{}{}, false)
+
+		By("Sending a request without Proxy Protocol Header and expect proxy list to HAProxy")
+		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
+		Expect(err).NotTo(HaveOccurred())
+
+	})
+})
+
+var _ = Describe("expect_proxy protocol with incorrect local host cidrs", func() {
+	opsfileExpectProxiProtocol := `---
+# Enable Proxy Protocol
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  value: false
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
+  value: 
+	- 8.8.8.8/8
+`
+	It("blocks requests with incorrect Expect Proxy CIDRs", func() {
+		haproxyBackendPort := 12000
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileExpectProxiProtocol}, map[string]interface{}{}, false)
+
+		By("Sending a request without Proxy Protocol Header and expect proxy list to HAProxy")
+		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
+		Expect(err).To(HaveOccurred())
+
+	})
+})
+
+var _ = Describe("expect_proxy protocol with incorrect local host cidrs", func() {
+	opsfileExpectProxiProtocol := `---
+# Enable Proxy Protocol
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  value: false
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
+  value: ~
+`
+	It("blocks request when accept_proxy set to false", func() {
+		haproxyBackendPort := 12000
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileExpectProxiProtocol}, map[string]interface{}{}, false)
+
+		By("Sending a request without Proxy Protocol Header and expect proxy list to HAProxy")
+		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
+		Expect(err).To(HaveOccurred())
+
+	})
+})
+
 func performProxyProtocolRequest(ip string, port int, endpoint string) error {
 	// Create a connection to the HAProxy instance
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
