@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-
 require 'rspec'
 
 describe 'config/haproxy.config HTTPS Websockets frontend' do
