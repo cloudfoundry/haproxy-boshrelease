@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rspec'
 
 describe 'config/expect_proxy_cidrs.txt' do
