@@ -49,10 +49,10 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
     end
 
-    context 'when ha_proxy.expect_proxy is not empty/nil and ha_proxy.accept_proxy is false' do
+    context 'when ha_proxy.expect_proxy_cidrs is not empty/nil and ha_proxy.accept_proxy is false' do
       let(:properties) do
         default_properties.merge({ 'accept_proxy' => false,
-                                   'expect_proxy' => ['127.0.0.1/8'] })
+                                   'expect_proxy_cidrs' => ['127.0.0.1/8'] })
       end
 
       it 'sets expect-proxy of tcp connection to the file proxies_cidrs.txt contents' do
@@ -60,16 +60,16 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
     end
 
-    context 'when ha_proxy.accept_proxy is true and ha_proxy.expect_proxy is not empty/nil' do
+    context 'when ha_proxy.accept_proxy is true and ha_proxy.expect_proxy_cidrs is not empty/nil' do
       let(:properties) do
         default_properties.merge({ 'accept_proxy' => true,
-                                   'expect_proxy' => ['127.0.0.1/8'] })
+                                   'expect_proxy_cidrs' => ['127.0.0.1/8'] })
       end
 
       it 'aborts with a meaningful error message' do
         expect do
           frontend_https
-        end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy are mutually exclusive/)
+        end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive/)
       end
     end
   end
