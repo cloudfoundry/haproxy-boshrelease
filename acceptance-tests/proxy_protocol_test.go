@@ -91,20 +91,22 @@ var _ = Describe("Proxy Protocol", func() {
 			closeBackendTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 			defer closeBackendTunnel()
 
-			By("Not expecting Proxy Protocol for requests from IPs not in the list")
+			By("Checking that Proxy Protocol is expected for requests from IPs in the list")
+			// Requests without Proxy Protocol Header should be rejected
 			_, err := http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
 			expectConnectionResetErr(err)
 
+			// Requests with Proxy Protocol Header should succeed
 			err = performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Expecting Proxy Protocol for requests from IPs in the list")
+			By("Checking that Proxy Protocol is NOT expected for requests from IPs NOT in the list")
 			// Set up a tunnel so that requests to localhost:11000 appear to come from localhost
-			// on the HAProxy VM as Proxy Protocol is expected for this CIDR block (see ops file above)
+			// on the HAProxy VM as Proxy Protocol is not expected for requests from localhost (see ops file above)
 			closeFrontendTunnel := setupTunnelFromLocalMachineToHAProxy(haproxyInfo, 11000, 80)
 			defer closeFrontendTunnel()
 
-			By("Sending a request without Proxy Protocol Header to HAProxy from localhost")
+			// Requests without Proxy Protocol Header should succeed
 			expectTestServer200(http.Get("http://127.0.0.1:11000"))
 		})
 	})
