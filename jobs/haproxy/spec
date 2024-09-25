@@ -581,11 +581,11 @@ properties:
       cidr_whitelist:
       - 172.168.4.1/32
       - 10.2.0.0/16
-  ha_proxy.expect_proxy:
+  ha_proxy.expect_proxy_cidrs:
     description: "List of CIDRs to enable proxy protocol for. This enables forwarding of the client source IP for hyperscalers not supporting IP dual stack (v4 & v6)"
     default: ~
     example:
-      expect_proxy:
+      expect_proxy_cidrs:
       - 10.6.7.8/27
       - 2001:db8::/32
   ha_proxy.block_all:
