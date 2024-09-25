@@ -169,8 +169,8 @@ end
 # }}}
 
 # Error checking
-  if p("ha_proxy.accept_proxy",false) && p("ha_proxy.expect_proxy",nil)
-    abort "Conflicting configuration: accept_proxy and expect_proxy are mutually exclusive"
+  if p("ha_proxy.accept_proxy",false) && p("ha_proxy.expect_proxy_cidrs",nil)
+    abort "Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive"
   end
   if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
     abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
@@ -413,7 +413,7 @@ frontend http-in
       <%- end -%>
     <%- end -%>
   <%- end -%>
-  <% if_p("ha_proxy.expect_proxy") do -%>
+  <% if_p("ha_proxy.expect_proxy_cidrs") do -%>
     tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
@@ -534,7 +534,7 @@ frontend https-in
       <%- end -%>
     <%- end -%>
   <%- end -%>
-  <% if_p("ha_proxy.expect_proxy") do -%>
+  <% if_p("ha_proxy.expect_proxy_cidrs") do -%>
       tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
@@ -700,7 +700,7 @@ frontend wss-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
-  <% if_p("ha_proxy.expect_proxy") do -%>
+  <% if_p("ha_proxy.expect_proxy_cidrs") do -%>
     tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>

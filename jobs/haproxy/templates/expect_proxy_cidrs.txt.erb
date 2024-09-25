@@ -2,13 +2,13 @@
 require 'zlib'
 require 'stringio'
 
-if_p("ha_proxy.expect_proxy") do |cidrs|
+if_p("ha_proxy.expect_proxy_cidrs") do |cidrs|
 -%>
 # generated from expect_proxy_cidrs.txt.erb
 
-# BEGIN expect_proxy cidrs
+# BEGIN expect_proxy_cidrs
 <%= cidrs.join("\n") %>
-# END expect_proxy cidrs
+# END expect_proxy_cidrs
 <%
 end
 %>
