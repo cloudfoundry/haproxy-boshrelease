@@ -50,6 +50,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         expect(frontend_wss).to include('bind :4443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl')
       end
     end
+
     context 'when ha_proxy.expect_proxy is not empty/nil and ha_proxy.accept_proxy is false' do
       let(:properties) do
         default_properties.merge({ 'accept_proxy' => false,

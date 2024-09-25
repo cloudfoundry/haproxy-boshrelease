@@ -44,8 +44,9 @@ describe 'config/haproxy.config HTTP frontend' do
     end
 
     context 'when ha_proxy.expect_proxy is not empty/nil and ha_proxy.accept_proxy is false' do
-      let(:properties) do { 'accept_proxy' => false,
-                            'expect_proxy' => ['127.0.0.1/8'] }
+      let(:properties) do
+        { 'accept_proxy' => false,
+          'expect_proxy' => ['127.0.0.1/8'] }
       end
 
       it 'sets expect-proxy of tcp connection to the file proxies_cidrs.txt contents' do
@@ -54,8 +55,9 @@ describe 'config/haproxy.config HTTP frontend' do
     end
 
     context 'when ha_proxy.accept_proxy is true and ha_proxy.expect_proxy is not empty/nil' do
-      let(:properties) do { 'accept_proxy' => true,
-                            'expect_proxy' => ['127.0.0.1/8'] }
+      let(:properties) do
+        { 'accept_proxy' => true,
+          'expect_proxy' => ['127.0.0.1/8'] }
       end
 
       it 'aborts with a meaningful error message' do
