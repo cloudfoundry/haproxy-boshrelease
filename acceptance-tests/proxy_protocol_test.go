@@ -66,14 +66,14 @@ var _ = Describe("Proxy Protocol", func() {
 		})
 	})
 
-	Context("expect_proxy", func() {
+	Context("expect_proxy_cidrs", func() {
 		opsfileExpectProxyProtocol := `---
 # Enable Proxy Protocol
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
   value: false
 - type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy?
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy_cidrs?
   value: 
   - 10.0.0.0/8 # Bosh Network CIDR
 `
