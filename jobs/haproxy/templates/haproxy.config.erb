@@ -169,7 +169,7 @@ end
 # }}}
 
 # Error checking
-  if p("ha_proxy.accept_proxy",false) && p("ha_proxy.expect_proxy_cidrs",nil)
+  if p("ha_proxy.accept_proxy", false) && p("ha_proxy.expect_proxy_cidrs", nil)
     abort "Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive"
   end
   if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
@@ -365,7 +365,7 @@ listen health_check_http_url
     <%- if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
     tcp-request connection expect-proxy layer4 unless LOCALHOST
     <%- end -%>
-    <%- if_p("ha_proxy.expect_proxy_cidrs") do -%>
+    <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
       <%- if !p("ha_proxy.disable_health_check_proxy") -%>
     tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
       <%- end -%>
@@ -418,7 +418,7 @@ frontend http-in
       <%- end -%>
     <%- end -%>
   <%- end -%>
-  <%- if_p("ha_proxy.expect_proxy_cidrs") do -%>
+  <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
     tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
@@ -539,8 +539,8 @@ frontend https-in
       <%- end -%>
     <%- end -%>
   <%- end -%>
-  <%- if_p("ha_proxy.expect_proxy_cidrs") do -%>
-    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
+  <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+        tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -705,7 +705,7 @@ frontend wss-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
-  <% if_p("ha_proxy.expect_proxy_cidrs") do -%>
+  <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
     tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>

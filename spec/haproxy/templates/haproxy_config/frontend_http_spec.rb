@@ -65,6 +65,17 @@ describe 'config/haproxy.config HTTP frontend' do
       end
     end
 
+    context 'when ha_proxy.expect_proxy_cidrs is nil and ha_proxy.accept_proxy is false' do
+      let(:properties) do
+        { 'accept_proxy' => false,
+          'expect_proxy_cidrs' => nil }
+      end
+
+      it 'does not contain expect-proxy of tcp connection directive' do
+        expect(frontend_http).not_to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }')
+      end
+    end
+
     context 'when ha_proxy.accept_proxy is true and ha_proxy.expect_proxy_cidrs is not empty/nil' do
       let(:properties) do
         { 'accept_proxy' => true,
