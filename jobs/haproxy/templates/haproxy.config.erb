@@ -169,6 +169,9 @@ end
 # }}}
 
 # Error checking
+  if p("ha_proxy.accept_proxy", false) && p("ha_proxy.expect_proxy_cidrs", nil)
+    abort "Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive"
+  end
   if !p("ha_proxy.drain_enable", false) && p("ha_proxy.drain_frontend_grace_time") > 0
     abort "Conflicting configuration: drain_enable must be true to use drain_frontend_grace_time"
   end
@@ -359,8 +362,13 @@ listen health_check_http_url
     mode http
     option httpclose
     monitor-uri /health
-    <% if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
+    <%- if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
     tcp-request connection expect-proxy layer4 unless LOCALHOST
+    <%- end -%>
+    <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+      <%- if !p("ha_proxy.disable_health_check_proxy") -%>
+    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
+      <%- end -%>
     <%- end -%>
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
@@ -409,6 +417,9 @@ frontend http-in
     http-request deny status 429 if { sc_http_req_rate(1) gt <%= requests %> }
       <%- end -%>
     <%- end -%>
+  <%- end -%>
+  <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -527,6 +538,9 @@ frontend https-in
     http-request deny status 429 if { sc_http_req_rate(1) gt <%= requests %> }
       <%- end -%>
     <%- end -%>
+  <%- end -%>
+  <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+        tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -690,6 +704,9 @@ frontend wss-in
   <%- end -%>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
+  <%- end -%>
+  <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
   <%- end -%>
   <%- if_p("ha_proxy.cidr_whitelist") do -%>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt

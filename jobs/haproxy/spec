@@ -23,6 +23,7 @@ templates:
   client-revocation-list.erb:   config/client-revocation-list.pem
   blacklist_cidrs.txt.erb:      config/blacklist_cidrs.txt
   whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
+  expect_proxy_cidrs.txt.erb:   config/expect_proxy_cidrs.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
 
 consumes:
@@ -580,6 +581,13 @@ properties:
       cidr_whitelist:
       - 172.168.4.1/32
       - 10.2.0.0/16
+  ha_proxy.expect_proxy_cidrs:
+    description: "List of CIDRs to enable proxy protocol for. This enables forwarding of the client source IP for hyperscalers not supporting IP dual stack (v4 & v6). This property is mutually exclusive with the accept_proxy."
+    default: ~
+    example:
+      expect_proxy_cidrs:
+      - 10.6.7.8/27
+      - 2001:db8::/32
   ha_proxy.block_all:
     description: "Optionally block all incoming traffic to http(s). Use in conjunction with whitelist."
     default: false

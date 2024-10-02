@@ -11,7 +11,9 @@ import (
 )
 
 var _ = Describe("Proxy Protocol", func() {
-	opsfileProxyProtocol := `---
+
+	Context("accept_proxy", func() {
+		opsfileProxyProtocol := `---
 # Enable Proxy Protocol
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
@@ -23,44 +25,90 @@ var _ = Describe("Proxy Protocol", func() {
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/disable_health_check_proxy?
   value: false
 `
+		It("Correctly proxies Proxy Protocol requests", func() {
+			haproxyBackendPort := 12000
+			haproxyInfo, _ := deployHAProxy(baseManifestVars{
+				haproxyBackendPort:    haproxyBackendPort,
+				haproxyBackendServers: []string{"127.0.0.1"},
+				deploymentName:        deploymentNameForTestNode(),
+			}, []string{opsfileProxyProtocol}, map[string]interface{}{}, false)
 
-	It("Correctly proxies Proxy Protocol requests", func() {
-		haproxyBackendPort := 12000
-		haproxyInfo, _ := deployHAProxy(baseManifestVars{
-			haproxyBackendPort:    haproxyBackendPort,
-			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileProxyProtocol}, map[string]interface{}{}, false)
+			closeLocalServer, localPort := startDefaultTestServer()
+			defer closeLocalServer()
 
-		closeLocalServer, localPort := startDefaultTestServer()
-		defer closeLocalServer()
+			closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+			defer closeTunnel()
 
-		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
-		defer closeTunnel()
+			By("Waiting for monit to report that HAProxy is healthy")
+			// Since the backend is now listening, HAProxy healthcheck should start returning healthy
+			// and monit should in turn start reporting a healthy process
+			// We will wait up to one minute for the status to stabilise
+			Eventually(func() string {
+				return boshInstances(deploymentNameForTestNode())[0].ProcessState
+			}, time.Minute, time.Second).Should(Equal("running"))
 
-		By("Waiting for monit to report that HAProxy is healthy")
-		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
-		// and monit should in turn start reporting a healthy process
-		// We will wait up to one minute for the status to stabilise
-		Eventually(func() string {
-			return boshInstances(deploymentNameForTestNode())[0].ProcessState
-		}, time.Minute, time.Second).Should(Equal("running"))
+			By("Sending a request with Proxy Protocol Header to HAProxy traffic port")
+			err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
+			Expect(err).NotTo(HaveOccurred())
 
-		By("Sending a request with Proxy Protocol Header to HAProxy traffic port")
-		err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
-		Expect(err).NotTo(HaveOccurred())
+			By("Sending a request without Proxy Protocol Header to HAProxy")
+			_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
+			expectConnectionResetErr(err)
 
-		By("Sending a request without Proxy Protocol Header to HAProxy")
-		_, err = http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
-		expectConnectionResetErr(err)
+			By("Sending a request with Proxy Protocol Header to HAProxy health check port")
+			err = performProxyProtocolRequest(haproxyInfo.PublicIP, 8080, "/health")
+			Expect(err).NotTo(HaveOccurred())
 
-		By("Sending a request with Proxy Protocol Header to HAProxy health check port")
-		err = performProxyProtocolRequest(haproxyInfo.PublicIP, 8080, "/health")
-		Expect(err).NotTo(HaveOccurred())
+			By("Sending a request without Proxy Protocol Header to HAProxy health check port")
+			_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
+			expectConnectionResetErr(err)
 
-		By("Sending a request without Proxy Protocol Header to HAProxy health check port")
-		_, err = http.Get(fmt.Sprintf("http://%s:8080/health", haproxyInfo.PublicIP))
-		expectConnectionResetErr(err)
+		})
+	})
+
+	Context("expect_proxy_cidrs", func() {
+		opsfileExpectProxyProtocol := `---
+# Enable Proxy Protocol
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  value: false
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/expect_proxy_cidrs?
+  value: 
+  - 10.0.0.0/8 # Bosh Network CIDR
+`
+		It("Correctly proxies request with Expect Proxy CIDRs list", func() {
+			haproxyBackendPort := 12000
+			haproxyInfo, _ := deployHAProxy(baseManifestVars{
+				haproxyBackendPort:    haproxyBackendPort,
+				haproxyBackendServers: []string{"127.0.0.1"},
+				deploymentName:        deploymentNameForTestNode(),
+			}, []string{opsfileExpectProxyProtocol}, map[string]interface{}{}, true)
+
+			closeLocalServer, localPort := startDefaultTestServer()
+			defer closeLocalServer()
+
+			closeBackendTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+			defer closeBackendTunnel()
+
+			By("Checking that Proxy Protocol is expected for requests from IPs in the list")
+			// Requests without Proxy Protocol Header should be rejected
+			_, err := http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
+			expectConnectionResetErr(err)
+
+			// Requests with Proxy Protocol Header should succeed
+			err = performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/")
+			Expect(err).NotTo(HaveOccurred())
+
+			By("Checking that Proxy Protocol is NOT expected for requests from IPs NOT in the list")
+			// Set up a tunnel so that requests to localhost:11000 appear to come from localhost
+			// on the HAProxy VM as Proxy Protocol is not expected for requests from localhost (see ops file above)
+			closeFrontendTunnel := setupTunnelFromLocalMachineToHAProxy(haproxyInfo, 11000, 80)
+			defer closeFrontendTunnel()
+
+			// Requests without Proxy Protocol Header should succeed
+			expectTestServer200(http.Get("http://127.0.0.1:11000"))
+		})
 	})
 })
 
