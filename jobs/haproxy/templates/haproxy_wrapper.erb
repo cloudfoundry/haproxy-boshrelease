@@ -68,6 +68,8 @@ update_certs() {
   <%- end -%>
 }
 
+sudo ulimit -c unlimited
+
 # unpack base certs and add optional external certs
 update_certs
 
