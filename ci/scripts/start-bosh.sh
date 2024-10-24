@@ -139,7 +139,6 @@ function start_docker() {
 }
 EOF
 
-  trap stop_docker ERR
   service docker start
 
   export DOCKER_TLS_VERIFY=1
@@ -162,6 +161,7 @@ EOF
     exit 1
   fi
 
+  trap stop_docker ERR
   echo $certs_dir
 }
 
