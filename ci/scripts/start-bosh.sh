@@ -145,19 +145,23 @@ EOF
   export DOCKER_CERT_PATH=$1
 
   rc=1
-  for i in $(seq 1 100); do
+  for i in $(seq 1 10); do
     echo waiting for docker to come up...
-    sleep 1
+    sleep 10
     set +e
     docker info
     rc=$?
     set -e
     if [ "$rc" -eq "0" ]; then
-        break
+      break
+    else
+      service docker restart
+      sleep 20
     fi
   done
 
   if [ "$rc" -ne "0" ]; then
+    echo "Failed starting docker. Exiting."
     exit 1
   fi
 
