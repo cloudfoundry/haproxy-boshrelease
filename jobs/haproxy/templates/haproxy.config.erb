@@ -365,14 +365,20 @@ listen health_check_http_url
     <%- if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
     tcp-request connection expect-proxy layer4 unless LOCALHOST
     <%- end -%>
-    <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
-      <%- if !p("ha_proxy.disable_health_check_proxy") -%>
-    tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
-      <%- end -%>
-    <%- end -%>
+
+    acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
+    monitor fail if http-routers_down
+
+<%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+listen health_check_http_url_proxy_protocol
+    bind :<%= p("ha_proxy.health_check_port") + 1 %> accept-proxy
+    mode http
+    option httpclose
+    monitor-uri /health
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
 <% end -%>
+<%- end -%>
 
 <% if_p("ha_proxy.resolvers") do |resolvers| -%>
 resolvers default
