@@ -225,7 +225,7 @@ properties:
     description: "The HAProxy health check endpoint returns a healthy status if at least one backend server is responding. By default when enable_health_check_http: true, Bosh will consider the HAProxy VM unhealthy if the HAProxy health check returns an unhealthy status. In some cases this might not be desired, for example when deploying HAProxy before deploying the backend servers. To prevent Bosh from considering the HAProxy VM unhealthy when all backend servers are unhealthy set disable_monit_health_check_http: true. Note that this flag is ignored unless enable_health_check_http: true."
     default: false
   ha_proxy.health_check_port:
-    description: "port for http health-check"
+    description: "port for http health-check. Please note that `health_check_port` + 1 (e.g. 8081) is used with the `accept-proxy` directive, if `expect_proxy_cidrs` are defined. You will need to direct your health checker to the appropriate port (with or without Proxy Protocol) for correct functionality."
     default: 8080
   ha_proxy.disable_http:
     description: "Disable port 80 traffic"
