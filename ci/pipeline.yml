@@ -7,7 +7,6 @@ groups:
       - unit-tests-pr
       - acceptance-tests
       - acceptance-tests-pr
-      - pre
       - rc
       - shipit
       - patch
@@ -226,63 +225,12 @@ jobs:
         status: failure
         context: acceptance-tests
 
-  - name: pre
-    public: true
-    serial: true
-    plan:
-    - do:
-      - get: git
-        passed:
-        - acceptance-tests
-        trigger: true
-      - get: version
-        trigger: true
-      - task: release-notes
-        config:
-          platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
-          run:
-            path: sh
-            args:
-            - -ce
-            - |
-              cd git
-              if [ -f ci/release_notes.md ]; then
-                echo "######   RELEASE NOTES   ###############"
-                echo
-                cat ci/release_notes.md
-                echo
-                echo "########################################"
-                echo
-              else
-                echo "NO RELEASE NOTES HAVE BEEN WRITTEN"
-                echo "You *might* want to do that before"
-                echo "hitting (+) on that shipit job..."
-                echo
-              fi
-          inputs:
-          - name: git
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text: release candidate job 'pre' failed (which is unusual).
-          ok: false
-
   - name: rc
     public: true
     plan:
     - do:
       - in_parallel:
-          - { get: git,     trigger: true,  passed: [pre] }
+          - { get: git,     trigger: true,  passed: [acceptance-tests] }
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
