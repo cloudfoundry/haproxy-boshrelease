@@ -38,11 +38,6 @@ if [[ -z "${VERSION_TO_CREATE}" ]]; then
   exit 2
 fi
 
-if [[ ! -f "${REPO_ROOT}/ci/release_notes.md" ]]; then
-  echo >&2 "ci/release_notes.md not found.  Did you forget to write them?"
-  exit 1
-fi
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ###############################################################
@@ -106,9 +101,27 @@ mkdir -p "${RELEASE_ROOT}/artifacts"
 echo "v${VERSION}"                            > "${RELEASE_ROOT}/tag"
 echo "v${VERSION}"                            > "${RELEASE_ROOT}/name"
 mv "${REPO_ROOT}"/releases/*/*-"${VERSION}".tgz "${RELEASE_ROOT}/artifacts"
-mv "${REPO_ROOT}/ci/release_notes.md"           "${RELEASE_ROOT}/notes.md"
 
 cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+# haproxy-boshrelease ${VERSION}
+
+## Fixes
+<!--
+- fix a (@personA)
+- fix b (@personB)
+//-->
+
+## New Features
+<!--
+- feature a (@personA)
+- feature b (@personB)
+//-->
+
+## Upgrades
+<!--
+- `component` has been upgraded from v1.0.0 to v1.2.3
+//-->
+
 ### Versions
 
 The following versions of upstream components are included in this haproxy-boshrelease:
