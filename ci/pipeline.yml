@@ -331,12 +331,13 @@ jobs:
       - put: blobstore
         params:
           file:  "gh/artifacts/haproxy-*.tgz"
-      - put: github
+      - put: github-release
         params:
           name:   gh/name
           tag:    gh/tag
           body:   gh/notes.md
-          globs: [gh/artifacts/*, gh/artifacts-patched/*]
+          globs:  [gh/artifacts/*, gh/artifacts-patched/*]
+          drafts: true
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"
@@ -454,7 +455,7 @@ resources:
     source:
       url: ((slack.webhook))
 
-  - name: github
+  - name: github-release
     type: github-release
     source:
       user:         cloudfoundry
