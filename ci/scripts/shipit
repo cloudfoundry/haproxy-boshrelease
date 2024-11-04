@@ -212,5 +212,5 @@ EOF
 cp -a "${REPO_ROOT}" "${REPO_OUT}"
 
 cat > "${NOTIFICATION_OUT:-notifications}/message" <<EOS
-New ${RELEASE_NAME} v${VERSION} released. <https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/tag/v${VERSION}|Release notes>.
+New ${RELEASE_NAME} v${VERSION} release draft created. Please complete the <https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/tag/v${VERSION}|Release notes> in GitHub and finalize the release.
 EOS
