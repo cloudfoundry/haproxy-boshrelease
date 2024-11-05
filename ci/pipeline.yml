@@ -337,7 +337,6 @@ jobs:
           tag:    gh/tag
           body:   gh/notes.md
           globs:  [gh/artifacts/*, gh/artifacts-patched/*]
-          drafts: true
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"
@@ -461,6 +460,7 @@ resources:
       user:         cloudfoundry
       repository:   haproxy-boshrelease
       access_token: ((github.access_token))
+      drafts:       true
 
   - name: blobstore
     type: gcs
