@@ -1,8 +1,9 @@
 # Continuous Integration Setup
 
-The CI environment is maintained by the SAP Business Technology Platform on Cloud Foundry team for Routing and Networking.
+The CI environment is maintained by the SAP Business Technology Platform on Cloud Foundry [team for Routing and Networking](https://github.com/orgs/cloudfoundry/teams/wg-app-runtime-platform-networking-extensions-approvers).
 
-All secrets used in the pipeline and surrounding tools are kept in the team's Vault. Those secrets are only necessary for [modifying the pipeline](#updating-or-modifying-the-pipeline).
+All secrets used in the pipeline and surrounding tools are kept in the team's Vault. Those secrets are only necessary for [modifying the pipeline](#updating-or-modifying-the-pipeline). For git integration, [haproxy-boshrelease pipeline](https://concourse.arp.cloudfoundry.org/teams/main/pipelines/haproxy-boshrelease) has public visibility.
+
 ## Contact
 
 Credentials and admin access lie with that team. If you have questions or issues, please reach out via the [#haproxy-boshrelease](https://cloudfoundry.slack.com/archives/C0XRT9L22) channel on Slack.
@@ -11,15 +12,13 @@ Credentials and admin access lie with that team. If you have questions or issues
 
 Concourse is used as CI system. There are two main types of tests and various release specific steps, all of which are defined in [pipeline.yml](pipeline.yml).
 
-  * `unit-tests` runs a series of unit tests on the Ruby templating based configuration file generators and includes linters for all code and test code.
-  * `acceptance-tests` and `acceptance-tests-pr` runs a series of acceptance tests developed in Go.
-  * `unit-tests-pr` and `acceptance-tests-pr` are executed for PRs that are marked with the `run-ci` label AND authored by a member of `wg-app-runtime-platform-networking-extensions-approvers` or technical users like `dependabot` or `CFN-CI`.
-  * `unit-tests-pr` and `acceptance-tests-pr` are executed for each approved PR that is marked with the `run-ci` label.
-  * `acceptance-tests` is run on new commits to `master`, e.g. after a PR has been merged.
+* `unit-tests` runs a series of unit tests on the Ruby templating based configuration file generators and includes linters for all code and test code.
+* `acceptance-tests` and `acceptance-tests-pr` runs a series of acceptance tests developed in Go.
+* `unit-tests-pr` and `acceptance-tests-pr` are executed for PRs that are marked with the `run-ci` label AND authored by a member of [`wg-app-runtime-platform-networking-extensions-approvers`](https://github.com/orgs/cloudfoundry/teams/wg-app-runtime-platform-networking-extensions-approvers) or technical users like `dependabot` or `CFN-CI`.
+* `unit-tests-pr` and `acceptance-tests-pr` are executed for each approved PR that is marked with the `run-ci` label.
+* `acceptance-tests` is run on new commits to `master`, e.g. after a PR has been merged.
 
 All tests run in Docker. The image `cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight` is a built and cached version of building [`Dockerfile`](Dockerfile).
-
-***Note, August 2022***: The image used for acceptance tests is working, but on an older version. It will be updated to a recent state in the near future.
 
 ### Unit Tests
 
@@ -27,7 +26,7 @@ Unit tests are executed via `rake` and are contained in [spec/haproxy/templates]
 
 ### Acceptance Tests
 
-The acceptance tests run a full BOSH director and exercise creating and running the candidate `haproxy-boshrelease` against a test suite that covers a wide range of features and use cases supported by it.
+The acceptance tests run BOSH director and exercise creating and running the candidate `haproxy-boshrelease` against a test suite that covers a wide range of features and use cases supported by it.
 
 The code can be found in [acceptance-tests](../acceptance-tests/).
 
@@ -39,7 +38,7 @@ The deployed HAProxy will in most cases have a functioning backend that simply r
 
 There are examples for various types of tests already in the source code. Those include startup and draining behaviour, various types of requests and specific configurations where HAProxy modifies the request as well as general functionality checks to avoid regressions.
 
- There are a few things to highlight when developing new acceptance tests:
+There are a few things to highlight when developing new acceptance tests:
 
 1. The HAProxy deployed via the release is run in a container. The port to HAProxy and to the backend are forwarded via SSH tunnel to the test runner and allow interacting with either of those servers.
 2. The HAProxy deployment is carried out by:
@@ -65,7 +64,7 @@ There are examples for various types of tests already in the source code. Those 
 
 Since the acceptance tests are very time consuming, they are skipped for certain changes. The tests are not run if the pull request contains only minor changes such as `README.md` or `release_notes.md`.
 
-The list of ignored files is maintained in [.ci-ignored](https://github.com/cloudfoundry/haproxy-boshrelease/blob/master/ci/.ci-ignore) and contains individual files as well as folders such as `docs`.
+The list of ignored files is maintained in [.ci-ignore](https://github.com/cloudfoundry/haproxy-boshrelease/blob/master/ci/.ci-ignore) and contains individual files as well as folders such as `docs`.
 
 **Caveat:** The regular (non-PR triggered) acceptance tests are not skippable in this way.
 
@@ -96,11 +95,11 @@ The pipeline `haproxy-boshrelease` is used to build, verify and release this BOS
 
 New pipeline steps should be added without modifying existing steps or resources, or in a separate pipeline altogether.
 
-A pipeline can be uploaded to concourse via the [`upload-to-concourse.sh`](upload-to-concourse.sh) script. This script requires the data in `source.me`, which can be found in the team's Vault.
+A pipeline can be uploaded to concourse via the [`upload-to-concourse.sh`](upload-to-concourse.sh) script. The script and pipeline require some secrets (`vars.yml`), which can be found in the team's Vault. The script will also expose the pipeline.
 
 ### Testing new Pipeline Steps in a Branch
 
-While developing new scripts or pipeline steps, these steps will not be in the Git `master` branch. In order to access them, _copy_ the resource `git` and defined this separate resource to check out the particular branch you are working on.
+While developing new scripts or pipeline steps, these steps will not be in the Git `master` branch. In order to access them, _copy_ the resource `git` and define this separate resource to check out the particular branch you are working on.
 
 Please note that the name of a git resource influences the directory name in the workspace, i.e. the directory will not be called `git` but whatever you called your copied git resource.
 
@@ -120,14 +119,7 @@ Note that you can use the `dir` parameter in `run` to define the working directo
 
 Don't forget to remove separate pipelines that were created for testing.
 
-### Deprecated Maintenance Pipeline
-
-The maintenance pipeline was removed in [this PR](https://github.com/cloudfoundry/haproxy-boshrelease/pull/646)
-
-To re-establish it in the future, we need to revert these commits:
-- 94e3b88131ffcc2d5fc8cc54dde669cf137e68c7 (remove dependabot config)
-- f457e98848d98050e5541c1bc1993ceefa76ab58 (remove maintenance pipeline)
-
+Note that your test pipeline does not need to be publicly exposed. [`upload-to-concourse.sh`](upload-to-concourse.sh) does that by default, so if this is undesirable you can `fly hide-pipeline` afterwards.
 
 ### Versioning Guide
 
@@ -139,12 +131,10 @@ For creating a new release please follow the versioning guide based on the [Sema
 * **Minor Version** (x.*Y*.z) -- incremented if new, backwards compatible functionality is introduced to the public API
   
   Used when upgrading dependencies (e.g. PCRE, socat, etc.) or HAProxy **patch** versions.
-* **Patch Version** (x.y.*Z*) -- incremented if only backwards compatible bug fixes are introduced)
+* **Patch Version** (x.y.*Z*) -- incremented if only backwards compatible bug fixes are introduced
   
   Used for documentation updates, changes in the test suite or any updates in the testing frameworks (e.g. ginkgo).
 
 Since releases `11.16.3` and `11.17.5` the build metadata has been included into the version number. The build metadata denotes the contained HAProxy version. As an example, `11.16.2+2.6.9` means that HAProxy 2.6.9 is used.
 
 The `haproxy-boshrelease` also contains patches (see [haproxy-patches](../haproxy-patches)). The patched version is a part of the build metadata and is denoted by appending a hyphen and key word `patched`, like `11.17.4+2.6.9-patched`.
-
-
