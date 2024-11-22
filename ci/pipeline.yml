@@ -23,16 +23,11 @@ jobs:
     - do:
       - get: git
         trigger: true
+      - get: haproxy-boshrelease-testflight
       - task: lint
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - { name: git }
           caches:
@@ -44,15 +39,9 @@ jobs:
           params:
             REPO_ROOT: git
       - task: unit-tests
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - { name: git }
           caches:
@@ -77,21 +66,16 @@ jobs:
     plan:
     - do:
       - { get: git-pull-requests, trigger: true, version: every }
+      - get: haproxy-boshrelease-testflight
       - put: git-pull-requests
         params:
           path: git-pull-requests
           status: pending
           context: unit-tests
       - task: lint
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - { name: git-pull-requests }
           caches:
@@ -103,15 +87,9 @@ jobs:
           params:
             REPO_ROOT: git-pull-requests
       - task: unit-tests
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - { name: git-pull-requests }
           caches:
@@ -145,17 +123,12 @@ jobs:
         - { get: stemcell }
         - { get: stemcell-bionic }
         - { get: bpm }
+        - get: haproxy-boshrelease-testflight
       - task: acceptance-tests
         privileged: true
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - { name: git }
             - { name: stemcell }
@@ -183,6 +156,7 @@ jobs:
       - { get: stemcell }
       - { get: stemcell-bionic }
       - { get: bpm }
+      - get: haproxy-boshrelease-testflight
       - put: git-pull-requests
         params:
           path: git-pull-requests
@@ -192,15 +166,9 @@ jobs:
           list_changed_files: true
       - task: acceptance-tests
         privileged: true
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - { name: git-pull-requests }
             - { name: stemcell }
@@ -291,16 +259,11 @@ jobs:
       - in_parallel:
           - { get: version, passed: [rc], params: {bump: final} }
           - { get: git,     passed: [rc] }
+          - get: haproxy-boshrelease-testflight
       - task: release
+        image: haproxy-boshrelease-testflight
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-              tag:        latest
-              username:   ((docker.username))
-              password:   ((docker.password))
           inputs:
             - name: version
             - name: git
@@ -357,18 +320,13 @@ jobs:
           - get: daily
             trigger: true
           - get: git
+          - get: haproxy-boshrelease-testflight
           - task: autobump-dependencies
+            image: haproxy-boshrelease-testflight
             config:
               inputs:
                 - name: git
               platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: cf-routing.common.repositories.cloud.sap/haproxy-boshrelease-testflight
-                  tag: latest
-                  username: ((docker.username))
-                  password: ((docker.password))
               run:
                 dir: git
                 path: /usr/bin/python3
