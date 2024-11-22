@@ -13,6 +13,7 @@ groups:
       - minor
       - major
       - autobump-dependencies
+      - build-haproxy-testflight-image
 
 jobs:
   - name: unit-tests
@@ -380,6 +381,36 @@ jobs:
                 GCP_SERVICE_KEY: ((gcp.service_key))
                 GITHUB_COM_TOKEN: ((github.access_token))
 
+  - name: build-haproxy-testflight-image
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - get: git-ci
+            trigger: true
+          - get: daily
+            trigger: true
+          - get: docker-cpi-image
+            trigger: true
+      - task: create-daily-tag
+        image: docker-cpi-image
+        config:
+          outputs:
+            - name: tag
+          platform: linux
+          run:
+            path: sh
+            args:
+            - -exc
+            - date +%Y%m%d.%H%M%S | tee tag/today
+      - put: haproxy-boshrelease-testflight
+        params:
+          tag_as_latest: true
+          tag_file: tag/today
+          build: git-ci/ci
+        get_params:
+          skip_download: true
+
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -473,3 +504,24 @@ resources:
       stop: 8:00 AM
       location: Europe/Berlin
       interval: 24h
+
+  - name: docker-cpi-image
+    type: docker-image
+    source:
+      repository: bosh/docker-cpi
+
+  - name: git-ci
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/haproxy-boshrelease.git
+      branch: master
+      paths:
+        - ci/Dockerfile
+        - ci/scripts/requirements.txt
+
+  - name: haproxy-boshrelease-testflight
+    type: docker-image
+    source:
+      repository: europe-west3-docker.pkg.dev/app-runtime-platform-wg/arp-wg-docker/haproxy-boshrelease-testflight
+      username: _json_key
+      password: ((gcp.docker_image_writer_service_key))
