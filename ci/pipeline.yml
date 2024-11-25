@@ -360,7 +360,7 @@ jobs:
             path: sh
             args:
             - -exc
-            - date +%Y%m%d.%H%M%S | tee tag/today
+            - date +%Y.%m.%d-%H%M%S | tee tag/today
       - put: haproxy-boshrelease-testflight
         params:
           tag_as_latest: true
