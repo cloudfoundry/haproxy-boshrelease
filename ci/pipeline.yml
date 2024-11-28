@@ -378,10 +378,7 @@ resource_types:
   - name: pull-request
     type: docker-image
     source:
-      repository: cf-routing.common.repositories.cloud.sap/eirini-github-pr-resource
-      tag: latest
-      username: ((docker.username))
-      password: ((docker.password))
+      repository: cfcommunity/github-pr-resource
 
   - name: gcs
     type: docker-image
