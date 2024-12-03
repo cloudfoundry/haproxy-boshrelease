@@ -31,6 +31,23 @@ describe 'bin/drain' do
           expect(drain).not_to include('drain is disabled')
           expect(drain).to include('socat')
         end
+
+        context 'when PROXY CIDRs are provided' do
+          it 'includes the PROXY frontend in drain logic' do
+            drain = template.render(
+              {
+                'ha_proxy' => {
+                  'drain_enable' => true,
+                  'enable_health_check_http' => true,
+                  'expect_proxy_cidrs' => ['10.0.0.0/8']
+                }
+              }
+            )
+            expect(drain).not_to include('drain is disabled')
+            expect(drain).to include('socat')
+            expect(drain).to include('disable frontend health_check_http_url_proxy_protocol')
+          end
+        end
       end
 
       context 'when a custom ha_proxy.drain_timeout is provided' do
