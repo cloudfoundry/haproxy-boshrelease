@@ -46,6 +46,9 @@ haproxy_master_pid=$(pgrep -P "$pid" -x haproxy)
 
 <%- if p("ha_proxy.enable_health_check_http") -%>
 echo "disable frontend health_check_http_url" | /usr/local/bin/socat stdio unix-connect:${sockfile}
+<%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+echo "disable frontend health_check_http_url_proxy_protocol" | /usr/local/bin/socat stdio unix-connect:${sockfile}
+<%- end -%>
 echo "$(date): triggering grace period for process ${haproxy_master_pid}" >> ${logfile}
 sleep <%= p("ha_proxy.drain_frontend_grace_time") %>
 <%- end -%>
