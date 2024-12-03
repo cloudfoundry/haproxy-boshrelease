@@ -7,10 +7,10 @@ source meta-info/blobs-versions.env
 mkdir -p ${BOSH_INSTALL_TARGET}/common
 cp -a ${BOSH_COMPILE_TARGET}/common/* ${BOSH_INSTALL_TARGET}/common
 
-tar xzvf keepalived/keepalived-${KEEPALIVED_VER}.tar.gz
-cd keepalived-${KEEPALIVED_VER}/
+tar xzvf keepalived/keepalived-${KEEPALIVED_VERSION}.tar.gz
+cd keepalived-${KEEPALIVED_VERSION}/
 
 #compile keepalive
 ./configure --prefix=${BOSH_INSTALL_TARGET}
-make 
+make
 make install

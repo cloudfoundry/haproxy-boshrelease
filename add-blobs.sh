@@ -24,8 +24,8 @@ function down_add_blob {
 
 down_add_blob "haproxy" "haproxy-${HAPROXY_2_8_VERSION}.tar.gz" "$HAPROXY_2_8_URL"
 down_add_blob "haproxy" "haproxy-${HAPROXY_2_9_VERSION}.tar.gz" "$HAPROXY_2_9_URL"
-
 down_add_blob "haproxy" "haproxy-${HAPROXY_3_0_VERSION}.tar.gz" "$HAPROXY_3_0_URL"
+down_add_blob "haproxy" "haproxy-${HAPROXY_3_1_VERSION}.tar.gz" "$HAPROXY_3_1_URL"
 
 down_add_blob "haproxy" "hatop-${HATOP_VERSION}" "$HATOP_URL"
 down_add_blob "haproxy" "lua-${LUA_VERSION}.tar.gz" "$LUA_URL"

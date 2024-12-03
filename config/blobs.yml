@@ -1,24 +1,27 @@
-haproxy/haproxy-2.8.9.tar.gz:
-  size: 4383096
-  sha: sha256:7a821478f36f847607f51a51e80f4f890c37af4811d60438e7f63783f67592ff
-haproxy/haproxy-2.9.7.tar.gz:
-  size: 4516225
-  sha: sha256:d1a0a56f008a8d2f007bc0c37df6b2952520d1f4dde33b8d3802710e5158c131
-haproxy/haproxy-3.0.0.tar.gz:
-  size: 4677659
-  sha: sha256:5aad97416216d2cd9dd212eb674839c40cd387f60fbc4b13d7ea3f1e5664a814
+haproxy/haproxy-2.8.12.tar.gz:
+  size: 4404583
+  sha: sha256:16c16c1d7ba6793c89a8fae7f20c595d19497bb18d75fedd9f2db77741b1fa75
+haproxy/haproxy-2.9.12.tar.gz:
+  size: 4551877
+  sha: sha256:2505042b4665b87a08dff2fd2ceed2860ae202b3c4fe7b3dddd7dd96d068fc53
+haproxy/haproxy-3.0.6.tar.gz:
+  size: 4710169
+  sha: sha256:cf1bf58b5bc79c48db7b01667596ffd98343adb29a41096f075f00a8f90a7335
+haproxy/haproxy-3.1.0.tar.gz:
+  size: 4892185
+  sha: sha256:56a1468574ab411dcabde837f96bea6cf3c2eb90e279469f75ed1dcdc70fce11
 haproxy/hatop-0.8.2:
   size: 74157
   sha: sha256:6ba2136e98b9a436488be67a54a5295f55f38090157d09df0154dda493ac5815
-haproxy/lua-5.4.6.tar.gz:
-  size: 363329
-  sha: sha256:7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88
-haproxy/pcre2-10.43.tar.gz:
-  size: 2522928
-  sha: sha256:889d16be5abb8d05400b33c25e151638b8d4bac0e2d9c76e9d6923118ae8a34e
-haproxy/socat-1.8.0.0.tar.gz:
-  size: 712469
-  sha: sha256:6010f4f311e5ebe0e63c77f78613d264253680006ac8979f52b0711a9a231e82
-keepalived/keepalived-2.3.1.tar.gz:
-  size: 1210697
-  sha: sha256:92f4b69bfd998e2306d1995ad16fdad1b59e70be694c883385c5f55e02c62aa3
+haproxy/lua-5.4.7.tar.gz:
+  size: 374097
+  sha: sha256:9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30
+haproxy/pcre2-10.44.tar.gz:
+  size: 2552792
+  sha: sha256:86b9cb0aa3bcb7994faa88018292bc704cdbb708e785f7c74352ff6ea7d3175b
+haproxy/socat-1.8.0.1.tar.gz:
+  size: 723747
+  sha: sha256:dc350411e03da657269e529c4d49fe23ba7b4610b0b225c020df4cf9b46e6982
+keepalived/keepalived-2.3.2.tar.gz:
+  size: 1225181
+  sha: sha256:77f4a22e5a23fa8e49b8916acdfb584c864e72905a2f1de2a7f62ed40a896160

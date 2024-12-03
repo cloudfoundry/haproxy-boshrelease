@@ -6,11 +6,10 @@ description: "The HAProxy server can be used to terminate SSL in front of the Ro
 # LTS - Long Term Support
 # STS - Short Term Support
 packages:
-# - haproxy-1.8 # LTS
-# - haproxy-1.9 # STS
 - haproxy-2.8 # LTS
 - haproxy-2.9 # STS
 - haproxy-3.0 # LTS
+- haproxy-3.1 # STS
 - ttar
 
 templates:
