@@ -19,7 +19,7 @@ jobs:
           stale-issue-message: 'This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs within 15 days.'
           stale-pr-message: 'This pull request has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs within 15 days.'
           days-before-stale: 30
-          days-before-close: 45
+          days-before-close: 15
           stale-issue-label: 'stale'
           stale-pr-label: 'stale'
           exempt-issue-labels: 'evergreen'
