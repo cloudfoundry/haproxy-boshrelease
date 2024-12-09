@@ -986,6 +986,9 @@ frontend tcp-frontend_<%= tcp_proxy["name"]%>
   <%- else -%>
     bind <%= p("ha_proxy.binding_ip") %>:<%= tcp_proxy["port"] %> <%= tcp_accept_proxy %> <%= v4v6 %>
   <%- end -%>
+    <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+      tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
+    <%- end -%>
     default_backend tcp-<%= tcp_proxy["name"] %>
 
 backend tcp-<%= tcp_proxy["name"] %>
