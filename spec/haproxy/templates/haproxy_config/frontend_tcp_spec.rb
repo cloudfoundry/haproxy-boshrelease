@@ -121,6 +121,21 @@ describe 'config/haproxy.config custom TCP frontends' do
         end
       end
     end
+
+    context 'when ha_proxy.expect_proxy_cidrs is not empty/nil and ha_proxy.accept_proxy is false' do
+      let(:properties) do
+        default_properties.merge({ 'accept_proxy' => false,
+                                   'expect_proxy_cidrs' => ['127.0.0.1/8'] })
+      end
+
+      it 'sets expect-proxy of tcp connection to the file proxies_cidrs.txt contents' do
+        expect(frontend_tcp_redis).to include('bind :6379  ssl')
+        expect(frontend_tcp_redis).to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }')
+
+        expect(frontend_tcp_mysql).to include('bind :3306')
+        expect(frontend_tcp_mysql).to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }')
+      end
+    end
   end
 
   context 'when ha_proxy.tcp is not provided' do
