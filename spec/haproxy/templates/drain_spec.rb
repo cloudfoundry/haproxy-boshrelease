@@ -5,6 +5,13 @@ require 'rspec'
 describe 'bin/drain' do
   let(:template) { haproxy_job.template('bin/drain') }
 
+  let(:backend_tcp_link) do
+    Bosh::Template::Test::Link.new(
+      name: 'tcp_backend',
+      instances: [Bosh::Template::Test::LinkInstance.new(address: 'postgres.backend.com', name: 'postgres')]
+    )
+  end
+
   describe 'ha_proxy.drain_enable' do
     context 'when enabled' do
       it 'includes drain logic' do
@@ -30,6 +37,43 @@ describe 'bin/drain' do
           )
           expect(drain).not_to include('drain is disabled')
           expect(drain).to include('socat')
+        end
+
+        context 'when tcp backends are defined' do
+          it 'includes drain and grace logic' do
+            drain = template.render(
+              {
+                'ha_proxy' => {
+                  'drain_enable' => true,
+                  'tcp' => [{
+                    'name' => 'redis',
+                    'port' => 6379,
+                    'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+                    'health_check_http' => 2223
+                  }]
+                }
+              }
+            )
+            expect(drain).not_to include('drain is disabled')
+            expect(drain).to include('socat')
+            expect(drain).to include('disable frontend health_check_http_tcp-redis')
+          end
+        end
+
+        context 'when tcp backends consumed via link' do
+          it 'includes drain and grace logic' do
+            drain = template.render(
+              {
+                'ha_proxy' => {
+                  'drain_enable' => true,
+                  'tcp_link_port' => 5432
+                }
+              }, consumes: [backend_tcp_link]
+            )
+            expect(drain).not_to include('drain is disabled')
+            expect(drain).to include('socat')
+            expect(drain).to include('disable frontend health_check_http_tcp-postgres')
+          end
         end
 
         context 'when PROXY CIDRs are provided' do
