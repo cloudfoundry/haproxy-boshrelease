@@ -85,7 +85,8 @@ describe 'config/haproxy.config custom TCP frontends' do
           'name' => 'redis',
           'port' => 6379,
           'backend_servers' => ['10.0.0.1', '10.0.0.2'],
-          'ssl' => true
+          'ssl' => true,
+          'health_check_http' => 9095
         }, {
           'name' => 'mysql',
           'port' => 3306,
@@ -134,6 +135,10 @@ describe 'config/haproxy.config custom TCP frontends' do
 
         expect(frontend_tcp_mysql).to include('bind :3306')
         expect(frontend_tcp_mysql).to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }')
+      end
+
+      it 'adds a _proxy_protocol health check' do
+        expect(haproxy_conf['listen health_check_http_tcp-redis_proxy_protocol']).to include('bind :9096 accept-proxy')
       end
     end
   end
