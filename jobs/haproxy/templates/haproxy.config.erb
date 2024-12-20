@@ -1040,8 +1040,20 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
     bind :<%= tcp_proxy["health_check_http"] %>
     mode http
     monitor-uri /health
+    <%- if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
+    tcp-request connection expect-proxy layer4 unless LOCALHOST
+    <%- end -%>
     acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0
     monitor fail if tcp-<%= tcp_proxy["name"] %>-routers_down
+
+    <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+listen health_check_http_tcp-<%= tcp_proxy["name"] %>_proxy_protocol
+    bind :<%= tcp_proxy["health_check_http"] + 1 %> accept-proxy
+    mode http
+    monitor-uri /health
+    acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0
+    monitor fail if tcp-<%= tcp_proxy["name"] %>-routers_down
+    <%- end -%>
   <%- end -%>
 <% end -%>
 
