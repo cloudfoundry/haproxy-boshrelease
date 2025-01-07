@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+FOCUS="$1"
 
 set -eu
 
@@ -12,8 +13,6 @@ if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
     git status
     exit 1
 fi
-
-FOCUS="$1"
 
 docker_mac_check_cgroupsv1() {
     # Force cgroups v1 on Docker for Mac
