@@ -31,10 +31,14 @@ docker_mac_check_cgroupsv1() {
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
-    ../ci/scripts/bpm/bpm-release-*.tgz!https://bosh.io/d/github.com/cloudfoundry/bpm-release
     ../ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
     ../ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
   )
+
+  # BPM downloads as uuid and needs manually specifying file name
+  if [ ! -f "../ci/scripts/bpm/bpm-release-latest.tgz" ] ; then
+    curl -sL https://bosh.io/d/github.com/cloudfoundry/bpm-release -o ../ci/scripts/bpm/bpm-release-latest.tgz
+  fi
 
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
     pattern=$(cut -f1 -d! <<<"$entry")
