@@ -235,17 +235,11 @@ func expectConnectionResetErr(err error) {
 
 func checkNetOpErr(err error, expectString string) {
 	Expect(err).To(HaveOccurred())
-	urlErr, ok := err.(*url.Error)
+	var urlErr *url.Error
+	ok := errors.As(err, &urlErr)
 	Expect(ok).To(BeTrue())
 	tlsErr := urlErr.Unwrap()
 	var opErr *net.OpError
 	Expect(errors.As(tlsErr, &opErr)).To(BeTrue())
 	Expect(opErr.Err.Error()).To(ContainSubstring(expectString))
-}
-
-func writeLog(s string) {
-	ginkgoConfig, _ := GinkgoConfiguration()
-	for _, line := range strings.Split(s, "\n") {
-		fmt.Printf("node %d/%d: %s\n", ginkgoConfig.ParallelProcess, ginkgoConfig.ParallelTotal, line)
-	}
 }

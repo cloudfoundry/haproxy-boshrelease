@@ -5,13 +5,13 @@ set -eu
 SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
-    echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
-    echo "The build will fail otherwise."
-    echo "Git Status:"
-    git status
-    exit 1
-fi
+# if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
+#     echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
+#     echo "The build will fail otherwise."
+#     echo "Git Status:"
+#     git status
+#     exit 1
+# fi
 
 FOCUS="$1"
 
