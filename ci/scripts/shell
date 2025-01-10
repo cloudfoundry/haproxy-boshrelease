@@ -20,7 +20,7 @@ function stop_docker() {
   service docker stop
 }
 
-trap stop_docker EXIT
+# trap stop_docker EXIT
 
 source /tmp/local-bosh/director/env
 

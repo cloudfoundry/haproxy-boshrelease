@@ -2,6 +2,28 @@
 
 set -e
 
+usage() { 
+    echo -e "Usage: $0 [-F <ginkgo focus target>] [-m]
+    
+    -F      Focus on a particular test. Expects a Ginkgo test name
+    -m      Manual mode. Requires that start-bosh.sh was run before." 1>&2; exit 1; 
+}
+
+while getopts ":F:m" o; do
+    case "${o}" in
+        F)
+            FOCUS=${OPTARG}
+            ;;
+        m)
+            MANUAL_MODE=true
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 stemcell_jammy_path=$PWD/stemcell/*.tgz
 stemcell_bionic_path=$PWD/stemcell-bionic/*.tgz
 bpm_release_path=$PWD/bpm/*.tgz
@@ -32,24 +54,25 @@ if [ -f ".git/resource/changed_files" ]; then
 fi
 echo "----- Starting BOSH"
 
-./ci/scripts/start-bosh.sh
+if [ -z "$MANUAL_MODE" ]; then
+    ./ci/scripts/start-bosh.sh
 
-function stop_docker() {
-  echo "----- stopping docker"
-  service docker stop
-}
-
-if [ -z "$FOCUS" ]; then
-  trap stop_docker EXIT
+    function stop_docker() {
+    echo "----- stopping docker"
+    service docker stop
+    }
+    
+    if [ -z "$FOCUS" ]; then
+      trap stop_docker EXIT
+    fi
 fi
-
 # shellcheck disable=SC1091
 source /tmp/local-bosh/director/env
 
 echo "----- Creating candidate BOSH release..."
 bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
-bosh create-release
+bosh create-release --force
 bosh upload-release --rebase
 release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
 export RELEASE_VERSION="${release_final_version}.latest"
@@ -69,7 +92,7 @@ bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
   https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.2
 
 # shellcheck disable=SC2155
-export BOSH_PATH=$(which bosh)
+export BOSH_PATH=$(command -v bosh)
 export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
 
 cd "acceptance-tests"
@@ -82,4 +105,10 @@ echo "----- Running tests"
 
 export PATH=$PATH:$GOPATH/bin
 ginkgo version
-ginkgo -v -p -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
+
+PARALLELISM="-p"
+if [ -n "$FOCUS" ]; then
+  PARALLELISM="--nodes=1"
+fi
+
+ginkgo -v "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"

@@ -100,7 +100,7 @@ function sanitize_cgroups() {
 }
 
 function stop_docker() {
-  echo "ERROR: stopping docker"
+  echo "ERROR: would have stopped docker"
   service docker stop
 }
 
@@ -165,7 +165,9 @@ EOF
     exit 1
   fi
 
-  trap stop_docker ERR
+  if [ -z "$MANUAL_MODE" ]; then
+    trap stop_docker ERR
+  fi
   echo $certs_dir
 }
 
