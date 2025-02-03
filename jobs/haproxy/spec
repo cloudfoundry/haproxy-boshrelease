@@ -405,6 +405,9 @@ properties:
         X-Application-ID: my-custom-header
         MyCustomHeader: 3
 
+  ha_proxy.true_client_ip_header:
+    description: "Header to use to store the client's IP address, as seen from HAProxy. The header will be overwritten if it already exists in the request."
+
   ha_proxy.backend_crt:
     description: "Provides client certificate to backend server to do mutual ssl. Note this only configures the client cert for HTTP backends configured via the backend_servers property or through BOSH links. It is not used with backend servers configured via routed_backend_servers or TCP backends"
     example: |

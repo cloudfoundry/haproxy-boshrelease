@@ -296,6 +296,16 @@ describe 'config/haproxy.config HTTP frontend' do
     expect(frontend_http).to include('http-request add-header X-Forwarded-Proto "http" if ! xfp_exists')
   end
 
+  context 'when ha_proxy.true_client_ip_header is set' do
+    let(:properties) do
+      { 'true_client_ip_header' => 'X-CF-True-Client-IP' }
+    end
+
+    it 'adds the X-CF-True-Client-IP header' do
+      expect(frontend_http).to include('http-request set-header X-CF-True-Client-IP %[src]')
+    end
+  end
+
   context 'when ha_proxy.https_redirect_all is true' do
     let(:properties) do
       { 'https_redirect_all' => true }
