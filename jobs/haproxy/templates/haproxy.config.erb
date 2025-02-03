@@ -469,6 +469,9 @@ frontend http-in
     http-response add-header <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
     <%- end -%>
   <%- end -%>
+  <%- if_p("ha_proxy.true_client_ip_header") do |header| -%>
+    http-request set-header <%= header %> %[src]
+  <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
     acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
@@ -650,6 +653,9 @@ frontend https-in
     <%- rsp_headers.each do |rsp_header, value| -%>
     http-response add-header <%= rsp_header.gsub(/(?!:\\)( )/, '\ ') %> "<%= value.to_s.gsub(/(?!:\\) /, '\ ') %>"
     <%- end -%>
+  <%- end -%>
+  <%- if_p("ha_proxy.true_client_ip_header") do |header| -%>
+    http-request set-header <%= header %> %[src]
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
     acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt
