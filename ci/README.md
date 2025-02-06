@@ -1,6 +1,6 @@
 # Continuous Integration Setup
 
-The CI environment is maintained by the SAP Business Technology Platform on Cloud Foundry [team for Routing and Networking](https://github.com/orgs/cloudfoundry/teams/wg-app-runtime-platform-networking-extensions-approvers).
+The CI environment is maintained by the SAP Business Technology Platform on Cloud Foundry team for Routing and Networking.
 
 All secrets used in the pipeline and surrounding tools are kept in the team's Vault. Those secrets are only necessary for [modifying the pipeline](#updating-or-modifying-the-pipeline). For git integration, [haproxy-boshrelease pipeline](https://concourse.arp.cloudfoundry.org/teams/main/pipelines/haproxy-boshrelease) has public visibility.
 
@@ -14,7 +14,7 @@ Concourse is used as CI system. There are two main types of tests and various re
 
 * `unit-tests` runs a series of unit tests on the Ruby templating based configuration file generators and includes linters for all code and test code.
 * `acceptance-tests` and `acceptance-tests-pr` runs a series of acceptance tests developed in Go.
-* `unit-tests-pr` and `acceptance-tests-pr` are executed for PRs that are marked with the `run-ci` label AND authored by a member of [`wg-app-runtime-platform-networking-extensions-approvers`](https://github.com/orgs/cloudfoundry/teams/wg-app-runtime-platform-networking-extensions-approvers) or technical users like `dependabot` or `CFN-CI`.
+* `unit-tests-pr` and `acceptance-tests-pr` are executed for PRs that are marked with the `run-ci` label AND authored by a member of [`wg-app-runtime-platform-networking-approvers`](https://github.com/orgs/cloudfoundry/teams/wg-app-runtime-platform-networking-approvers) or technical users like `dependabot` or `CFN-CI`.
 * `unit-tests-pr` and `acceptance-tests-pr` are executed for each approved PR that is marked with the `run-ci` label.
 * `acceptance-tests` is run on new commits to `master`, e.g. after a PR has been merged.
 

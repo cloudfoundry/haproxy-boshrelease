@@ -403,7 +403,7 @@ resources:
       labels:       [run-ci]
       required_review_approvals: 1
       trusted_teams:
-        - "wg-app-runtime-platform-networking-extensions-approvers"
+        - "wg-app-runtime-platform-networking-approvers"
       trusted_users:
         - "dependabot"
         - "CFN-CI"
