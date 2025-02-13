@@ -871,8 +871,8 @@ backend <%= backend[:name] %>
   <%- end -%>
   <%- backend_configs = p('ha_proxy.backend_config_targeted', {})  -%>
   <%- backend_configs.keys.each do |backend_name| -%>
-    <%- if backend[:name] == backend_name -%>
-      <%= format_indented_multiline_config(backend_configs[backend_name]) -%>
+  <%- if backend[:name] == backend_name -%>
+    <%= format_indented_multiline_config(backend_configs[backend_name]) -%>
     <%- end -%>
   <%- end -%>
 

@@ -39,7 +39,7 @@ describe 'config/haproxy.config backend http-routers' do
       expect(backend_http1).to include('custom backend config')
     end
   end
-  
+
   context 'when ha_proxy.backend_config_targeted is h1' do
     let(:properties) do
       {
@@ -48,31 +48,33 @@ describe 'config/haproxy.config backend http-routers' do
         }
       }
     end
+
     it 'includes the config' do
       expect(backend_http1).to include('http-reuse aggressive')
     end
   end
-  
+
   context 'when ha_proxy.backend_config_targeted is h2' do
     let(:properties) do
       {
-        'enable_http2' => true ,
+        'enable_http2' => true,
         'backend_ssl' => 'verify',
         'backend_config_targeted' => {
           'http-routers-http2' => 'http-reuse safe'
         }
       }
     end
+
     it 'includes the config' do
       expect(backend_http2).to include('http-reuse safe')
     end
   end
-  
+
   context 'when ha_proxy.backend_config_targeted is h1 and h2' do
     let(:properties) do
       {
-        'enable_http2' => true , 
-        'backend_ssl' => 'verify', 
+        'enable_http2' => true,
+        'backend_ssl' => 'verify',
         'disable_backend_http2_websockets' => true,
         'backend_config_targeted' => {
           'http-routers-http1' => 'http-reuse aggressive',
@@ -80,12 +82,13 @@ describe 'config/haproxy.config backend http-routers' do
         }
       }
     end
+
     it 'includes the config' do
       expect(backend_http1).to include('http-reuse aggressive')
       expect(backend_http2).to include('http-reuse safe')
     end
   end
-  
+
   context 'when ha_proxy.custom_http_error_files is provided' do
     let(:properties) do
       {
