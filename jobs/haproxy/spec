@@ -707,7 +707,15 @@ properties:
   ha_proxy.backend_config:
     description: |
       Raw HAProxy config that will be added to the default HTTP + routed HTTP backend definitions, provided either as a multiline text blob or as an array of lines.
-
+  ha_proxy.backend_config_targeted:
+    description: |
+      A map of existing backends which enables more fine-grained configuration of the backend.
+      example:
+        backend_config_targeted:
+          http-routers-http1: |
+            http-reuse aggressive
+          http-routers-http2: |
+            http-reuse safe
   ha_proxy.custom_http_error_files:
     description: |
       A map of status codes to errorfile contents
