@@ -2,8 +2,6 @@ README.md
 CONTRIBUTING.md
 LICENSE.md
 ci/README.md
-ci/release_notes_template.md
-ci/release_notes.md
 docs
 releases
 .final_builds
