@@ -6,3 +6,5 @@ docs
 releases
 .final_builds
 manifests/haproxy.yml
+ci/.ci-ignore
+
