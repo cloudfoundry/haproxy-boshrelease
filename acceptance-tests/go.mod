@@ -1,7 +1,8 @@
 module github.com/cloudfoundry/haproxy-boshrelease/acceptance-tests
 
-go 1.22.0
-toolchain go1.23.6
+go 1.23.0
+
+toolchain go1.24.0
 
 require (
 	github.com/bramvdbogaerde/go-scp v1.5.0
