@@ -122,7 +122,6 @@ jobs:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
         - { get: stemcell-bionic }
-        - { get: bpm }
         - get: haproxy-boshrelease-testflight
       - task: acceptance-tests
         privileged: true
@@ -133,7 +132,6 @@ jobs:
             - { name: git }
             - { name: stemcell }
             - { name: stemcell-bionic }
-            - { name: bpm }
           run:
             path: ./git/ci/scripts/acceptance-tests
             args: []
@@ -155,7 +153,6 @@ jobs:
       - { get: git-pull-requests, trigger: true, version: every }
       - { get: stemcell }
       - { get: stemcell-bionic }
-      - { get: bpm }
       - get: haproxy-boshrelease-testflight
       - put: git-pull-requests
         params:
@@ -173,7 +170,6 @@ jobs:
             - { name: git-pull-requests }
             - { name: stemcell }
             - { name: stemcell-bionic }
-            - { name: bpm }
           run:
             path: ./git-pull-requests/ci/scripts/acceptance-tests
             args: []
@@ -417,11 +413,6 @@ resources:
     type: bosh-io-stemcell
     source:
       name: bosh-warden-boshlite-ubuntu-jammy-go_agent
-
-  - name: bpm
-    type: bosh-io-release
-    source:
-      repository: cloudfoundry/bpm-release
 
   - name: version
     type: semver

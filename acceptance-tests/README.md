@@ -7,8 +7,6 @@
   * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
 * A matching Bionic stemcell tgz downloaded to `ci/scripts/stemcell-bionic`
   * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
-* A BPM release tgz downloaded to `ci/scripts/bpm`
-  * Get it from https://bosh.io/releases/github.com/cloudfoundry/bpm-release?all=1
 
 ## Running
 
