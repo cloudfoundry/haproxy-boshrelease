@@ -35,11 +35,6 @@ check_required_files() {
     ../ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
   )
 
-  # BPM downloads as uuid and needs manually specifying file name
-  if [ ! -f "../ci/scripts/bpm/bpm-release-latest.tgz" ] ; then
-    curl -sL https://bosh.io/d/github.com/cloudfoundry/bpm-release -o ../ci/scripts/bpm/bpm-release-latest.tgz
-  fi
-
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
     pattern=$(cut -f1 -d! <<<"$entry")
     url=$(cut -f2 -d! <<<"$entry")

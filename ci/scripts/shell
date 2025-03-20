@@ -3,7 +3,6 @@
 set -eu
 
 stemcell_path=$PWD/stemcell/*.tgz
-bpm_release_path=$PWD/bpm/*.tgz
 
 cd ${REPO_ROOT:?required}
 echo "----- Pulling in any git submodules..."
@@ -35,9 +34,6 @@ echo "----- Created ${RELEASE_VERSION}"
 
 echo "----- Uploading stemcell"
 bosh -n upload-stemcell $stemcell_path
-
-echo "----- Uploading BPM"
-bosh -n upload-release $bpm_release_path
 
 echo "----- Uploading os-conf (used for tests only)"
 bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
