@@ -71,10 +71,14 @@ if [ "$(uname)" == "Darwin" ]; then
     docker_mac_check_cgroupsv1
 fi
 
-# Build acceptance test image
-pushd "$SCRIPT_DIR/../ci" || exit 1
- docker build -t haproxy-boshrelease-testflight .
-popd || exit 1
+# Build acceptance test image if not found.
+if docker images -a | grep "haproxy-boshrelease-testflight " ; then
+  echo "Found existing testflight image, skipping docker build. To force rebuild delete this image."
+else
+  pushd "$SCRIPT_DIR/../ci"
+    docker build -t haproxy-boshrelease-testflight .
+  popd
+fi
 
 # Run acceptance tests
 if [ -n "$FOCUS" ]; then
