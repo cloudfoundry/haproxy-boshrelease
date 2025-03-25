@@ -6,14 +6,6 @@ set -eu
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "${REPO_DIR}/ci/scripts/functions-ci.sh"
 
-if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
-    echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
-    echo "The build will fail otherwise."
-    echo "Git Status:"
-    git status
-    exit 1
-fi
-
 docker_mac_check_cgroupsv1() {
     # Force cgroups v1 on Docker for Mac
     # inspired by https://github.com/docker/for-mac/issues/6073#issuecomment-1018793677

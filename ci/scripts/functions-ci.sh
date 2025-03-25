@@ -54,7 +54,7 @@ function bosh_release() {
     echo "----- Creating candidate BOSH release..."
     bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
-    bosh create-release
+    bosh create-release --force
     bosh upload-release --rebase
     release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
     export RELEASE_VERSION="${release_final_version}.latest"
@@ -75,6 +75,6 @@ function bosh_assets() {
     bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
     https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.2
 
-    export BOSH_PATH=$(which bosh)
+    export BOSH_PATH=$(command -v bosh)
     export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
 }
