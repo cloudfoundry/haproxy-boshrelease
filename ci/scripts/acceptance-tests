@@ -1,10 +1,8 @@
 #!/bin/bash
 
 set -e
-
-stemcell_jammy_path=$PWD/stemcell/*.tgz
-stemcell_bionic_path=$PWD/stemcell-bionic/*.tgz
 source "${REPO_ROOT}/ci/scripts/functions-ci.sh"
+START_DIR="${PWD}"  # Differs for CI and manual execution
 
 if [ -n "$FOCUS" ]; then
   echo "------------------------------------------------------------------"
@@ -33,29 +31,8 @@ fi
 
 # shellcheck disable=SC1091
 source /tmp/local-bosh/director/env
-
-echo "----- Creating candidate BOSH release..."
-bosh -n reset-release # in case dev_releases/ is in repo accidentally
-
-bosh create-release
-bosh upload-release --rebase
-release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")
-export RELEASE_VERSION="${release_final_version}.latest"
-echo "----- Created ${RELEASE_VERSION}"
-
-echo "----- Uploading Jammy stemcell"
-bosh -n upload-stemcell $stemcell_jammy_path
-
-echo "----- Uploading Bionic stemcell"
-bosh -n upload-stemcell $stemcell_bionic_path
-
-echo "----- Uploading os-conf (used for tests only)"
-bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
-  https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.2
-
-# shellcheck disable=SC2155
-export BOSH_PATH=$(which bosh)
-export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
+bosh_release
+bosh_assets
 
 cd "acceptance-tests"
 
