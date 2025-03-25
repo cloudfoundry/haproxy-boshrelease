@@ -4,6 +4,7 @@ set -e
 
 stemcell_jammy_path=$PWD/stemcell/*.tgz
 stemcell_bionic_path=$PWD/stemcell-bionic/*.tgz
+source "${REPO_ROOT}/ci/scripts/functions-ci.sh"
 
 if [ -n "$FOCUS" ]; then
   echo "------------------------------------------------------------------"
@@ -13,14 +14,8 @@ if [ -n "$FOCUS" ]; then
   ADDITIONAL_ARGS=("--focus" "$FOCUS")
 fi
 
-cd "${REPO_ROOT:?required}"
-echo "----- Pulling in any git submodules..."
-git config --global --add safe.directory /repo
-git config --global --add safe.directory /repo/src/ttar
-git submodule update --init --recursive --force
+git_pull
 
-# shellcheck disable=SC1091
-source "ci/scripts/functions-ci.sh"
 if [ -f ".git/resource/changed_files" ]; then
   if skip_ci "ci/.ci-ignore" ".git/resource/changed_files"; then
     echo "SKIP TEST: Only .ci-ignored changes found."
