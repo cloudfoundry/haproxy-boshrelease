@@ -3,9 +3,8 @@ FOCUS="$1"
 
 set -eu
 
-SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-source "${SCRIPT_DIR}/../ci/scripts/functions-ci.sh"
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+source "${REPO_DIR}/ci/scripts/functions-ci.sh"
 
 if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
     echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
@@ -32,14 +31,14 @@ docker_mac_check_cgroupsv1() {
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
-    ../ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
-    ../ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
+    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
+    ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
   )
 
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
     pattern=$(cut -f1 -d! <<<"$entry")
     url=$(cut -f2 -d! <<<"$entry")
-    folder=$(realpath "$(dirname "$SCRIPT_DIR/$pattern")")
+    folder=$(realpath "$(dirname "$REPO_DIR/$pattern")")
     filepattern=$(basename "$pattern")
     pattern=$folder/$filepattern
 
@@ -72,7 +71,7 @@ if [ "$(uname)" == "Darwin" ]; then
     docker_mac_check_cgroupsv1
 fi
 
-build_image "${SCRIPT_DIR}/../ci"
+build_image "${REPO_DIR}/ci"
 
 # Run acceptance tests
 if [ -n "$FOCUS" ]; then
