@@ -10,7 +10,6 @@ git config --global --add safe.directory /repo
 git config --global --add safe.directory /repo/src/ttar
 git submodule update --init --recursive --force
 
-echo "----- Starting BOSH"
 ./ci/scripts/start-bosh.sh
 
 source "ci/scripts/functions-ci.sh"

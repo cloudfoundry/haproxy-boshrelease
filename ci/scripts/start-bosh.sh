@@ -223,4 +223,5 @@ EOF
   popd > /dev/null
 }
 
+echo "----- Starting BOSH"
 main $@
