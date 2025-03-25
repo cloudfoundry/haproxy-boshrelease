@@ -3,16 +3,12 @@
 set -eu
 
 stemcell_path=$PWD/stemcell/*.tgz
+source "${REPO_ROOT}/ci/scripts/functions-ci.sh"
 
-cd ${REPO_ROOT:?required}
-echo "----- Pulling in any git submodules..."
-git config --global --add safe.directory /repo
-git config --global --add safe.directory /repo/src/ttar
-git submodule update --init --recursive --force
+git_pull
 
 ./ci/scripts/start-bosh.sh
 
-source "ci/scripts/functions-ci.sh"
 trap stop_docker EXIT
 
 source /tmp/local-bosh/director/env

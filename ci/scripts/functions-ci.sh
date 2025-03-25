@@ -42,4 +42,12 @@ function build_image() {
     fi
 }
 
+function git_pull() {
+    cd "${REPO_ROOT:?required}"
+    echo "----- Pulling in any git submodules..."
+    git config --global --add safe.directory /repo
+    git config --global --add safe.directory /repo/src/ttar
+    git submodule update --init --recursive --force
+}
+
 echo "Loaded shell script functions..."
