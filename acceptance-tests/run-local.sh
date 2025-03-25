@@ -5,6 +5,7 @@ set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "${SCRIPT_DIR}/../ci/scripts/functions-ci.sh"
 
 if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
     echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
@@ -71,14 +72,7 @@ if [ "$(uname)" == "Darwin" ]; then
     docker_mac_check_cgroupsv1
 fi
 
-# Build acceptance test image if not found.
-if docker images -a | grep "haproxy-boshrelease-testflight " ; then
-  echo "Found existing testflight image, skipping docker build. To force rebuild delete this image."
-else
-  pushd "$SCRIPT_DIR/../ci"
-    docker build -t haproxy-boshrelease-testflight .
-  popd
-fi
+build_image "${SCRIPT_DIR}/../ci"
 
 # Run acceptance tests
 if [ -n "$FOCUS" ]; then

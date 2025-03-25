@@ -20,7 +20,7 @@ git config --global --add safe.directory /repo/src/ttar
 git submodule update --init --recursive --force
 
 # shellcheck disable=SC1091
-source "ci/scripts/skip-ci.sh"
+source "ci/scripts/functions-ci.sh"
 if [ -f ".git/resource/changed_files" ]; then
   if skip_ci "ci/.ci-ignore" ".git/resource/changed_files"; then
     echo "SKIP TEST: Only .ci-ignored changes found."
@@ -32,11 +32,6 @@ fi
 echo "----- Starting BOSH"
 
 ./ci/scripts/start-bosh.sh
-
-function stop_docker() {
-  echo "----- stopping docker"
-  service docker stop
-}
 
 if [ -z "$FOCUS" ]; then
   trap stop_docker EXIT

@@ -99,10 +99,7 @@ function sanitize_cgroups() {
   done
 }
 
-function stop_docker() {
-  echo "ERROR: stopping docker"
-  service docker stop
-}
+source "ci/scripts/functions-ci.sh"
 
 function start_docker() {
   generate_certs "$1"

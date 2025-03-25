@@ -11,14 +11,9 @@ git config --global --add safe.directory /repo/src/ttar
 git submodule update --init --recursive --force
 
 echo "----- Starting BOSH"
-
 ./ci/scripts/start-bosh.sh
 
-function stop_docker() {
-  echo "----- stopping docker"
-  service docker stop
-}
-
+source "ci/scripts/functions-ci.sh"
 trap stop_docker EXIT
 
 source /tmp/local-bosh/director/env
