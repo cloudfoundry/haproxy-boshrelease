@@ -25,3 +25,21 @@ function skip_ci() {
     # If we get here, all files are skipped or in skipped dirs.
     return 0
 }
+
+function stop_docker() {
+  echo "----- stopping docker"
+  service docker stop
+}
+
+# Build acceptance test image if not found.
+function build_image() {
+    if docker images -a | grep "haproxy-boshrelease-testflight " ; then
+    echo "Found existing testflight image, skipping docker build. To force rebuild delete this image."
+    else
+    pushd "$1"
+        docker build -t haproxy-boshrelease-testflight .
+    popd
+    fi
+}
+
+echo "Loaded shell script functions..."
