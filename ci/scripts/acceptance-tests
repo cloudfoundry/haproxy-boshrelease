@@ -29,7 +29,6 @@ if [ -f ".git/resource/changed_files" ]; then
     echo "RUN TEST: There is at least one non-ignored change found."
   fi
 fi
-echo "----- Starting BOSH"
 
 ./ci/scripts/start-bosh.sh
 
