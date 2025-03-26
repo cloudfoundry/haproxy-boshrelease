@@ -162,7 +162,9 @@ EOF
     exit 1
   fi
 
-  trap stop_docker ERR
+  if [ -z "${KEEP_RUNNING}" ] ; then
+      trap stop_docker ERR
+  fi
   echo $certs_dir
 }
 

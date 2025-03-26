@@ -1,10 +1,32 @@
 #!/usr/bin/env bash
-FOCUS="$1"
 
 set -eu
-
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "${REPO_DIR}/ci/scripts/functions-ci.sh"
+KEEP_RUNNING=""
+
+usage() {
+    echo -e "Usage: $0 [-F <ginkgo focus target>] [-k]
+
+    -F      Focus on a particular test. Expects a Ginkgo test name. Keep bosh running afterwards.
+    -k      Keep bosh container running. Useful for debug." 1>&2; exit 1;
+}
+
+while getopts ":F:k" o; do
+    case "${o}" in
+        F)
+            FOCUS=${OPTARG}
+            KEEP_RUNNING=true
+            ;;
+        k)
+            KEEP_RUNNING=true
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 docker_mac_check_cgroupsv1() {
     # Force cgroups v1 on Docker for Mac
@@ -66,8 +88,8 @@ fi
 build_image "${REPO_DIR}/ci"
 
 # Run acceptance tests
-if [ -n "$FOCUS" ]; then
-  docker run --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e FOCUS="$FOCUS" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
+if [ -n "$KEEP_RUNNING" ] ; then
+  docker run --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e FOCUS="$FOCUS" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
 else
-  docker run --rm --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+  docker run --rm --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e KEEP_RUNNING="" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
 fi

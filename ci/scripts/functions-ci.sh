@@ -78,3 +78,27 @@ function bosh_assets() {
     export BOSH_PATH=$(command -v bosh)
     export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"
 }
+
+function prepare_bosh() {
+    if [ -z "${KEEP_RUNNING}" ] ; then
+        ./ci/scripts/start-bosh.sh
+        trap stop_docker EXIT
+    elif ! bosh deployments &>/dev/null ; then      # With KEEP_RUNNING only start when not running already
+        ./ci/scripts/start-bosh.sh
+    fi
+
+    # shellcheck disable=SC1091
+    source /tmp/local-bosh/director/env
+    bosh_release
+    bosh_assets
+}
+
+function keep_running_info() {
+    if [ -n "${KEEP_RUNNING}" ] ; then
+        echo
+        echo "KEEP_RUNNING is ${KEEP_RUNNING} and bosh remains running."
+        echo "Re-enter container via: docker exec -it `hostname` bash"
+        echo
+        echo "Stop with: docker stop `hostname`"
+    fi
+}
