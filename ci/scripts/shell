@@ -1,20 +1,12 @@
 #!/bin/bash
 
 set -eu
-
-stemcell_path=$PWD/stemcell/*.tgz
 source "${REPO_ROOT}/ci/scripts/functions-ci.sh"
 START_DIR="${PWD}"  # Differs for CI and manual execution
 
 git_pull
-
-./ci/scripts/start-bosh.sh
-
-trap stop_docker EXIT
-
-# shellcheck disable=SC1091
-source /tmp/local-bosh/director/env
-bosh_release
-bosh_assets
+prepare_bosh
 
 bash
+
+keep_running_info

@@ -7,7 +7,6 @@ START_DIR="${PWD}"  # Differs for CI and manual execution
 if [ -n "$FOCUS" ]; then
   echo "------------------------------------------------------------------"
   echo "FOCUS is set. Will only run tests matching '$FOCUS'"
-  echo "Docker won't be stopped afterwards, so you can debug the test."
   echo "------------------------------------------------------------------"
   ADDITIONAL_ARGS=("--focus" "$FOCUS")
 fi
@@ -23,16 +22,7 @@ if [ -f ".git/resource/changed_files" ]; then
   fi
 fi
 
-./ci/scripts/start-bosh.sh
-
-if [ -z "$FOCUS" ]; then
-  trap stop_docker EXIT
-fi
-
-# shellcheck disable=SC1091
-source /tmp/local-bosh/director/env
-bosh_release
-bosh_assets
+prepare_bosh
 
 cd "acceptance-tests"
 
@@ -51,3 +41,5 @@ if [ -n "$FOCUS" ]; then
 fi
 
 ginkgo -v "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
+
+keep_running_info
