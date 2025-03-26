@@ -664,12 +664,30 @@ describe 'config/haproxy.config HTTPS frontend' do
   end
 
   context 'when ha_proxy.true_client_ip_header is set' do
-    let(:properties) do
-      default_properties.merge({ 'true_client_ip_header' => 'X-CF-True-Client-IP' })
+    context 'when forward_true_client_ip_header is set to overwrite' do
+      let(:properties) do
+        default_properties.merge({
+          'true_client_ip_header' => 'X-CF-True-Client-IP',
+          'forward_true_client_ip_header' => 'overwrite'
+        })
+      end
+
+      it 'adds the X-CF-True-Client-IP header' do
+        expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src]')
+      end
     end
 
-    it 'adds the X-CF-True-Client-IP header' do
-      expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src]')
+    context 'when forward_true_client_ip_header is set to always_forward' do
+      let(:properties) do
+        default_properties.merge({
+          'true_client_ip_header' => 'X-CF-True-Client-IP',
+          'forward_true_client_ip_header' => 'always_forward'
+        })
+      end
+
+      it 'adds the X-CF-True-Client-IP header' do
+        expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src] if !true_client_ip_request')
+      end
     end
   end
 

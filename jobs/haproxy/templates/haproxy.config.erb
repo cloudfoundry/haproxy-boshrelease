@@ -146,6 +146,22 @@ else
   abort("Unknown 'forwarded_client_cert' option: #{forwarded_client_cert_option}. Known options: 'always_forward_only', 'forward_only', 'sanitize_set', 'forward_only_if_route_service'")
 end
 
+forward_true_client_ip_header = :forward_only_if_route_service
+if_p("ha_proxy.true_client_ip_header") do
+  if_p("ha_proxy.forward_true_client_ip_header") do
+    case p("ha_proxy.forward_true_client_ip_header").downcase
+      when "always_forward"
+        forward_true_client_ip_header = :always_forward
+      when "forward_only_if_route_service"
+        forward_true_client_ip_header = :forward_only_if_route_service
+      when "overwrite"
+        forward_true_client_ip_header = :overwrite
+      else
+        abort("Unknown 'forward_true_client_ip_header' option: #{forward_true_client_ip_header}. Known options: 'always_forward', 'forward_only_if_route_service', 'overwrite'")
+      end
+  end
+end
+
 disable_domain_fronting = p("ha_proxy.disable_domain_fronting")
 if ![true, false, "true", "false", "mtls_only"].include?(disable_domain_fronting)
   abort("Unknown 'disable_domain_fronting' option: #{disable_domain_fronting}. Known options: true, false or 'mtls_only'")
@@ -516,6 +532,8 @@ frontend http-in
 frontend https-in
     mode http
     bind <%= p("ha_proxy.binding_ip") %>:443 <%= accept_proxy %> <%= tls_bind_options %> <%= v4v6 %> <%= default_alpn_config %>
+    # Set this acl when the request is a route service request, used by ha_proxy.forward_true_client_ip_header and ha_proxy.forwarded_client_cert
+    acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
     # Ensure a host header exists to check against
@@ -587,7 +605,6 @@ frontend https-in
     http-request del-header X-SSL-Client-NotAfter   if ! { ssl_c_used }
     http-request del-header X-SSL-Client-Root-CA-DN if ! { ssl_c_used }
   <%- when :non_route_service_only -%>
-    acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
     http-request del-header X-Forwarded-Client-Cert if !route_service_request
     http-request del-header X-SSL-Client            if !route_service_request
     http-request del-header X-SSL-Client-Session-ID if !route_service_request
@@ -655,7 +672,18 @@ frontend https-in
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.true_client_ip_header") do |header| -%>
-    http-request set-header <%= header %> %[src]
+    <%- case forward_true_client_ip_header -%>
+    <%- when  :always_forward -%>
+      # only set the header if it is not already set
+      acl true_client_ip_request hdr(<%= header %>) -m found
+      http-request set-header <%= header %> %[src] if !true_client_ip_request
+    <%- when  :overwrite -%>
+      # always set header
+      http-request set-header <%= header %> %[src]
+    <%- when  :forward_only_if_route_service -%>
+      acl true_client_ip_request hdr(<%= header %>) -m found
+      http-request set-header <%= header %> %[src] if !true_client_ip_request or route_service_request
+    <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
     acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt
