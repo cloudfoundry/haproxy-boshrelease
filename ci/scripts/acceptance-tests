@@ -44,4 +44,10 @@ echo "----- Running tests"
 
 export PATH=$PATH:$GOPATH/bin
 ginkgo version
-ginkgo -v -p -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
+
+PARALLELISM="-p"
+if [ -n "$FOCUS" ]; then
+  PARALLELISM="--nodes=1"
+fi
+
+ginkgo -v "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
