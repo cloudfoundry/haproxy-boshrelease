@@ -86,10 +86,16 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 build_image "${REPO_DIR}/ci"
+prepare_docker_scratch
 
 # Run acceptance tests
 if [ -n "$KEEP_RUNNING" ] ; then
-  docker run --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e FOCUS="$FOCUS" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
+  echo
+  echo "*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: ${DOCKER_SCRATCH}"
+  echo
+  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="$FOCUS" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
 else
-  docker run --rm --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e KEEP_RUNNING="" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+  echo "Cleaning up docker scratch: ${DOCKER_SCRATCH}"
+  sudo rm -rf "${DOCKER_SCRATCH}"
 fi
