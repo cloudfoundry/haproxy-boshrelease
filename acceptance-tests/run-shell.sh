@@ -22,10 +22,16 @@ while getopts ":k" o; do
 done
 
 build_image "${REPO_DIR}/ci"
+prepare_docker_scratch
 
 # Run local shell - start new container with bosh
 if [ -n "${KEEP_RUNNING}" ] ; then
-    docker run -it --privileged -v "$REPO_DIR":/repo -e KEEP_RUNNING="${KEEP_RUNNING}" -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./shell ; sleep infinity"
+    echo
+    echo "*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: ${DOCKER_SCRATCH}"
+    echo
+    docker run -it --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e KEEP_RUNNING="${KEEP_RUNNING}" -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./shell ; sleep infinity"
 else
-    docker run -it --rm --privileged -v "$REPO_DIR":/repo -e KEEP_RUNNING="" -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./shell"
+    docker run -it --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e KEEP_RUNNING="" -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./shell"
+    echo "Cleaning up docker scratch: ${DOCKER_SCRATCH}"
+    sudo rm -rf "${DOCKER_SCRATCH}"
 fi

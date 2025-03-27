@@ -102,3 +102,9 @@ function keep_running_info() {
         echo "Stop with: docker stop `hostname`"
     fi
 }
+
+# Prepare ext4 based scratch for internal docker. This is so that it can run overlay2 FS for its containers.
+function prepare_docker_scratch() {
+    DOCKER_SCRATCH="/workspace/docker-in/scratch-$RANDOM"
+    mkdir $DOCKER_SCRATCH
+}
