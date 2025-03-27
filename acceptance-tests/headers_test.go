@@ -154,7 +154,7 @@ var _ = Describe("Headers", func() {
 	})
 
 	It("Adds a header with the provided name and correct value for the true client ip", func() {
-		ipAdresses := getAllIpAddresses()
+		ipAddresses := getAllIpAddresses()
 		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -164,9 +164,39 @@ var _ = Describe("Headers", func() {
 		headerKey := "X-Cf-True-Client-Ip"
 		Expect(recordedHeaders).To(HaveKey(headerKey))
 		Expect(recordedHeaders[headerKey]).To(HaveLen(1))
-		Expect(ipAdresses).To(ContainElement(recordedHeaders[headerKey][0]))
+		Expect(ipAddresses).To(ContainElement(recordedHeaders[headerKey][0]))
 	})
 
+	It("Overwrites the True-Client-Ip header if it is already set", func() {
+		ipAddresses := getAllIpAddresses()
+		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
+		request.Header.Set("X-Cf-True-Client-Ip", "8.8.8.8")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Overwrites the existing True-Client-Ip Header")
+		resp, err := client.Do(request)
+		expect200(resp, err)
+		headerKey := "X-Cf-True-Client-Ip"
+		Expect(recordedHeaders).To(HaveKey(headerKey))
+		Expect(recordedHeaders[headerKey]).To(HaveLen(1))
+		Expect(ipAddresses).To(ContainElement(recordedHeaders[headerKey][0]))
+	})
+
+	It("Overwrites the True-Client-Ip header if it is already set AND the request is a route-service", func() {
+		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
+		// Mock a route-service request via the X-Cf-Proxy-Signature header
+		request.Header.Set("X-Cf-Proxy-Signature", "abc123")
+		request.Header.Set("X-Cf-True-Client-Ip", "8.8.8.8")
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Correctly preserves the pre-existing True-Client-Ip Header")
+		resp, err := client.Do(request)
+		expect200(resp, err)
+		headerKey := "X-Cf-True-Client-Ip"
+		Expect(recordedHeaders).To(HaveKey(headerKey))
+		Expect(recordedHeaders[headerKey]).To(HaveLen(1))
+		Expect(recordedHeaders[headerKey][0]).To(Equal("8.8.8.8"))
+	})
 })
 
 func getAllIpAddresses() (ips []string) {
