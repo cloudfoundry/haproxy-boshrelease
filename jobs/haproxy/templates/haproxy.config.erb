@@ -154,10 +154,10 @@ if_p("ha_proxy.true_client_ip_header") do
         forward_true_client_ip_header = :always_forward
       when "forward_only_if_route_service"
         forward_true_client_ip_header = :forward_only_if_route_service
-      when "overwrite"
-        forward_true_client_ip_header = :overwrite
+      when "always_set"
+        forward_true_client_ip_header = :always_set
       else
-        abort("Unknown 'forward_true_client_ip_header' option: #{forward_true_client_ip_header}. Known options: 'always_forward', 'forward_only_if_route_service', 'overwrite'")
+        abort("Unknown 'forward_true_client_ip_header' option: #{forward_true_client_ip_header}. Known options: 'always_forward', 'forward_only_if_route_service', 'always_set'")
       end
   end
 end
@@ -674,15 +674,15 @@ frontend https-in
   <%- if_p("ha_proxy.true_client_ip_header") do |header| -%>
     <%- case forward_true_client_ip_header -%>
     <%- when  :always_forward -%>
-      # only set the header if it is not already set
-      acl true_client_ip_request hdr(<%= header %>) -m found
-      http-request set-header <%= header %> %[src] if !true_client_ip_request
-    <%- when  :overwrite -%>
-      # always set header
-      http-request set-header <%= header %> %[src]
+    # only set the header if it is not already set
+    acl true_client_ip_found hdr(<%= header %>) -m found
+    http-request set-header <%= header %> %[src] if !true_client_ip_found
+    <%- when  :always_set -%>
+    # always set header
+    http-request set-header <%= header %> %[src]
     <%- when  :forward_only_if_route_service -%>
-      acl true_client_ip_request hdr(<%= header %>) -m found
-      http-request set-header <%= header %> %[src] unless true_client_ip_request route_service_request
+    acl true_client_ip_found hdr(<%= header %>) -m found
+    http-request set-header <%= header %> %[src] unless true_client_ip_found route_service_request
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>

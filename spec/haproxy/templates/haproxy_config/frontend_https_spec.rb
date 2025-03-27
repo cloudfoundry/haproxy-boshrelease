@@ -664,11 +664,11 @@ describe 'config/haproxy.config HTTPS frontend' do
   end
 
   context 'when ha_proxy.true_client_ip_header is set' do
-    context 'when ha_proxy.forward_true_client_ip_header is set to overwrite' do
+    context 'when ha_proxy.forward_true_client_ip_header is set to always_set' do
       let(:properties) do
         default_properties.merge({
           'true_client_ip_header' => 'X-CF-True-Client-IP',
-          'forward_true_client_ip_header' => 'overwrite'
+          'forward_true_client_ip_header' => 'always_set'
         })
       end
 
@@ -686,7 +686,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'adds the X-CF-True-Client-IP header' do
-        expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src] if !true_client_ip_request')
+        expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src] if !true_client_ip_found')
       end
     end
 
@@ -699,7 +699,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'adds the X-CF-True-Client-IP header' do
-        expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src] unless true_client_ip_request route_service_request')
+        expect(frontend_https).to include('http-request set-header X-CF-True-Client-IP %[src] unless true_client_ip_found route_service_request')
       end
     end
 
@@ -714,7 +714,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       it 'aborts with a meaningful error message' do
         expect do
           frontend_https
-        end.to raise_error(/Unknown 'forward_true_client_ip_header' option: forward_only_if_route_service. Known options: 'always_forward', 'forward_only_if_route_service', 'overwrite'/)
+        end.to raise_error(/Unknown 'forward_true_client_ip_header' option: forward_only_if_route_service. Known options: 'always_forward', 'forward_only_if_route_service', 'always_set'/)
       end
     end
 

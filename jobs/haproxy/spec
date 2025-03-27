@@ -418,7 +418,7 @@ properties:
       - forward_only_if_route_service: This option is useful to support the header with Route Services.
           The header will be overwritten with the current source address, unless there is an X-Cf-Proxy-Signature header.
       
-      - overwrite: Always overwrite the header with the current source address. 
+      - always_set: Always set the header with the current source address. Will overwrite any existing header.
 
     default: forward_only_if_route_service
 
