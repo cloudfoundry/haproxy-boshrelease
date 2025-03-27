@@ -682,7 +682,7 @@ frontend https-in
       http-request set-header <%= header %> %[src]
     <%- when  :forward_only_if_route_service -%>
       acl true_client_ip_request hdr(<%= header %>) -m found
-      http-request set-header <%= header %> %[src] if !true_client_ip_request or route_service_request
+      http-request set-header <%= header %> %[src] unless true_client_ip_request && route_service_request
     <%- end -%>
   <%- end -%>
   <%- if p("ha_proxy.internal_only_domains").size > 0 -%>
