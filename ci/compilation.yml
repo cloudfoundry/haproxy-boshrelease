@@ -1,0 +1,3 @@
+- path: /compilation/workers
+  type: replace
+  value: 2
