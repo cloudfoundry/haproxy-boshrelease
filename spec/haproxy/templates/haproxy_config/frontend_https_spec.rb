@@ -717,7 +717,6 @@ describe 'config/haproxy.config HTTPS frontend' do
         end.to raise_error(/Unknown 'forward_true_client_ip_header' option: forward_only_if_route_service. Known options: 'always_forward', 'forward_only_if_route_service', 'always_set'/)
       end
     end
-
   end
 
   context 'when ha_proxy.enable_http2 is true' do
