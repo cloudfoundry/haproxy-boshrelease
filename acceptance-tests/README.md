@@ -3,10 +3,7 @@
 ## Requirements
 
 * Docker installed locally
-* A matching Jammy stemcell tgz downloaded to `ci/scripts/stemcell`
-  * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
-* A matching Bionic stemcell tgz downloaded to `ci/scripts/stemcell-bionic`
-  * Get it from https://bosh.io/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
+* x86 based computer (cloudfoundry currently doesn't build/run on arm; rosetta can't run docker in docker for x86)
 
 ## Running
 
@@ -16,6 +13,8 @@ cd acceptance-tests
 ```
 
 ### Running on Docker for Mac
+
+Unfortunately rosetta on arm based macs doesn't support docker in docker required for bosh docker-cpi used in this test setup. You will either have to run on x86 based mac or some remote x86 workstation. Virtualization using QUEMU is possible, but so slow the tests fail on timeouts.
 
 The BOSH Docker CPI requires cgroups v1 to be active. Docker for Mac since 4.3.x uses cgroups v2 by default.
 
@@ -80,24 +79,40 @@ The output at the end should be:
 
 If you want to run only a specific part of the suite, you can use [focussed specs](https://onsi.github.io/ginkgo/#focused-specs)
 
-The easiest way is to just provide the name of the tests you want to run as a command line argument like so:
+The easiest way is to just provide the name of the tests you want to run as a `-F` command line argument:
 
 ```shell
-./run-local.sh "description of the test to run"
+./run-local.sh -F "description of the test to run"
 ```
 
 The argument is passed as a regular expression that will match all `Describe`, `Context` or `It` closure descriptions in the suite.
 So, e.g. if you want to run all tests that use mTLS, you can run:
 
 ```shell
-./run-local.sh mTLS
+./run-local.sh -F mTLS
 ```
 
 However, if you want to run exactly one specific test, make sure you pass the exact description of the matching `It` closure:
 
 ```shell
-./run-local.sh "Correctly terminates mTLS requests"
+./run-local.sh -F "Correctly terminates mTLS requests"
 ```
 
-Alternatively, you add an `F` to your `Describe`, `Context` or `It` closures.
-Don't forget to do a local commit before running the tests, else BOSH will fail to produce a release. The git repo must be clean before running the tests.
+Running tests in focus will also preserve bosh container running after tests complete, so that you can easily run tests again without having to wait for bosh set-up again.
+
+### Bosh persistence
+
+Because BOSH setup takes a while (it starts from scratch with bosh create-env), it is useful to preserve container with bosh already configured to run tests. This can be done either by providing test focus as described above, or `-k` (keep) switch to `run-local.sh` and `run-shell.sh` scripts, e.g. `run-shell.sh -k`. Once initial setup is complete, scripts will output message about how to get back into running container:
+
+```text
+KEEP_RUNNING is true and bosh remains running.
+Re-enter container via: docker exec -it b7c767c5c0e4 bash
+
+Stop with: docker stop b7c767c5c0e4
+```
+
+After you have completed your work and have stopped the container, it is required you do further cleanup. In order to have working overlay2 filesystem for docker-cpi, it is necessary to mount ext4 based storage from `/workspace/docker-in` into bosh container. Each container gets its own temporary space, which in case of containers that keep running is not deleted when the tests complete. The scripts will output location of this temporary storage:
+
+```text
+*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: /workspace/docker-in/scratch-19517
+```
