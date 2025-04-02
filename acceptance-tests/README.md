@@ -14,7 +14,7 @@ cd acceptance-tests
 
 ### Running on Docker for Mac
 
-Unfortunately rosetta on arm based macs doesn't support docker in docker required for bosh docker-cpi used in this test setup. You will either have to run on x86 based mac or some remote x86 workstation. Virtualization using QUEMU is possible, but so slow the tests fail on timeouts.
+Unfortunately rosetta on arm based macs doesn't support docker in docker required for bosh docker-cpi used in this test setup. You will either have to run on x86 based mac or some remote x86 workstation. Virtualization using QEMU is possible, but so slow the tests fail on timeouts.
 
 The BOSH Docker CPI requires cgroups v1 to be active. Docker for Mac since 4.3.x uses cgroups v2 by default.
 
@@ -98,11 +98,11 @@ However, if you want to run exactly one specific test, make sure you pass the ex
 ./run-local.sh -F "Correctly terminates mTLS requests"
 ```
 
-Running tests in focus will also preserve bosh container running after tests complete, so that you can easily run tests again without having to wait for bosh set-up again.
+Running tests in focus will also preserve the bosh container running after tests complete, so that you can easily run tests again without having to wait for bosh set-up again.
 
-### Bosh persistence
+### Persistent BOSH
 
-Because BOSH setup takes a while (it starts from scratch with bosh create-env), it is useful to preserve container with bosh already configured to run tests. This can be done either by providing test focus as described above, or `-k` (keep) switch to `run-local.sh` and `run-shell.sh` scripts, e.g. `run-shell.sh -k`. Once initial setup is complete, scripts will output message about how to get back into running container:
+Because BOSH setup takes a while (it starts from scratch with bosh create-env), it is useful to preserve the container with bosh already configured to run tests. This can be done either by providing test focus as described above, or `-k` (keep) switch to `run-local.sh` and `run-shell.sh` scripts, e.g. `run-shell.sh -k`. Once initial setup is complete, scripts will output a message about how to get back into the running container:
 
 ```text
 KEEP_RUNNING is true and bosh remains running.
@@ -111,7 +111,7 @@ Re-enter container via: docker exec -it b7c767c5c0e4 bash
 Stop with: docker stop b7c767c5c0e4
 ```
 
-After you have completed your work and have stopped the container, it is required you do further cleanup. In order to have working overlay2 filesystem for docker-cpi, it is necessary to mount ext4 based storage from `/workspace/docker-in` into bosh container. Each container gets its own temporary space, which in case of containers that keep running is not deleted when the tests complete. The scripts will output location of this temporary storage:
+After you have completed your work and have stopped the container, it is required you do further cleanup. In order to have a working overlay2 filesystem for docker-cpi, it is necessary to mount ext4 based storage from `/workspace/docker-in` into the bosh container. Each container gets its own temporary space, which in case of containers that keep running is not deleted when the tests complete. The scripts will output the location of this temporary storage:
 
 ```text
 *** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: /workspace/docker-in/scratch-19517
