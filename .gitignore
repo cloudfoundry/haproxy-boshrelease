@@ -5,7 +5,6 @@ releases/*.tgz
 releases/**/*.tgz
 ci/scripts/stemcell/*.tgz
 ci/scripts/stemcell-bionic/*.tgz
-ci/scripts/bpm/*.tgz
 dev_releases
 blobs/*
 .blobs

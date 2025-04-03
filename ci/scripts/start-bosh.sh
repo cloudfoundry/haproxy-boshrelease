@@ -99,10 +99,7 @@ function sanitize_cgroups() {
   done
 }
 
-function stop_docker() {
-  echo "ERROR: stopping docker"
-  service docker stop
-}
+source "ci/scripts/functions-ci.sh"
 
 function start_docker() {
   generate_certs "$1"
@@ -165,7 +162,9 @@ EOF
     exit 1
   fi
 
-  trap stop_docker ERR
+  if [ -z "${KEEP_RUNNING}" ] ; then
+      trap stop_docker ERR
+  fi
   echo $certs_dir
 }
 
@@ -187,6 +186,7 @@ function main() {
     docker network create -d bridge --subnet=10.245.0.0/16 director_network
   fi
 
+  compilation_ops="`pwd`/ci/compilation.yml"
   pushd ${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment} > /dev/null
       export BOSH_DIRECTOR_IP="10.245.0.3"
       export BOSH_ENVIRONMENT="docker-director"
@@ -221,9 +221,10 @@ function main() {
 EOF
       source "${local_bosh_dir}/env"
 
-      bosh -n update-cloud-config docker/cloud-config.yml -v network=director_network
+      bosh -n update-cloud-config docker/cloud-config.yml -v network=director_network -o "${compilation_ops}"
 
   popd > /dev/null
 }
 
+echo "----- Starting BOSH"
 main $@
