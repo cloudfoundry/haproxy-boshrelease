@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-cd ${REPO_ROOT}
+cd "${REPO_ROOT}"
 
 bundle install
 bundle exec rake spec
