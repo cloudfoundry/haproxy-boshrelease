@@ -165,7 +165,7 @@ EOF
   if [ -z "${KEEP_RUNNING}" ] ; then
       trap stop_docker ERR
   fi
-  echo $certs_dir
+  echo "$certs_dir"
 }
 
 function main() {
@@ -187,7 +187,7 @@ function main() {
   fi
 
   compilation_ops="$PWD/ci/compilation.yml"
-  pushd ${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment} > /dev/null
+  pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
       export BOSH_DIRECTOR_IP="10.245.0.3"
       export BOSH_ENVIRONMENT="docker-director"
 
@@ -202,7 +202,7 @@ function main() {
         -v internal_ip="${BOSH_DIRECTOR_IP}" \
         -v docker_host="${DOCKER_HOST}" \
         -v network=director_network \
-        -v docker_tls="{\"ca\": \"$(cat ${certs_dir}/ca_json_safe.pem)\",\"certificate\": \"$(cat ${certs_dir}/client_certificate_json_safe.pem)\",\"private_key\": \"$(cat ${certs_dir}/client_private_key_json_safe.pem)\"}" \
+        -v docker_tls="{\"ca\": \"$(cat "${certs_dir}"/ca_json_safe.pem)\",\"certificate\": \"$(cat "${certs_dir}"/client_certificate_json_safe.pem)\",\"private_key\": \"$(cat "${certs_dir}"/client_private_key_json_safe.pem)\"}" \
         ${@} > "${local_bosh_dir}/bosh-director.yml"
 
       command bosh create-env "${local_bosh_dir}/bosh-director.yml" \
@@ -215,7 +215,7 @@ function main() {
       cat <<EOF > "${local_bosh_dir}/env"
       export BOSH_ENVIRONMENT="${BOSH_ENVIRONMENT}"
       export BOSH_CLIENT=admin
-      export BOSH_CLIENT_SECRET=`bosh int "${local_bosh_dir}/creds.yml" --path /admin_password`
+      export BOSH_CLIENT_SECRET=$(bosh int "${local_bosh_dir}/creds.yml" --path /admin_password)
       export BOSH_CA_CERT="${local_bosh_dir}/ca.crt"
 
 EOF

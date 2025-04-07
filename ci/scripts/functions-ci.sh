@@ -62,8 +62,8 @@ function bosh_release() {
 }
 
 function bosh_assets() {
-    stemcell_jammy_path=$START_DIR/stemcell/*.tgz
-    stemcell_bionic_path=$START_DIR/stemcell-bionic/*.tgz
+    stemcell_jammy_path="$START_DIR/stemcell/*.tgz"
+    stemcell_bionic_path="$START_DIR/stemcell-bionic/*.tgz"
 
     echo "----- Uploading Jammy stemcell"
     bosh -n upload-stemcell $stemcell_jammy_path
@@ -97,9 +97,9 @@ function keep_running_info() {
     if [ -n "${KEEP_RUNNING}" ] ; then
         echo
         echo "KEEP_RUNNING is ${KEEP_RUNNING} and bosh remains running."
-        echo "Re-enter container via: docker exec -it `hostname` bash"
+        echo "Re-enter container via: docker exec -it $(hostname) bash"
         echo
-        echo "Stop with: docker stop `hostname`"
+        echo "Stop with: docker stop $(hostname)"
     fi
 }
 

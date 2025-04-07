@@ -2,15 +2,15 @@
 
 set -e
 
-: ${BLOB_DIR:?required}
-: ${BLOB_NAME:?required}
-: ${BLOB_BINARY:?required}
-: ${BLOB_CLEANUP:?required}
-: ${BLOB_DESTINATION:?required}
+: "${BLOB_DIR:?required}"
+: "${BLOB_NAME:?required}"
+: "${BLOB_BINARY:?required}"
+: "${BLOB_CLEANUP:?required}"
+: "${BLOB_DESTINATION:?required}"
 
-VERSION=$(cat ${BLOB_DIR}/version)
+VERSION=$(cat "${BLOB_DIR}"/version)
 
-pushd ${REPO_ROOT:?required}
+pushd "${REPO_ROOT:?required}"
 
 cat <<EOF >config/private.yml
 ---
@@ -22,19 +22,19 @@ blobstore:
 EOF
 
 blobs_to_remove=$(spruce json config/blobs.yml | jq -r "keys[] | select(test(\"${BLOB_CLEANUP}\"))")
-if [[ ! -z $blobs_to_remove ]]; then
+if [[ -n $blobs_to_remove ]]; then
   echo "$blobs_to_remove" | xargs -L1 bosh remove-blob
 fi
 
 # expand ${VERSION} env var into file path
 eval "blob_destination=${BLOB_DESTINATION}"
-bosh add-blob ../${BLOB_DIR}/${BLOB_BINARY} "${blob_destination}"
+bosh add-blob "../${BLOB_DIR}/${BLOB_BINARY}" "${blob_destination}"
 bosh -n upload-blobs
 rm config/private.yml
 popd
 
-if [[ -n "$(cd ${REPO_ROOT}; git status --porcelain)" ]]; then
-  pushd ${REPO_ROOT}
+if [[ -n "$(cd "${REPO_ROOT}"; git status --porcelain)" ]]; then
+  pushd "${REPO_ROOT}"
   cat <<EOF >>ci/release_notes.md
 
 # ${BLOB_NAME}
@@ -50,12 +50,12 @@ EOF
     git config --global user.name "CI Bot"
   fi
 
-  (cd ${REPO_ROOT}
-   git merge --no-edit ${BRANCH}
+  (cd "${REPO_ROOT}"
+   git merge --no-edit "${BRANCH}"
    git add -A
    git status
    git commit -m "Bumped ${BLOB_NAME} to v${VERSION}")
 fi
 
 # so that future steps in the pipeline can push our changes
-cp -a ${REPO_ROOT} ${REPO_OUT}
+cp -a "${REPO_ROOT}" "${REPO_OUT}"
