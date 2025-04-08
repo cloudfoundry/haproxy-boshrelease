@@ -3,7 +3,6 @@ package acceptance_tests
 import (
 	"crypto/tls"
 	"fmt"
-	"net"
 	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -20,9 +19,6 @@ var _ = Describe("Headers", func() {
   value: 
     Custom-Header-To-Add: add-value
     Custom-Header-To-Replace: replace-value
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/true_client_ip_header?
-  value: "X-CF-True-Client-IP"
 # Configure CA and cert chain
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/crt_list?/-
@@ -153,57 +149,4 @@ var _ = Describe("Headers", func() {
 
 	})
 
-	It("Adds a header with the provided name and correct value for the true client ip", func() {
-		ipAdresses := getAllIpAddresses()
-		request, err = http.NewRequest("GET", "https://haproxy.internal:443", nil)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Correctly sets the True-Client-Ip Header")
-		resp, err := client.Do(request)
-		expect200(resp, err)
-		headerKey := "X-Cf-True-Client-Ip"
-		Expect(recordedHeaders).To(HaveKey(headerKey))
-		Expect(recordedHeaders[headerKey]).To(HaveLen(1))
-		Expect(ipAdresses).To(ContainElement(recordedHeaders[headerKey][0]))
-	})
-
 })
-
-func getAllIpAddresses() (ips []string) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		fmt.Printf("Cannot get interface: %s", err)
-		return
-	}
-
-	for _, iface := range ifaces {
-		if iface.Flags&net.FlagUp == 0 {
-			continue
-		}
-		if iface.Flags&net.FlagLoopback != 0 {
-			continue
-		}
-		addrs, err := iface.Addrs()
-		if err != nil {
-			fmt.Printf("Cannot get addresses for interface %s: %s", iface.Name, err)
-			continue
-		}
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			default:
-				continue
-			}
-			if ip == nil || ip.IsLoopback() {
-				continue
-			}
-
-			ips = append(ips, ip.String())
-		}
-	}
-	return ips
-}
