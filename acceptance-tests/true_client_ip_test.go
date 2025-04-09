@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const TrueClientIpHeader string = "X-CF-True-Client-IP"
+const TrueClientIpHeader string = "X-Cf-True-Client-Ip"
 const MockClientIp string = "8.8.8.8"
 
 var _ = Describe("True Client IP", func() {
