@@ -1,9 +1,0 @@
-instance_groups:
-  - name: haproxy
-    jobs:
-      - name: keepalived
-        release: haproxy
-
-properties:
-  keepalived:
-    vip: (( grab $KEEPALIVED_VIP ))
