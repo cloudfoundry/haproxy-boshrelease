@@ -8,7 +8,10 @@ describe 'bin/drain' do
   let(:backend_tcp_link) do
     Bosh::Template::Test::Link.new(
       name: 'tcp_backend',
-      instances: [Bosh::Template::Test::LinkInstance.new(address: 'postgres.backend.com', name: 'postgres')]
+      instances: [Bosh::Template::Test::LinkInstance.new(address: 'postgres.backend.com', name: 'postgres')],
+      properties: {
+        'health_check_http' => 8080
+      }
     )
   end
 
@@ -57,6 +60,39 @@ describe 'bin/drain' do
             expect(drain).not_to include('drain is disabled')
             expect(drain).to include('socat')
             expect(drain).to include('disable frontend health_check_http_tcp-redis')
+          end
+
+          it 'includes drain and grace logic unless no http health check is defined' do
+            drain = template.render(
+              {
+                'ha_proxy' => {
+                  'drain_enable' => true,
+                  'tcp' => [{
+                    'name' => 'redis',
+                    'port' => 6379,
+                    'backend_servers' => ['10.0.0.1', '10.0.0.2']
+                  }]
+                }
+              }
+            )
+            expect(drain).not_to include('disable frontend health_check_http_tcp-redis')
+          end
+
+          it 'includes drain and grace logic unless no http health check is defined (even when empty)' do
+            drain = template.render(
+              {
+                'ha_proxy' => {
+                  'drain_enable' => true,
+                  'tcp' => [{
+                    'name' => 'redis',
+                    'port' => 6379,
+                    'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+                    'health_check_http' => nil
+                  }]
+                }
+              }
+            )
+            expect(drain).not_to include('disable frontend health_check_http_tcp-redis')
           end
         end
 

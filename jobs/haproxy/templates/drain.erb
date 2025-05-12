@@ -63,7 +63,9 @@ echo "disable frontend health_check_http_url_proxy_protocol" | /usr/local/bin/so
     }
   end -%>
 <%- tcp.each do |tcp_proxy| -%>
+<%- unless tcp_proxy.fetch("health_check_http", nil).nil? -%>
 echo "disable frontend health_check_http_tcp-<%= tcp_proxy["name"] %>" | /usr/local/bin/socat stdio unix-connect:${sockfile}
+<%- end -%>
 <%- end -%>
 
 <%- if p("ha_proxy.enable_health_check_http") || tcp.size > 0 -%>
