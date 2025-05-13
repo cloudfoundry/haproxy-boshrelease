@@ -467,6 +467,7 @@ frontend http-in
           <%- acl_names=acl_names+acl["acl_name"]+" " -%>
         <%- end -%>
       <%- end -%>
+    http-request set-var-fmt(txn.block_reason) "blocked by custom acl(s) <%= acl_names %>" if <%= acl_names %>
     http-request deny if <%= acl_names %>
     <%- end -%>
   <%- end -%>
@@ -653,6 +654,7 @@ frontend https-in
           <%- acl_names=acl_names+acl["acl_name"]+" " -%>
         <%- end -%>
       <%- end -%>
+    http-request set-var-fmt(txn.block_reason) "blocked by custom acl(s) <%= acl_names %>" if <%= acl_names %>
     http-request deny if <%= acl_names %>
     <%- end -%>
   <%- end -%>
@@ -833,6 +835,7 @@ frontend wss-in
           <%- acl_names=acl_names+acl["acl_name"]+" " -%>
         <%- end -%>
       <%- end -%>
+    http-request set-var-fmt(txn.block_reason) "blocked by custom acl(s) <%= acl_names %>" if <%= acl_names %>
     http-request deny if <%= acl_names %>
     <%- end -%>
   <%- end -%>

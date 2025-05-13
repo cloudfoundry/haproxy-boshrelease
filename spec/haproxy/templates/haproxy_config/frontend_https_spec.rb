@@ -515,7 +515,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     it 'adds the correct acls and http-request deny rules' do
       expect(frontend_https).to include('acl block_host hdr_beg(host) -i login')
       expect(frontend_https).to include('acl whitelist_ips src 5.22.5.11 5.22.5.12')
-
+      expect(frontend_https).to include('http-request set-var-fmt(txn.block_reason) "blocked by custom acl(s) block_host !whitelist_ips " if block_host !whitelist_ips')
       expect(frontend_https).to include('http-request deny if block_host !whitelist_ips')
     end
   end
