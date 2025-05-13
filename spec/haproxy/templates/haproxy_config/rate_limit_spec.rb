@@ -51,8 +51,10 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'adds http-request deny condition to http-in and https-in frontends' do
+        expect(frontend_http).to include('http-request set-var-fmt(txn.block_reason) "blocked: requests rate limit reached" if { sc_http_req_rate(1) gt 5 }')
         expect(frontend_http).to include('http-request deny status 429 if { sc_http_req_rate(1) gt 5 }')
         expect(frontend_http).to include('http-request track-sc1 src table st_http_req_rate')
+        expect(frontend_https).to include('http-request set-var-fmt(txn.block_reason) "blocked: requests rate limit reached" if { sc_http_req_rate(1) gt 5 }')
         expect(frontend_https).to include('http-request deny status 429 if { sc_http_req_rate(1) gt 5 }')
         expect(frontend_https).to include('http-request track-sc1 src table st_http_req_rate')
       end

@@ -82,6 +82,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     it 'disables domain fronting by checking SNI against the Host header' do
       expect(frontend_https).to include('http-request set-var(txn.host) hdr(host),host_only')
       expect(frontend_https).to include('acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0')
+      expect(frontend_https).to include('http-request set-var-fmt(txn.block_reason) "blocked: Host header mismatch" if { ssl_fc_has_sni } !ssl_sni_http_host_match')
       expect(frontend_https).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match')
     end
   end
@@ -94,6 +95,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     it 'disables domain fronting by checking SNI against the Host header for mtls connections only' do
       expect(frontend_https).to include('http-request set-var(txn.host) hdr(host),host_only')
       expect(frontend_https).to include('acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0')
+      expect(frontend_https).to include('http-request set-var-fmt(txn.block_reason) "blocked: Host header mismatch" if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
       expect(frontend_https).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
     end
   end
