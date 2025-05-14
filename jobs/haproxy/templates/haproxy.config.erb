@@ -495,6 +495,7 @@ frontend http-in
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
     acl internal hdr(Host) -m sub <%= domain %>
     <%- end -%>
+    http-request set-var-fmt(txn.block_reason) "blocked: not trusted for internal-only" if internal !private
     http-request deny if internal !private
   <%- end -%>
   <%- p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
@@ -697,6 +698,7 @@ frontend https-in
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
     acl internal hdr(Host) -m sub <%= domain %>
     <%- end -%>
+    http-request set-var-fmt(txn.block_reason) "blocked: not trusted for internal-only" if internal !private
     http-request deny if internal !private
   <%- end -%>
   <%- p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>
@@ -867,6 +869,7 @@ frontend wss-in
     <%- p("ha_proxy.internal_only_domains").each do |domain| -%>
     acl internal hdr(Host) -m sub <%= domain %>
     <%- end -%>
+    http-request set-var-fmt(txn.block_reason) "blocked: not trusted for internal-only" if internal !private
     http-request deny if internal !private
   <%- end -%>
   <%- p('ha_proxy.routed_backend_servers').each do |prefix, data| -%>

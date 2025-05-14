@@ -620,6 +620,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     it 'adds the correct acl and http-request deny rules' do
       expect(frontend_https).to include('acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt')
       expect(frontend_https).to include('acl internal hdr(Host) -m sub bosh.internal')
+      expect(frontend_https).to include('http-request set-var-fmt(txn.block_reason) "blocked: not trusted for internal-only" if internal !private')
       expect(frontend_https).to include('http-request deny if internal !private')
     end
   end
