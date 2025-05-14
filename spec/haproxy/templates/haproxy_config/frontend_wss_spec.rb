@@ -84,6 +84,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     it 'disables domain fronting by checking SNI against the Host header' do
       expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),host_only')
       expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0')
+      expect(frontend_wss).to include('http-request set-var-fmt(txn.block_reason) "blocked: Host header mismatch" if { ssl_fc_has_sni } !ssl_sni_http_host_match')
       expect(frontend_wss).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } !ssl_sni_http_host_match')
     end
   end
@@ -96,12 +97,14 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     it 'disables domain fronting by checking SNI against the Host header for mtls connections only' do
       expect(frontend_wss).to include('http-request set-var(txn.host) hdr(host),host_only')
       expect(frontend_wss).to include('acl ssl_sni_http_host_match ssl_fc_sni,lower,strcmp(txn.host) eq 0')
+      expect(frontend_wss).to include('http-request set-var-fmt(txn.block_reason) "blocked: Host header mismatch" if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
       expect(frontend_wss).to include('http-request deny deny_status 421 if { ssl_fc_has_sni } { ssl_c_used } !ssl_sni_http_host_match')
     end
   end
 
   context 'when ha_proxy.disable_domain_fronting is false (the default)' do
     it 'allows domain fronting' do
+      expect(frontend_wss).not_to include(/http-request set-var-fmt(txn.block_reason) "blocked: Host header mismatch"/)
       expect(frontend_wss).not_to include(/http-request deny deny_status 421/)
     end
   end
@@ -645,6 +648,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     it 'adds the correct acl and http-request deny rules' do
       expect(frontend_wss).to include('acl private src -f /var/vcap/jobs/haproxy/config/trusted_domain_cidrs.txt')
       expect(frontend_wss).to include('acl internal hdr(Host) -m sub bosh.internal')
+      expect(frontend_wss).to include('http-request set-var-fmt(txn.block_reason) "blocked: not trusted for internal-only" if internal !private')
       expect(frontend_wss).to include('http-request deny if internal !private')
     end
   end
