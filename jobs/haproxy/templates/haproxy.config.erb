@@ -540,7 +540,7 @@ frontend https-in
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
     # Ensure a host header exists to check against
-    http-request set-var-fmt(txn.block_reason) "blocked: missing required Host header" if { req.hdr_cnt(host) eq 0 }
+    http-request set-var-fmt(txn.block_reason) "blocked: missing required host header" if { req.hdr_cnt(host) eq 0 }
     http-request deny deny_status 400 content-type text/plain string "400 Bad Request: missing required Host header" if { req.hdr_cnt(host) eq 0 }
     # Ignore optional port in Host header when comparing to SNI
     http-request set-var(txn.host) hdr(host),host_only
