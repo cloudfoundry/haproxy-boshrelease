@@ -3,4 +3,4 @@ gitpython==3.1.44
 packaging==25.0
 pygithub==2.6.1
 pyyaml==6.0.2
-requests==2.32.3
+requests==2.32.4
