@@ -18,7 +18,7 @@ haproxy/socat-1.8.0.3.tar.gz:
   size: 744553
   object_id: 5a0cc86e-dd69-4089-73f7-cdf7297c1377
   sha: sha256:a9f9eb6cfb9aa6b1b4b8fe260edbac3f2c743f294db1e362b932eb3feca37ba4
-keepalived/keepalived-2.3.3.tar.gz:
-  size: 1236713
-  object_id: 9edc950b-87e3-4dba-482b-b9c804718e77
-  sha: sha256:2288c5c7609fa452782b7acefa19acce742d0204dc17f54d36da46b10f8b590c
+keepalived/keepalived-2.3.4.tar.gz:
+  size: 1241315
+  object_id: 9fe43619-9129-4280-4e7c-b1750ea9a18e
+  sha: sha256:6afd95ddb7d3e0d3b8b8e5b3a489144131b61a01b06d29e883d0c44acc8a36bf
