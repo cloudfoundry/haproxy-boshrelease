@@ -328,7 +328,6 @@ jobs:
                 path: /usr/bin/python3
                 args: ["ci/scripts/autobump-dependencies.py"]
               params:
-                REPO_ROOT: git
                 PR_BASE: master
                 PR_ORG: cloudfoundry
                 PR_LABEL: run-ci
