@@ -150,6 +150,12 @@ class Dependency:
         """
         raise NotImplementedError
 
+    def get_release_notes(self) -> str:
+        """
+        Obtain changelog for the given current and latest release difference. This is useful to attach to the PR.
+        """
+        raise NotImplementedError
+
     def remove_current_blob(self):
         current_blob_path = f"{self.package}/{self.name}-{self.current_version}.tar.gz"
         if self._check_blob_exists(current_blob_path):
@@ -196,7 +202,7 @@ class Dependency:
             Automatic bump from version {self.current_version} to version {self.latest_release.version}, downloaded from {self.latest_release.url}.
 
             After merge, consider releasing a new version of haproxy-boshrelease.
-        """
+        """ + self.get_release_notes()
         )
         if not DRY_RUN:
             self._create_branch(self.remote_repo, self.pr_branch)
@@ -285,6 +291,9 @@ class GithubDependency(Dependency):
 
         return latest_release
 
+    def get_release_notes(self) -> str:
+        return ""
+
 
 @dataclass
 class WebLinkDependency(Dependency):
@@ -320,6 +329,9 @@ class WebLinkDependency(Dependency):
 
         raise Exception(f"Failed to get latest {self.name} version from {self.root_url}")
 
+    def get_release_notes(self) -> str:
+        return ""
+
 
 @dataclass
 class HaproxyDependency(Dependency):
@@ -343,6 +355,16 @@ class HaproxyDependency(Dependency):
             latest_release["file"],
             version.parse(latest_version),
         )
+
+    def get_release_notes(self) -> str:
+        current_version = self.current_version
+        latest_version = self.latest_release.version
+
+        # TODO: check if current version and latest version are defined and different
+        #       this function should be only called if they are, but check still
+
+        return ""
+
 
 
 def wget(url: str, path: str, auth: Optional[Tuple[str, str]] = None):
