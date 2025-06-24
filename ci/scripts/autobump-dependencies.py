@@ -190,7 +190,7 @@ class Dependency:
 
         for pr in self.remote_repo.get_pulls(
             state="open", base=PR_BASE, head=f"{PR_ORG}:{self.pr_branch}"
-        ):  # theoretically there shold never be more than one open PR, print them anyways
+        ):  # theoretically there should never be more than one open PR, print them anyways
             print(f"Open {self.pr_branch} PR exists: {pr.html_url}")
             prs_exist = True
         return prs_exist
@@ -360,10 +360,36 @@ class HaproxyDependency(Dependency):
         current_version = self.current_version
         latest_version = self.latest_release.version
 
-        # TODO: check if current version and latest version are defined and different
-        #       this function should be only called if they are, but check still
+        if ( current_version == latest_version ):
+            raise Exception(f"""Changelog requested but current and latest versions are the same: {current_version}""")
 
-        return ""
+        releaseNote = f"""
+            [Changelog for {latest_version}](https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG).
+
+            Please also check list of [known open bugs for {latest_version}](https://www.haproxy.org/bugs/bugs-{latest_version}.html).
+        """
+
+        wget(f"""https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG""", "HAPROXY-CHANGELOG")
+        with open('HAPROXY-CHANGELOG', 'r') as file:
+            releaseNote += f"""
+            <details>
+
+            <summary>HAPROXY CHANGELOG between {latest_version} and {current_version}</summary>
+            """
+
+            startCopy = False
+            for line in file:
+                if (line.endswith(str(latest_version)+"\n")):          # Start copying from latest version head
+                    startCopy = True
+                if (line.endswith(str(current_version)+"\n")):         # Stop when reaching current version
+                    break
+                if not startCopy:
+                    continue
+                releaseNote += line
+
+            releaseNote += f"""</details>"""
+
+        return releaseNote
 
 
 
