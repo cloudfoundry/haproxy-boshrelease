@@ -364,9 +364,11 @@ class HaproxyDependency(Dependency):
             raise Exception(f"""Changelog requested but current and latest versions are the same: {current_version}""")
 
         releaseNote = f"""
-            [Changelog for {latest_version}](https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG).
+            [Changelog for HAProxy {latest_version}](https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG).
 
-            Please also check list of [known open bugs for {latest_version}](https://www.haproxy.org/bugs/bugs-{latest_version}.html).
+            Please also check list of [known open bugs for HAProxy {latest_version}](https://www.haproxy.org/bugs/bugs-{latest_version}.html).
+        
+        The developer's summary for this release can be found in [the Announcement post for the HAProxy {latest_version} release](https://www.mail-archive.com/search?l=haproxy%40formilux.org&q=announce+subject%3A%22[ANNOUNCE]+haproxy-{latest_version}%22+-subject%3A%22re:%22).
         """
 
         wget(f"""https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG""", "HAPROXY-CHANGELOG")
