@@ -202,8 +202,8 @@ class Dependency:
             Automatic bump from version {self.current_version} to version {self.latest_release.version}, downloaded from {self.latest_release.url}.
 
             After merge, consider releasing a new version of haproxy-boshrelease.
-        """ + self.get_release_notes()
-        )
+        """) + self.get_release_notes()
+
         if not DRY_RUN:
             self._create_branch(self.remote_repo, self.pr_branch)
 
@@ -360,24 +360,26 @@ class HaproxyDependency(Dependency):
         current_version = self.current_version
         latest_version = self.latest_release.version
 
-        if ( current_version == latest_version ):
+        if (current_version == latest_version):
             raise Exception(f"""Changelog requested but current and latest versions are the same: {current_version}""")
 
-        releaseNote = f"""
+        releaseNote = textwrap.dedent(f"""
             [Changelog for HAProxy {latest_version}](https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG).
 
             Please also check list of [known open bugs for HAProxy {latest_version}](https://www.haproxy.org/bugs/bugs-{latest_version}.html).
-        
-        The developer's summary for this release can be found in [the Announcement post for the HAProxy {latest_version} release](https://www.mail-archive.com/search?l=haproxy%40formilux.org&q=announce+subject%3A%22[ANNOUNCE]+haproxy-{latest_version}%22+-subject%3A%22re:%22).
-        """
+
+            The developer's summary for this release can be found in [the Announcement post for the HAProxy {latest_version} release](https://www.mail-archive.com/search?l=haproxy%40formilux.org&q=announce+subject%3A%22[ANNOUNCE]+haproxy-{latest_version}%22+-subject%3A%22re:%22).
+        """)
 
         wget(f"""https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG""", "HAPROXY-CHANGELOG")
         with open('HAPROXY-CHANGELOG', 'r') as file:
-            releaseNote += f"""
-            <details>
+            releaseNote += textwrap.dedent(f"""
+                <details>
 
-            <summary>HAPROXY CHANGELOG between {latest_version} and {current_version}</summary>
-            """
+                <summary>HAPROXY CHANGELOG between {latest_version} and {current_version}</summary>
+
+                ```
+            """)
 
             startCopy = False
             for line in file:
@@ -389,7 +391,10 @@ class HaproxyDependency(Dependency):
                     continue
                 releaseNote += line
 
-            releaseNote += f"""</details>"""
+            releaseNote += textwrap.dedent(f"""
+                ```
+
+                </details>""")
 
         return releaseNote
 
