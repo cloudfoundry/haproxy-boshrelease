@@ -8,6 +8,8 @@ CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock
 
+ENV_OVERRIDE=<$= p("ha_proxy.env_override", "") %>
+
 cleanup_daemon() {
   if [ -f ${PID_FILE} ]; then
     pkill -F ${PID_FILE} || true
@@ -105,7 +107,7 @@ trap reload_daemon USR2
 
 # Start up
 echo "$(date): Starting HAProxy"
-haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> <%= cat_pipe %>
+$ENV_OVERRIDE haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> <%= cat_pipe %>
 
 # wait for the HAProxy main process to terminate non-gracefully (drain)
 while [ -f ${DRAIN_LOCK} ] || kill -0 $(cat ${PID_FILE}) 2>/dev/null; do sleep 1; done;
