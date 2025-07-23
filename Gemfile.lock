@@ -92,7 +92,7 @@ GEM
     ruby-progressbar (1.13.0)
     semi_semantic (1.2.0)
     shellany (0.0.1)
-    thor (1.2.1)
+    thor (1.4.0)
     treetop (1.6.12)
       polyglot (~> 0.3)
     unicode-display_width (2.5.0)
