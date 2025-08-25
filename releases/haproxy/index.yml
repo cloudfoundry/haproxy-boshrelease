@@ -229,6 +229,8 @@ builds:
     version: 9.5.1
   f0c984e4-6fb9-4621-46af-e0188a8be714:
     version: 11.10.3
+  f10314ac-3b1c-4768-4f49-d2de235029fb:
+    version: 15.2.1+2.8.15
   f1e0e8dc-6744-415d-7767-ee37fa248c9d:
     version: 14.6.0+2.8.13
   fa4778ed-7e7a-4ea1-819c-94ca28a9b867:
