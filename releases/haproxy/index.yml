@@ -235,6 +235,8 @@ builds:
     version: 14.6.0+2.8.13
   fa4778ed-7e7a-4ea1-819c-94ca28a9b867:
     version: "2"
+  fa94f493-ef88-48a2-4cc7-0c5b6b6c65dc:
+    version: 15.2.2+2.8.15
   fe9502ef-471d-47d4-5384-8143fde631f3:
     version: 11.9.2
 format-version: "2"
