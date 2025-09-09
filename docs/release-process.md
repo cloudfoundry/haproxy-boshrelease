@@ -16,7 +16,7 @@ Here are the detailed steps:
    * `major`, which will update the version resource in concourse to the next major version (e.g. `v12.0.0`).
 
 2. After configuring the version by running one of the three jobs, run the `rc` job. 
-3. When all jobs have succeeded, trigger the `shipit` job to create a new draft release. 
+3. When the `rc` job has succeeded, trigger the `shipit` job to create a new draft release. 
 4. Using the GitHub UI, finalise the release note and release: 
    * Use the "Generate Release Note" button to get a list of all changes. Remove all CI and test related commits as those don't impact the resulting release bundle. Retain information that changes the release itself (e.g. HAProxy version bumps).
    * Add information about noteworthy fixes, changes and features. Look at the overall changes list to ensure you didn't miss important changes by other committers. 
