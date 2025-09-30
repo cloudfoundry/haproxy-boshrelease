@@ -100,6 +100,12 @@ properties:
       Example
         curl -H "Host: bob.com" https://alice.com    <-- This will result in a 421 Misdirected Request
     default: false
+  ha_proxy.env_override:
+    description: |
+      Environment variables to be set ad-hoc when the HAProxy process is started. This can be used to override various settings for HAProxy and Linux process level.
+    example:
+       env_override: "LD_PRELOAD=/var/vcap/packages/haproxy/lib/libjemalloc.so.2"
+    default: ~
   ha_proxy.ssl_pem:
     description: |
       Array of private keys and certificates used for TLS handshakes with downstream clients. Each element in the array is an object containing fields 'cert_chain' and 'private_key',
