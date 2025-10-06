@@ -29,6 +29,8 @@ builds:
     version: 14.3.0+2.8.10
   29634395-eb7a-4793-4897-32359a99f9fb:
     version: 11.8.1
+  2b4f2a35-f2a4-47d6-4e08-35c64b62c3ee:
+    version: 15.3.0+2.8.16
   2c765105-da0a-4e82-8db5-0e95805af095:
     version: 8.1.0
   337502a4-bb82-4bfa-76dc-2b8f79943d6e:
