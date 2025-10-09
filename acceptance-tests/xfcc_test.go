@@ -302,7 +302,7 @@ func checkXFCCHeadersMatchCert(expectedCert *x509.Certificate, headers http.Head
 
 	Expect(*actualCert).To(Equal(*expectedCert))
 
-	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-Dn"))).To(Equal("/C=Vatican City/O=Víkî's Vergnügungspark/CN=haproxy.client"))
+	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-Dn"))).To(Equal("/C=Vatican City/O=Víkî's Vergnü\\/gungspark/CN=haproxy.client"))
 	Expect(base64Decode(headers.Get("X-SSL-Client-Subject-CN"))).To(Equal("haproxy.client"))
 	Expect(base64Decode(headers.Get("X-SSL-Client-Issuer-Dn"))).To(Equal("/C=Palau/O=Pete's Café"))
 	Expect(base64Decode(headers.Get("X-SSL-Client-Root-CA-DN"))).To(Equal("/C=Palau/O=Pete's Café"))
@@ -350,7 +350,7 @@ func generateClientCerts() (*Certificate, *Certificate, error) {
 	certTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"Víkî's Vergnügungspark"},
+			Organization: []string{"Víkî's Vergnü/gungspark"},
 			Country:      []string{"Vatican City"},
 			CommonName:   "haproxy.client",
 		},

@@ -822,10 +822,10 @@ frontend wss-in
     http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn]            if { ssl_c_used }
     http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn]            if { ssl_c_used }
     <%- else %>
-    http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn,base64]     if { ssl_c_used }
-    http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn),base64] if { ssl_c_used }
-    http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn,base64]     if { ssl_c_used }
-    http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn,base64]     if { ssl_c_used }
+    http-request set-header X-SSL-Client-Subject-DN %{+Q}[ssl_c_s_dn(,0,rfc2253),base64]     if { ssl_c_used }
+    http-request set-header X-SSL-Client-Subject-CN %{+Q}[ssl_c_s_dn(cn,0,rfc2253),base64] if { ssl_c_used }
+    http-request set-header X-SSL-Client-Issuer-DN  %{+Q}[ssl_c_i_dn(,0,rfc2253),base64]     if { ssl_c_used }
+    http-request set-header X-SSL-Client-Root-CA-DN %{+Q}[ssl_c_r_dn(,0,rfc2253),base64]     if { ssl_c_used }
     <%- end %>
   <%- end -%>
 
