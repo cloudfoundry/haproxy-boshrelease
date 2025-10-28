@@ -21,7 +21,7 @@ from git import Repo
 # Pinned versions for the resolvers. See use at the bottom.
 KEEPALIVED_VERSION = "2.3"
 SOCAT_VERSION = "1"
-HAPROXY_VERSION = "2.8"
+HAPROXY_VERSION = "3.2"
 LUA_VERSION = "5.4"
 PCRE_VERSION = "10"
 HATOP_VERSION = "0"
