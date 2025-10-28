@@ -356,12 +356,26 @@ class HaproxyDependency(Dependency):
             version.parse(latest_version),
         )
 
-    def get_release_notes(self) -> str:
+    def _get_comparison_versions(self):
+        """ HAProxy tracks each minor version in a dedicated repository and the changelog in each repository only ever
+        observes the .0 of previous minor versions as they are split off into a dedicated repository at that point.
+        To make a comparison across major and minor versions we need to compare against the .0 of the previous minor
+        version, this helper converts the comparison base accordingly.
+        """
         current_version = self.current_version
         latest_version = self.latest_release.version
+        if latest_version.major > current_version.major or latest_version.minor > current_version.minor:
+            current_version = version.Version(f"{current_version.major}.{current_version.minor}.0")
 
-        if (current_version == latest_version):
-            raise Exception(f"""Changelog requested but current and latest versions are the same: {current_version}""")
+        return str(current_version), str(latest_version)
+
+    def get_release_notes(self) -> str:
+
+        if self.current_version == self.latest_release.version:
+            raise Exception(f"""Changelog requested for identical current and latest versions: {self.current_version}""")
+
+        # Set patch part of the current version to 0 for minor and major version bumps
+        current_version, latest_version = self._get_comparison_versions()
 
         releaseNote = textwrap.dedent(f"""
             [Changelog for HAProxy {latest_version}](https://www.haproxy.org/download/{HAPROXY_VERSION}/src/CHANGELOG).
@@ -383,13 +397,20 @@ class HaproxyDependency(Dependency):
 
             startCopy = False
             for line in file:
-                if (line.endswith(str(latest_version)+"\n")):          # Start copying from latest version head
+                if (line.endswith(latest_version+"\n")):          # Start copying from latest version head
                     startCopy = True
-                if (line.endswith(str(current_version)+"\n")):         # Stop when reaching current version
+                if (line.endswith(current_version+"\n")):         # Stop when reaching current version
                     break
                 if not startCopy:
                     continue
                 releaseNote += line
+            # PR body length is limited by 65536 characters, truncating the change log to 60000 to avoid a validation error
+            releaseNoteLimit = 60000
+            if len(releaseNote) > releaseNoteLimit:
+                releaseNote = releaseNote[:releaseNoteLimit] + textwrap.dedent(f"""
+                
+                    Change log was trimmed to {releaseNoteLimit} characters. Please see the changelog file for the full change log.
+                """)
 
             releaseNote += textwrap.dedent(f"""
                 ```
