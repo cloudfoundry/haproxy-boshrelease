@@ -356,6 +356,27 @@ class HaproxyDependency(Dependency):
             version.parse(latest_version),
         )
 
+    # Parse, validate and split version into parts
+    def _parse_and_split_version(self, version):
+        version_parts = version.split('.')
+        if len(version_parts) < 3:
+            raise Exception(f"Expected version with 3 semver segments (major.minor.patch), got less: {version}.")
+        return version_parts[0], version_parts[1], version_parts[2]
+
+    # Returns normalized versions for changelog comparison
+    def _get_comparison_versions(self, current_version, latest_version):
+        comparison_current = str(current_version)
+        comparison_latest = str(latest_version)
+
+        current_major, current_minor, current_patch = self._parse_and_split_version(comparison_current)
+        latest_major, latest_minor, latest_patch = self._parse_and_split_version(comparison_latest)
+
+        # Major and minor version jump adjustment to the zero version
+        if int(latest_major) > int(current_major) or int(latest_minor) > int(current_minor):
+            comparison_current = f"{current_major}.{current_minor}.0"
+
+        return comparison_current, comparison_latest
+
     def get_release_notes(self) -> str:
         current_version = self.current_version
         latest_version = self.latest_release.version
@@ -381,15 +402,25 @@ class HaproxyDependency(Dependency):
                 ```
             """)
 
+            # Get normalized versions for comparison
+            comparison_current, comparison_latest = self._get_comparison_versions(current_version, latest_version)
+
             startCopy = False
             for line in file:
-                if (line.endswith(str(latest_version)+"\n")):          # Start copying from latest version head
+                if (line.endswith(comparison_latest+"\n")):          # Start copying from latest version head
                     startCopy = True
-                if (line.endswith(str(current_version)+"\n")):         # Stop when reaching current version
+                if (line.endswith(comparison_current+"\n")):         # Stop when reaching current version
                     break
                 if not startCopy:
                     continue
                 releaseNote += line
+            # PR body length is limited by 65536 characters, truncating the change log to 60000 to avoid a validation error
+            releaseNoteLimit = 60000
+            if len(releaseNote) > releaseNoteLimit:
+                releaseNote = releaseNote[:releaseNoteLimit] + textwrap.dedent(f"""
+                
+                    Change log was trimmed to {releaseNoteLimit} characters. Please see the changelog file for the full change log.
+                """)
 
             releaseNote += textwrap.dedent(f"""
                 ```
