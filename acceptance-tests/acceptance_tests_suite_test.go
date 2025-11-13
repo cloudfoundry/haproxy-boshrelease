@@ -200,6 +200,11 @@ func expect400(resp *http.Response, err error) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 }
 
+func expect431(resp *http.Response, err error) {
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusRequestHeaderFieldsTooLarge))
+}
+
 func expect421(resp *http.Response, err error) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusMisdirectedRequest))

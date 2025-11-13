@@ -53,7 +53,7 @@ var _ = Describe("max_rewrite and buffer_size_bytes", func() {
 		// ensure total header size (key+value) is 72k
 		req.Header.Set("X-Custom", string(randBytes(72*1024-len("X-Custom: "))))
 
-		expect400(http.DefaultClient.Do(req))
+		expect431(http.DefaultClient.Do(req))
 	})
 })
 
