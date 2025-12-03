@@ -9,6 +9,7 @@ describe 'config/haproxy.config healthcheck listeners' do
 
   context 'when ha_proxy.enable_health_check_http is true' do
     let(:healthcheck_listener) { haproxy_conf['listen health_check_http_url'] }
+    let(:healthcheck_listener_proxy_protocol) { haproxy_conf['listen health_check_http_url_proxy_protocol'] }
 
     let(:properties) do
       {
@@ -82,6 +83,35 @@ describe 'config/haproxy.config healthcheck listeners' do
 
         it 'does not set expect-proxy for the healthcheck' do
           expect(healthcheck_listener).not_to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
+        end
+      end
+
+      context 'when ha_proxy.enable_additional_health_check_proxy is also true' do
+        let(:properties) do
+          {
+            'enable_health_check_http' => true,
+            'accept_proxy' => true,
+            'enable_additional_health_check_proxy' => true
+          }
+        end
+
+        it 'sets expect-proxy for the healthcheck' do
+          expect(healthcheck_listener).to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
+          expect(healthcheck_listener_proxy_protocol).to include('bind :8081 accept-proxy')
+        end
+      end
+
+      context 'when ha_proxy.enable_additional_health_check_proxy is false but accept_proxy true' do
+        let(:properties) do
+          {
+            'enable_health_check_http' => true,
+            'accept_proxy' => true
+          }
+        end
+
+        it 'does not contain healthcheck_listener_proxy_protocol' do
+          expect(healthcheck_listener).to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
+          expect(haproxy_conf).not_to have_key('listen health_check_http_url_proxy_protocol')
         end
       end
     end
