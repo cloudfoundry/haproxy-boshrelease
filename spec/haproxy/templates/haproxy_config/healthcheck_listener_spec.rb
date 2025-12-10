@@ -95,8 +95,23 @@ describe 'config/haproxy.config healthcheck listeners' do
           }
         end
 
-        it 'sets expect-proxy for the healthcheck' do
+        it 'sets expect-proxy for the healthchecks on ports 8080 and 8081' do
+          expect(healthcheck_listener).to include('bind :8080')
           expect(healthcheck_listener).to include('tcp-request connection expect-proxy layer4 unless LOCALHOST')
+          expect(healthcheck_listener_proxy_protocol).to include('bind :8081 accept-proxy')
+        end
+      end
+
+      context 'when expect_proxy_cidrs is not empty due to backward compatibility' do
+        let(:properties) do
+          {
+            'enable_health_check_http' => true,
+            'expect_proxy_cidrs' => ['10.5.6.7/27']
+          }
+        end
+
+        it 'sets expect-proxy for the healthcheck on port 8081' do
+          expect(healthcheck_listener).to include('bind :8080')
           expect(healthcheck_listener_proxy_protocol).to include('bind :8081 accept-proxy')
         end
       end
