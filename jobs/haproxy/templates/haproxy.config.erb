@@ -271,6 +271,10 @@ end
   if backend_ssl != "" && (enable_http2 || backend_match_http_protocol)
     backends += [{ name: "http-routers-http2", backend_ssl: backend_ssl, alpn: "alpn h2,http/1.1 " }]
   end
+
+  # to keep backward compatibility enable_additional_health_check_proxy if expect_proxy_cidrs is not empty.
+  enable_additional_health_check_proxy = p("ha_proxy.enable_additional_health_check_proxy", p("ha_proxy.expect_proxy_cidrs", []).size > 0)
+
 -%>
 
 global
@@ -385,7 +389,7 @@ listen health_check_http_url
     acl http-routers_down nbsrv(<%= backends.first[:name] %>) eq 0
     monitor fail if http-routers_down
 
-<%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+<%- if enable_additional_health_check_proxy -%>
 listen health_check_http_url_proxy_protocol
     bind :<%= p("ha_proxy.health_check_port") + 1 %> accept-proxy
     mode http
@@ -1101,7 +1105,7 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
     acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0
     monitor fail if tcp-<%= tcp_proxy["name"] %>-routers_down
 
-    <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
+    <%- if enable_additional_health_check_proxy -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>_proxy_protocol
     bind :<%= tcp_proxy["health_check_http"] + 1 %> accept-proxy
     mode http

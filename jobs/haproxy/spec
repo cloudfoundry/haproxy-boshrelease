@@ -577,6 +577,8 @@ properties:
   ha_proxy.disable_health_check_proxy:
     description: "Disables the use of the PROXY protocol for health checks. Only applies if `ha_proxy.accept_proxy` is enabled."
     default: false
+  ha_proxy.enable_additional_health_check_proxy:
+      description: "Enable the additional health check listener with use of the PROXY protocol"
   ha_proxy.binding_ip:
     description: "If there are multiple ethernet interfaces, specify which one to bind. Set to `::` to bind to all IPv6 interfaces (no IPv4). IPv6 must be enabled on the HAProxy VM in the deployment manifest."
     default: ""
@@ -599,7 +601,7 @@ properties:
       - 172.168.4.1/32
       - 10.2.0.0/16
   ha_proxy.expect_proxy_cidrs:
-    description: "List of CIDRs to enable proxy protocol for. This enables forwarding of the client source IP for hyperscalers not supporting IP dual stack (v4 & v6). This property is mutually exclusive with the accept_proxy."
+    description: "List of CIDRs to enable proxy protocol for. This enables the forwarding of the client source IP for hyperscalers that do not support IP dual stack (v4 & v6). This property is mutually exclusive with the accept_proxy. For backward compatibility, if the list is not empty, HAProxy will listen on an additional health check port (health_check_port + 1) with proxy protocol enabled, by implicitly setting enable_additional_health_check_proxy to true if not set explicitly."
     default: ~
     example:
       expect_proxy_cidrs:
