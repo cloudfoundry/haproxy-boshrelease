@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.38.3
 	github.com/pires/go-proxyproto v0.8.1
 	golang.org/x/crypto v0.46.0
-	golang.org/x/net v0.47.0
+	golang.org/x/net v0.48.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
