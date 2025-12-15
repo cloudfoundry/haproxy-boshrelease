@@ -291,7 +291,7 @@ class GithubDependency(Dependency):
         return latest_release
 
     def get_release_notes(self) -> str:
-        return ""
+        return f"Make sure to check the [CHANGELOG]({self.root_url}/releases) for any breaking changes."
 
 
 @dataclass
@@ -299,6 +299,7 @@ class WebLinkDependency(Dependency):
 
     selector: str = "a"
     pattern: str = "({name}-({pinned_version}" + r"(?:\.[0-9])+))\.tar\.gz"
+    changelog_url: str = ""
 
     def fetch_latest_release(self) -> Release:
         data = requests.get(self.root_url)
@@ -329,7 +330,7 @@ class WebLinkDependency(Dependency):
         raise Exception(f"Failed to get latest {self.name} version from {self.root_url}")
 
     def get_release_notes(self) -> str:
-        return ""
+        return f"Make sure to check the [CHANGELOG]({self.changelog_url}) for any breaking changes."
 
 
 @dataclass
@@ -464,12 +465,14 @@ def main() -> None:
             "https://keepalived.org/download.html",
             package="keepalived",
             selector="div.content a",
+            changelog_url="https://keepalived.org/release-notes/"
         ),
         WebLinkDependency(
             "socat",
             "SOCAT_VERSION",
             SOCAT_VERSION,
             "http://www.dest-unreach.org/socat/download/",
+            changelog_url="http://www.dest-unreach.org/socat/CHANGES"
         ),
         HaproxyDependency(
             "haproxy",
