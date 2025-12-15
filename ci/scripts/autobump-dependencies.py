@@ -501,7 +501,6 @@ def main() -> None:
             tagname_prefix="v",
             filename_suffix="",
         ),
-        # ttar (currently a submodule to https://github.com/jhunt/ttar, no new releases. Manual bump only.)
     ]
 
     write_private_yaml()
