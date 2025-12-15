@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import functools
-from hashlib import sha1
 import json
 import os
 import re
@@ -286,7 +285,7 @@ class GithubDependency(Dependency):
                     current_version,
                 )
 
-        if latest_version == version.parse("0.0.0"):
+        if latest_version == version.parse("0.0.0") or latest_release is None:
             raise Exception(f"No release found for '{repo}'")
 
         return latest_release
@@ -412,7 +411,7 @@ class HaproxyDependency(Dependency):
                     Change log was trimmed to {releaseNoteLimit} characters. Please see the changelog file for the full change log.
                 """)
 
-            releaseNote += textwrap.dedent(f"""
+            releaseNote += textwrap.dedent("""
                 ```
 
                 </details>""")
