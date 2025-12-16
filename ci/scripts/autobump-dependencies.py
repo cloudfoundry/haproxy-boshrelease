@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import functools
-from hashlib import sha1
 import json
 import os
 import re
@@ -286,13 +285,13 @@ class GithubDependency(Dependency):
                     current_version,
                 )
 
-        if latest_version == version.parse("0.0.0"):
+        if latest_version == version.parse("0.0.0") or latest_release is None:
             raise Exception(f"No release found for '{repo}'")
 
         return latest_release
 
     def get_release_notes(self) -> str:
-        return ""
+        return f"Make sure to check the [CHANGELOG]({self.root_url}/releases) for any breaking changes."
 
 
 @dataclass
@@ -300,6 +299,7 @@ class WebLinkDependency(Dependency):
 
     selector: str = "a"
     pattern: str = "({name}-({pinned_version}" + r"(?:\.[0-9])+))\.tar\.gz"
+    changelog_url: str = ""
 
     def fetch_latest_release(self) -> Release:
         data = requests.get(self.root_url)
@@ -330,7 +330,7 @@ class WebLinkDependency(Dependency):
         raise Exception(f"Failed to get latest {self.name} version from {self.root_url}")
 
     def get_release_notes(self) -> str:
-        return ""
+        return f"Make sure to check the [CHANGELOG]({self.changelog_url}) for any breaking changes."
 
 
 @dataclass
@@ -412,7 +412,7 @@ class HaproxyDependency(Dependency):
                     Change log was trimmed to {releaseNoteLimit} characters. Please see the changelog file for the full change log.
                 """)
 
-            releaseNote += textwrap.dedent(f"""
+            releaseNote += textwrap.dedent("""
                 ```
 
                 </details>""")
@@ -465,12 +465,14 @@ def main() -> None:
             "https://keepalived.org/download.html",
             package="keepalived",
             selector="div.content a",
+            changelog_url="https://keepalived.org/release-notes/"
         ),
         WebLinkDependency(
             "socat",
             "SOCAT_VERSION",
             SOCAT_VERSION,
             "http://www.dest-unreach.org/socat/download/",
+            changelog_url="http://www.dest-unreach.org/socat/CHANGES"
         ),
         HaproxyDependency(
             "haproxy",
@@ -499,7 +501,6 @@ def main() -> None:
             tagname_prefix="v",
             filename_suffix="",
         ),
-        # ttar (currently a submodule to https://github.com/jhunt/ttar, no new releases. Manual bump only.)
     ]
 
     write_private_yaml()
