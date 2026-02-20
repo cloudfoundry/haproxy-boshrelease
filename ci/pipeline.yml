@@ -418,9 +418,9 @@ resources:
     source :
       driver:          gcs
       bucket:          haproxy-boshrelease
-      key:             version-13
+      key:             version-14
       json_key:        ((gcp.service_key))
-      initial_version: "12.2.1"
+      initial_version: "16.4.0"
 
   - name: notify
     type: slack-notification
