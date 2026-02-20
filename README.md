@@ -35,7 +35,7 @@ cut a new final release for you.
 ### Unit Tests and Linting
 
 #### PR Validation
-PRs will be automatically tested by https://concourse.cfi.sapcloud.io/teams/main/pipelines/haproxy-boshrelease once a maintainer has labelled the PR with the `run-ci` label
+PRs will be automatically tested by https://concourse.arp.cloudfoundry.org/teams/main/pipelines/haproxy-boshrelease once a maintainer has labelled the PR with the `run-ci` label
 
 #### Local Test Execution
 Unit/rspec Tests and linters can be run locally to verify correct functionality before pushing to the CI system.
