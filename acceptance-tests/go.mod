@@ -1,6 +1,6 @@
 module github.com/cloudfoundry/haproxy-boshrelease/acceptance-tests
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/bramvdbogaerde/go-scp v1.6.0
@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.39.1
 	github.com/pires/go-proxyproto v0.11.0
 	golang.org/x/crypto v0.48.0
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
