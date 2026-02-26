@@ -554,6 +554,39 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
   end
 
+  context 'TCP level blocklist (layer4_block)' do
+    context 'when ha_proxy.cidr_blocklist_tcp is provided' do
+      let(:properties) do
+        default_properties.merge({ 'cidr_blocklist_tcp' => ['172.168.4.1/32', '10.2.0.0/16'] })
+      end
+
+      it 'sets the correct acl and connection reject rules' do
+        expect(frontend_https).to include('acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt')
+        expect(frontend_https).to include('tcp-request connection reject if layer4_block')
+      end
+    end
+
+    context 'when ha_proxy.cidr_blocklist_tcp is not provided' do
+      let(:properties) { default_properties }
+
+      it 'still includes the layer4_block acl and reject rule (always present)' do
+        expect(frontend_https).to include('acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt')
+        expect(frontend_https).to include('tcp-request connection reject if layer4_block')
+      end
+    end
+
+    context 'when ha_proxy.cidr_blocklist_tcp is an empty array' do
+      let(:properties) do
+        default_properties.merge({ 'cidr_blocklist_tcp' => [] })
+      end
+
+      it 'still includes the layer4_block acl and reject rule (always present)' do
+        expect(frontend_https).to include('acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt')
+        expect(frontend_https).to include('tcp-request connection reject if layer4_block')
+      end
+    end
+  end
+
   context 'when ha_proxy.block_all is provided' do
     let(:properties) do
       default_properties.merge({ 'block_all' => true })

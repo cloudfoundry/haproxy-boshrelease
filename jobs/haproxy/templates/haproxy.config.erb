@@ -428,6 +428,8 @@ frontend http-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
+    acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
+    tcp-request connection reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
@@ -560,6 +562,8 @@ frontend https-in
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
+    acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
+    tcp-request connection reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
