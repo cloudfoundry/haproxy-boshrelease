@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -138,7 +139,7 @@ var _ = Describe("Proxy Protocol", func() {
 
 func performProxyProtocolRequest(ip string, port int, endpoint string) error {
 	// Create a connection to the HAProxy instance
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
+	conn, err := net.Dial("tcp", net.JoinHostPort(ip, strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}
