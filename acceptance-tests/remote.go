@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"time"
 
 	scp "github.com/bramvdbogaerde/go-scp"
@@ -128,7 +129,7 @@ func startReverseSSHPortAndIPForwarder(user string, addr string, privateKey stri
 				return
 			}
 
-			localConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", localIP, localPort))
+			localConn, err := net.Dial("tcp", net.JoinHostPort(localIP, strconv.Itoa(localPort)))
 			if err != nil {
 				writeLog(fmt.Sprintf("Error dialing local ip %s port %d: %s\n", localIP, localPort, err.Error()))
 				return
