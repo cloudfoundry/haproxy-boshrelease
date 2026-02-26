@@ -121,7 +121,7 @@ jobs:
       - in_parallel:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
-        - { get: stemcell-bionic }
+        - { get: stemcell-jammy }
         - get: haproxy-boshrelease-testflight
       - task: acceptance-tests
         privileged: true
@@ -131,7 +131,7 @@ jobs:
           inputs:
             - { name: git }
             - { name: stemcell }
-            - { name: stemcell-bionic }
+            - { name: stemcell-jammy }
           run:
             path: ./git/ci/scripts/acceptance-tests
             args: []
@@ -152,7 +152,7 @@ jobs:
     - do:
       - { get: git-pull-requests, trigger: true, version: every }
       - { get: stemcell }
-      - { get: stemcell-bionic }
+      - { get: stemcell-jammy }
       - get: haproxy-boshrelease-testflight
       - put: git-pull-requests
         params:
@@ -169,7 +169,7 @@ jobs:
           inputs:
             - { name: git-pull-requests }
             - { name: stemcell }
-            - { name: stemcell-bionic }
+            - { name: stemcell-jammy }
           run:
             path: ./git-pull-requests/ci/scripts/acceptance-tests
             args: []
@@ -403,15 +403,15 @@ resources:
         - "dependabot"
         - "CFN-CI"
 
-  - name: stemcell-bionic
+  - name: stemcell-jammy
     type: bosh-io-stemcell
     source:
-      name: bosh-warden-boshlite-ubuntu-bionic-go_agent
+      name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
   - name: stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+      name: bosh-warden-boshlite-ubuntu-noble-go_agent
 
   - name: version
     type: semver

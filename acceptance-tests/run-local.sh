@@ -43,15 +43,16 @@ docker_mac_check_cgroupsv1() {
 }
 
 check_required_files() {
-  PIDS=""
+#  PIDS=""
   REQUIRED_FILE_PATTERNS=(
-    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
-    ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
+    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://storage.googleapis.com/bosh-core-stemcells/1.238/bosh-stemcell-1.238-warden-boshlite-ubuntu-noble.tgz!no
+    ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent!yes
   )
 
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
     pattern=$(cut -f1 -d! <<<"$entry")
     url=$(cut -f2 -d! <<<"$entry")
+    resolve=$(cut -f2 -d! <<<"$entry")
     folder=$(realpath "$(dirname "$REPO_DIR/$pattern")")
     filepattern=$(basename "$pattern")
     pattern=$folder/$filepattern
@@ -62,28 +63,32 @@ check_required_files() {
       continue
     fi
 
-    (
-      echo "$filepattern not found, downloading latest."
-      cd "$folder" && \
-      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1) && \
-      curl -s --remote-name --remote-header-name --location "$resolved" && \
-      echo "Downloaded '$url' successfully." && \
+    #(
+      echo "$filepattern not found, downloading."
+      cd "$folder"
+      resolved="$url"
+      if [ "$resolve" == "yes" ]; then
+        resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n')
+      fi
+      echo "Resolved URL: $resolved"
+      curl -s --remote-name --remote-header-name --location "$resolved"
+      echo "Downloaded '$url' successfully."
       ls -1lh "$folder/"$filepattern
-    )&
+    #)&
 
-    PIDS="$PIDS $!"
+#    PIDS="$PIDS $!"
 
   done
   # shellcheck disable=SC2086
   # expansion is desired, as $PIDS is a list of PIDs. Wait on all of those PIDs.
-  wait $PIDS
+#  wait $PIDS
 }
 
 check_required_files
 
-if [ "$(uname)" == "Darwin" ]; then
-    docker_mac_check_cgroupsv1
-fi
+#if [ "$(uname)" == "Darwin" ]; then
+#    docker_mac_check_cgroupsv1
+#fi
 
 build_image "${REPO_DIR}/ci"
 prepare_docker_scratch
