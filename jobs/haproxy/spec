@@ -22,6 +22,7 @@ templates:
   backend-crt.erb:              config/backend-crt.pem
   client-revocation-list.erb:   config/client-revocation-list.pem
   blacklist_cidrs.txt.erb:      config/blacklist_cidrs.txt
+  blocklist_cidrs_tcp.txt.erb:  config/blocklist_cidrs_tcp.txt
   whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
   expect_proxy_cidrs.txt.erb:   config/expect_proxy_cidrs.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
@@ -593,6 +594,13 @@ properties:
       cidr_blacklist:
       - 10.0.0.0/8
       - 192.168.2.0/24
+  ha_proxy.cidr_blocklist_tcp:
+    description: List of CIDRs to block on TCP level. If empty, only a comment is rendered. Format is string array of CIDRs or single string of base64 encoded gzip.
+    default: ~
+    example:
+      cidr_blocklist_tcp:
+        - 10.0.0.0/8
+        - 192.168.2.0/24
   ha_proxy.cidr_whitelist:
     description: "List of CIDRs to allow for http(s). Format is string array of CIDRs or single string of base64 encoded gzip. Note that unless ha_proxy.block_all is true, non-whitelisted traffic will still be allowed, provided that traffic is not also blacklisted"
     default: ~

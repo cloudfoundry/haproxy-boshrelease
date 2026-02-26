@@ -1,0 +1,20 @@
+# generated from blocklist_cidrs_tcp.txt.erb
+<%
+require "base64"
+require 'zlib'
+require 'stringio'
+
+cidrs = p("ha_proxy.cidr_blocklist_tcp", [])
+uncompressed = ''
+if cidrs.is_a?(Array) && cidrs.any?
+  cidrs.each do |cidr|
+    uncompressed << cidr << "\n"
+  end
+elsif cidrs.is_a?(String)
+  gzplain = Base64.decode64(cidrs)
+  gz = Zlib::GzipReader.new(StringIO.new(gzplain))
+  uncompressed = gz.read
+end
+%>
+# This list contains CIDRs that are blocked immediately after TCP connection setup.
+<%= uncompressed %>
