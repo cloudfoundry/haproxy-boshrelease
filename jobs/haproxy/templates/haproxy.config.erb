@@ -432,7 +432,8 @@ frontend http-in
     tcp-request connection track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
       <%-if block -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
+    acl cidr_list_to_exclude src -f /var/vcap/jobs/haproxy/config/cidrs_to_exclude_from_blocking.txt
+    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> } !cidr_list_to_exclude
       <%- end -%>
     <%- end -%>
   <%- end -%>
@@ -564,7 +565,8 @@ frontend https-in
     tcp-request connection track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
       <%-if block -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
+    acl cidr_list_to_exclude src -f /var/vcap/jobs/haproxy/config/cidrs_to_exclude_from_blocking.txt
+    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> } !cidr_list_to_exclude
       <%- end -%>
     <%- end -%>
   <%- end -%>
