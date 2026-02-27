@@ -24,6 +24,7 @@ templates:
   blacklist_cidrs.txt.erb:      config/blacklist_cidrs.txt
   whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
   expect_proxy_cidrs.txt.erb:   config/expect_proxy_cidrs.txt
+  cidrs_to_exclude_from_blocking.txt.erb:   config/cidrs_to_exclude_from_blocking.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
 
 consumes:
@@ -816,6 +817,13 @@ properties:
     description: Window size for counting connections. See docs/rate_limiting.md
   ha_proxy.connections_rate_limit.table_size:
     description: Size of the stick table in which the IPs and counters are stored. See docs/rate_limiting.md
+  ha_proxy.connections_rate_limit.cidrs_to_exclude:
+    description: List of CIDRs to exclude during connection rate limiting. Format is a string array of CIDRs or a single string of base64 encoded gzip.
+    default: ~
+    example:
+      cidrs_to_exclude:
+      - 10.0.0.0/8
+      - 192.168.2.0/32
   ha_proxy.connections_rate_limit.block:
     description: Whether or not to block connections. See docs/rate_limiting.md
     default: false
