@@ -3,6 +3,7 @@
 set -eu
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "${REPO_DIR}/ci/scripts/functions-ci.sh"
+FOCUS=""
 KEEP_RUNNING=""
 
 usage() {
@@ -52,7 +53,7 @@ check_required_files() {
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
     pattern=$(cut -f1 -d! <<<"$entry")
     url=$(cut -f2 -d! <<<"$entry")
-    resolve=$(cut -f2 -d! <<<"$entry")
+    to_resolve=$(cut -f3 -d! <<<"$entry")
     folder=$(realpath "$(dirname "$REPO_DIR/$pattern")")
     filepattern=$(basename "$pattern")
     pattern=$folder/$filepattern
@@ -67,7 +68,7 @@ check_required_files() {
       echo "$filepattern not found, downloading."
       cd "$folder"
       resolved="$url"
-      if [ "$resolve" == "yes" ]; then
+      if [ "$to_resolve" == "yes" ]; then
         resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n')
       fi
       echo "Resolved URL: $resolved"
@@ -98,7 +99,7 @@ if [ -n "$KEEP_RUNNING" ] ; then
   echo
   echo "*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: ${DOCKER_SCRATCH}"
   echo
-  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="$FOCUS" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
+  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="${FOCUS}" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
 else
   docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
   echo "Cleaning up docker scratch: ${DOCKER_SCRATCH}"

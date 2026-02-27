@@ -9,6 +9,8 @@ RUN apt-get update && \
 # Set bosh env at login
 RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
+COPY noble-updates.yml /usr/local/bosh-deployment/ci/noble-updates.yml
+
 # Install Python libraries needed for scripts
 COPY scripts/requirements.txt /requirements.txt
 RUN /usr/bin/python3 -m pip install -r /requirements.txt

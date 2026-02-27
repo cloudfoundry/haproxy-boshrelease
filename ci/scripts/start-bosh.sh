@@ -7,7 +7,7 @@ if [[ -n "${DEBUG:-}" ]]; then
   export BOSH_LOG_LEVEL=debug
 fi
 
-export BOSH_DIRECTOR_IP="10.245.0.11"
+export BOSH_DIRECTOR_IP="10.245.0.3"
 export BOSH_ENVIRONMENT="docker-director"
 
 export DNS_IP="8.8.8.8"
@@ -156,6 +156,7 @@ function start_docker() {
   "tlskey": "${certs_dir}/server-key.pem",
   "tlscacert": "${certs_dir}/ca.pem",
   "mtu": ${mtu},
+  "dns": ["8.8.8.8", "8.8.4.4"],
   "data-root": "/scratch/docker",
   "tlsverify": true
 }
@@ -168,6 +169,7 @@ EOF
     echo "waiting for docker to come up... (${i})"
     sleep 1
     set +e
+    echo "Docker started, checking if it's responsive..."
     docker info
     rc=$?
     set -e
@@ -222,9 +224,12 @@ EOF
     echo "A docker network named '${docker_network_name}' already exists, skipping creation" >&2
   else
     docker network create -d bridge --subnet=${docker_network_cidr} "${docker_network_name}"
+    echo "Created docker network '${docker_network_name}' with subnet '${docker_network_cidr}'" >&2
   fi
 
   pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
+      echo "Current directory: $(pwd)" >&2
+
       cat <<EOF > "${local_bosh_dir}/docker_tls.json"
 {
   "ca": "$(cat "${certs_dir}/ca_json_safe.pem")",
@@ -233,11 +238,12 @@ EOF
 }
 EOF
 
+      echo "Interpolating BOSH deployment manifest with Docker CPI and TLS configuration..." >&2
       bosh int bosh.yml \
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
-        -o "$PWD/ci/noble-updates.yml"
+        -o "$PWD/ci/noble-updates.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \
@@ -247,13 +253,16 @@ EOF
         -v docker_tls="$(cat "${local_bosh_dir}/docker_tls.json")" \
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
+      echo "Creating BOSH director environment..." >&2
       bosh create-env "${local_bosh_dir}/bosh-director.yml" \
         --vars-store="${local_bosh_dir}/creds.yml" \
         --state="${local_bosh_dir}/state.json"
 
+      echo "Extracting BOSH director credentials and CA certificate..." >&2
       bosh int "${local_bosh_dir}/creds.yml" --path /director_ssl/ca > "${local_bosh_dir}/ca.crt"
       bosh_client_secret="$(bosh int "${local_bosh_dir}/creds.yml" --path /admin_password)"
 
+      echo "Setting up BOSH CLI environment..." >&2
       bosh -e "${BOSH_DIRECTOR_IP}" --ca-cert "${local_bosh_dir}/ca.crt" alias-env "${BOSH_ENVIRONMENT}"
 
       cat <<EOF > "${local_bosh_dir}/env"
@@ -266,6 +275,7 @@ EOF
       echo "Source '${local_bosh_dir}/env' to run bosh" >&2
       source "${local_bosh_dir}/env"
 
+      echo "Updating BOSH cloud config with Docker network..." >&2
       bosh -n update-cloud-config docker/cloud-config.yml -v network="${docker_network_name}"
 
   popd > /dev/null

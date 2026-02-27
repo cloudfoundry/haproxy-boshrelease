@@ -1,3 +1,31 @@
-- path: /cloud_provider/properties/docker_cpi/start_containers_with_systemd?
-  type: replace
+- type: replace
+  path: /cloud_provider/properties/docker_cpi/start_containers_with_systemd?
   value: true
+- type: replace
+  path: /releases/name=bosh
+  value:
+    name: bosh
+    version: 282.1.2
+    url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=282.1.2
+    sha1: sha256:e9c95823932c81b4ce4442b3fae67223c04492a8dfe54489d6b5ec7d4fac2183
+- type: replace
+  path: /releases/name=bpm
+  value:
+    name: bpm
+    version: 1.4.26
+    url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.4.26
+    sha1: sha256:40af85114d2a8a67812bf65212076581ea42cefcf67ee6b8d78d778ed1ca2b85
+- type: replace
+  path: /releases/name=bosh-docker-cpi
+  value:
+    name: bosh-docker-cpi
+    version: 0.2.4
+    url: https://bosh.io/d/github.com/cloudfoundry/bosh-docker-cpi-release?v=0.2.4
+    sha1: sha256:a485beee8d3f1d6a434800a4ac2dea5644c826b143988f04102cad894e81565d
+- type: replace
+  path: /releases/name=os-conf
+  value:
+    name: os-conf
+    version: 23.0.0
+    url: https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=23.0.0
+    sha1: sha256:efcf30754ce4c5f308aedab3329d8d679f5967b2a4c3c453204c7cb10c7c5ed9
