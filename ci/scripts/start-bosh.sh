@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu -o pipefail
+set -e
 
 if [[ -n "${DEBUG:-}" ]]; then
   set -x
@@ -120,6 +120,7 @@ function start_docker() {
   mkdir -p /var/run
 
   sanitize_cgroups
+  echo "Sanitized cgroups for docker" >&2
 
   # systemd inside nested Docker containers requires shared mount propagation
   mount --make-rshared /
@@ -156,6 +157,7 @@ function start_docker() {
 EOF
 
   service docker start
+  echo "Started docker service" >&2
 
   rc=1
   for i in $(seq 1 100); do
@@ -201,6 +203,8 @@ function main() {
     exit 1
   fi
 
+  echo "Determined OUTER_CONTAINER_IP: ${OUTER_CONTAINER_IP}" >&2
+
   local certs_dir
   certs_dir=$(mktemp -d)
 
@@ -217,6 +221,7 @@ EOF
   source "${local_bosh_dir}/docker-env"
 
   start_docker "${certs_dir}"
+  echo "Docker is up and running with TLS configured" >&2
 
   local docker_network_name="director_network"
   local docker_network_cidr="10.245.0.0/16"
@@ -246,7 +251,6 @@ EOF
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
-        -o "$PWD/ci/noble-updates.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \
