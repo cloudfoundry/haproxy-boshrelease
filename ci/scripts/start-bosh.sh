@@ -189,13 +189,11 @@ EOF
 }
 
 function main() {
-  OUTER_CONTAINER_IP=$(
-    ip addr \
-    | grep 'inet ' \
-    | grep -v -E ' (127\.|172\.|10\.245)' \
-    | cut -d/ -f 1 \
-    | cut -d' ' -f6
-  )
+  # ".first" - original code could return multiple IPs (e.g., container IP + docker0 bridge IP)
+  # which breaks the docker_tls JSON variable formatting
+  OUTER_CONTAINER_IP=$(ruby -rsocket -e 'puts Socket.ip_address_list
+                         .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
+                         .map { |addr| addr.ip_address }.first')
   export OUTER_CONTAINER_IP
 
   if [[ "${OUTER_CONTAINER_IP}" == *$'\n'* ]] ; then
