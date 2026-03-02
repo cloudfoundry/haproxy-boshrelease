@@ -1,4 +1,4 @@
-FROM bosh/docker-cpi:main
+FROM ghcr.io/cloudfoundry/bosh/docker-cpi:latest
 
 # Install all necessary tools for haproxy testflight and dependency autobump
 ENV DEBIAN_FRONTEND=noninteractive
