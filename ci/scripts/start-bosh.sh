@@ -114,6 +114,10 @@ function start_docker() {
 
   export DNS_IP="8.8.8.8"
 
+  # docker will fail starting with the new iptables. it throws:
+  # iptables v1.8.7 (nf_tables): Could not fetch rule set generation id: ....
+  update-alternatives --set iptables /usr/sbin/iptables-legacy
+
   generate_certs "${certs_dir}"
 
   mkdir -p /var/log
@@ -195,12 +199,6 @@ function main() {
                          .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
                          .map { |addr| addr.ip_address }.first')
   export OUTER_CONTAINER_IP
-
-  if [[ "${OUTER_CONTAINER_IP}" == *$'\n'* ]] ; then
-    echo "OUTER_CONTAINER_IP had more than one ip: '${OUTER_CONTAINER_IP}'" >&2
-    exit 1
-  fi
-
   echo "Determined OUTER_CONTAINER_IP: ${OUTER_CONTAINER_IP}" >&2
 
   local certs_dir
@@ -233,7 +231,7 @@ EOF
   pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
       echo "Current directory: $(pwd)" >&2
 
-      export BOSH_DIRECTOR_IP="10.245.0.11"
+      export BOSH_DIRECTOR_IP="10.245.0.3"
       export BOSH_ENVIRONMENT="docker-director"
 
       cat <<EOF > "${local_bosh_dir}/docker_tls.json"
