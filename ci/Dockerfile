@@ -9,6 +9,9 @@ RUN apt-get update && \
 # Set bosh env at login
 RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
+# Copy ops files
+COPY noble-updates.yml /usr/local/bosh-deployment/noble-updates.yml
+
 # Install Python libraries needed for scripts
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"

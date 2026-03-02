@@ -1,0 +1,6 @@
+- type: replace
+  path: /cloud_provider/properties/docker_cpi/start_containers_with_systemd?
+  value: true
+- type: replace
+  path: /instance_groups/name=bosh/properties/docker_cpi/start_containers_with_systemd?
+  value: true
