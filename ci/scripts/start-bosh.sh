@@ -7,11 +7,6 @@ if [[ -n "${DEBUG:-}" ]]; then
   export BOSH_LOG_LEVEL=debug
 fi
 
-export BOSH_DIRECTOR_IP="10.245.0.3"
-export BOSH_ENVIRONMENT="docker-director"
-
-export DNS_IP="8.8.8.8"
-
 function generate_certs() {
   local certs_dir
   certs_dir="${1}"
@@ -117,9 +112,7 @@ function start_docker() {
   local certs_dir
   certs_dir="${1}"
 
-  # docker will fail starting with the new iptables. it throws:
-  # iptables v1.8.7 (nf_tables): Could not fetch rule set generation id: ....
-  update-alternatives --set iptables /usr/sbin/iptables-legacy
+  export DNS_IP="8.8.8.8"
 
   generate_certs "${certs_dir}"
 
@@ -194,12 +187,19 @@ EOF
 }
 
 function main() {
-  # ".first" - original code could return multiple IPs (e.g., container IP + docker0 bridge IP)
-  # which breaks the docker_tls JSON variable formatting
-  OUTER_CONTAINER_IP=$(ruby -rsocket -e 'puts Socket.ip_address_list
-                          .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
-                          .map { |addr| addr.ip_address }.first')
+  OUTER_CONTAINER_IP=$(
+    ip addr \
+    | grep 'inet ' \
+    | grep -v -E ' (127\.|172\.|10\.245)' \
+    | cut -d/ -f 1 \
+    | cut -d' ' -f6
+  )
   export OUTER_CONTAINER_IP
+
+  if [[ "${OUTER_CONTAINER_IP}" == *$'\n'* ]] ; then
+    echo "OUTER_CONTAINER_IP had more than one ip: '${OUTER_CONTAINER_IP}'" >&2
+    exit 1
+  fi
 
   local certs_dir
   certs_dir=$(mktemp -d)
@@ -229,6 +229,9 @@ EOF
 
   pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
       echo "Current directory: $(pwd)" >&2
+
+      export BOSH_DIRECTOR_IP="10.245.0.11"
+      export BOSH_ENVIRONMENT="docker-director"
 
       cat <<EOF > "${local_bosh_dir}/docker_tls.json"
 {

@@ -29,22 +29,8 @@ while getopts ":F:k" o; do
 done
 shift $((OPTIND-1))
 
-docker_mac_check_cgroupsv1() {
-    # Force cgroups v1 on Docker for Mac
-    # inspired by https://github.com/docker/for-mac/issues/6073#issuecomment-1018793677
-
-    SETTINGS=~/Library/Group\ Containers/group.com.docker/settings.json
-
-    cgroupsV1Enabled=$(jq '.deprecatedCgroupv1' "$SETTINGS")
-    if [ "$cgroupsV1Enabled" != "true" ]; then 
-        echo "deprecatedCgroupv1 should be enabled in $SETTINGS. Otherwise the acceptance tests will not run on Docker for Mac."
-        echo "Check in the README.md for a convenient script to set deprecatedCgroupv1 and restart Docker."
-        exit 1
-    fi
-}
-
 check_required_files() {
-#  PIDS=""
+  PIDS=""
   REQUIRED_FILE_PATTERNS=(
     ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://storage.googleapis.com/bosh-core-stemcells/1.238/bosh-stemcell-1.238-warden-boshlite-ubuntu-noble.tgz!no
     ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent!yes
@@ -64,7 +50,7 @@ check_required_files() {
       continue
     fi
 
-    #(
+    (
       echo "$filepattern not found, downloading."
       cd "$folder"
       resolved="$url"
@@ -75,21 +61,17 @@ check_required_files() {
       curl -s --remote-name --remote-header-name --location "$resolved"
       echo "Downloaded '$url' successfully."
       ls -1lh "$folder/"$filepattern
-    #)&
+    )&
 
-#    PIDS="$PIDS $!"
+    PIDS="$PIDS $!"
 
   done
   # shellcheck disable=SC2086
   # expansion is desired, as $PIDS is a list of PIDs. Wait on all of those PIDs.
-#  wait $PIDS
+  wait $PIDS
 }
 
 check_required_files
-
-#if [ "$(uname)" == "Darwin" ]; then
-#    docker_mac_check_cgroupsv1
-#fi
 
 build_image "${REPO_DIR}/ci"
 prepare_docker_scratch
