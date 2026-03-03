@@ -1,6 +1,14 @@
 #!/bin/sh
 set -eu
 
+# Enable DNS
+tee /etc/resolv.conf >/dev/null <<'EOF'
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+options timeout:2 attempts:2
+EOF
+
+# Update NF tables rules for monit to use the correct cgroup path for the agent
 DATE=$(date +%s)
 NFT_FILE=/etc/nftables/monit.nft
 BACKUP="${NFT_FILE}.bak.${DATE}"
@@ -17,15 +25,24 @@ echo "Found ControlGroup for bosh-agent.service: $cg"
 
 # Replace the quoted cgroup path in the socket rule that matches the ip/tcp part
 # The expected nft rule begins with: socket cgroupv2 level <n> "<path>" ip daddr 127.0.0.1 ...
-pattern='(^[[:space:]]*socket[[:space:]]+cgroupv2[[:space:]]+level[[:space:]]+[0-9]+[[:space:]]+")[^"]+("[[:space:]]+ip[[:space:]]+daddr[[:space:]]+127\.0\.0\.1[[:space:]].*)'
-esc=$(printf '%s' "$cg" | sed 's@[/&]@\&@g') # escape slashes and ampersands for sed
-sed -E "s@$pattern@\1${esc}\2@" "$NFT_FILE" > "$TMP"
-if cmp -s "$NFT_FILE" "$TMP"; then
+awk_status=0
+awk -v new="$cg" '
+BEGIN { replaced = 0 }
+/^[[:space:]]*socket[[:space:]]+cgroupv2[[:space:]]+level[[:space:]]+[0-9]+[[:space:]]+"[^"]+"[[:space:]]+ip[[:space:]]+daddr[[:space:]]+127\.0\.0\.1/ {
+  sub(/"[^"]+"/, "\"" new "\"", $0)
+  replaced = 1
+}
+{ print }
+END { if (replaced == 0) exit 3 }
+' "$NFT_FILE" > "$TMP" || awk_status=$?
+if [ "$awk_status" -eq 3 ]; then
+  echo "monit.nft socket rule not found; no changes made" >&2
   rm -f "$TMP"
-  echo "monit.nft already up-to-date (using cgroup: $cg)"
-  exit 0
-else
-  echo "monit.nft needs update (new cgroup: $cg)"
+  exit 1
+elif [ "$awk_status" -ne 0 ]; then
+  echo "failed to update monit.nft (awk error $awk_status)" >&2
+  rm -f "$TMP"
+  exit 1
 fi
 
 # Backup & atomically replace and try to reload nft

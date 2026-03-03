@@ -18,11 +18,15 @@ run_update_in_container() {
   cid="$1"
   if [ ! -r "$SCRIPT_PATH" ]; then
     echo "missing host script: $SCRIPT_PATH" >&2
-    return
+    return 1
   fi
-  if ! docker exec -i "$cid" /bin/sh -s -- < "$SCRIPT_PATH"; then
-    echo "failed to run update-monit-nft.sh inside container $cid" >&2
-  fi
+  while true; do
+    if docker exec -i "$cid" /bin/sh -s -- < "$SCRIPT_PATH"; then
+      return 0
+    fi
+    echo "failed to run update-monit-nft.sh inside container $cid; retrying in 1s" >&2
+    sleep 1
+  done
 }
 
 # initial update for any already-running containers
