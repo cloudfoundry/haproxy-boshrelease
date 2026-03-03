@@ -1,14 +1,6 @@
 #!/bin/sh
 set -eu
 
-# Enable DNS
-tee /etc/resolv.conf >/dev/null <<'EOF'
-nameserver 1.1.1.1
-nameserver 8.8.8.8
-options timeout:2 attempts:2
-EOF
-
-# Update NF tables rules for monit to use the correct cgroup path for the agent
 DATE=$(date +%s)
 NFT_FILE=/etc/nftables/monit.nft
 BACKUP="${NFT_FILE}.bak.${DATE}"
