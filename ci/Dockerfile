@@ -15,7 +15,6 @@ COPY noble-updates.yml /usr/local/bosh-deployment/noble-updates.yml
 # Copy scripts
 COPY scripts/nft/update-monit-nft.sh /usr/local/sbin/update-monit-nft.sh
 COPY scripts/nft/watch-containers.sh /usr/local/sbin/watch-containers.sh
-COPY scripts/nft/monit-nft-watcher.service /etc/systemd/system/monit-nft-watcher.service
 RUN chmod 755 /usr/local/sbin/update-monit-nft.sh /usr/local/sbin/watch-containers.sh
 
 # Install Python libraries needed for scripts

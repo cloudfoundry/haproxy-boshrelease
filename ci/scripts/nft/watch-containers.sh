@@ -3,6 +3,8 @@ set -eu
 
 SCRIPT_PATH=/usr/local/sbin/update-monit-nft.sh
 
+trap 'echo "monit-nft watcher interrupted; exiting" >&2; exit 0' INT TERM
+
 run_update_in_container() {
   cid="$1"
   if [ ! -r "$SCRIPT_PATH" ]; then
@@ -19,11 +21,12 @@ for cid in $(docker ps -q 2>/dev/null); do
   run_update_in_container "$cid"
 done
 
-# listen for docker start events and update when they occur
-docker events --filter 'event=start' --format '{{.ID}} {{.Type}} {{.Action}}' | while read -r id type action; do
-  echo "Received docker event: ID=$id Type=$type Action=$action"
-  run_update_in_container "$id"
-done || {
-  echo "docker events stream ended or failed; continuing without event watch" >&2
-  true
-}
+# listen for docker start events and update when they occur forever
+while true; do
+  docker events --filter 'event=start' --format '{{.ID}} {{.Type}} {{.Action}}' | while read -r id type action; do
+    echo "Received docker event: ID=$id Type=$type Action=$action"
+    run_update_in_container "$id"
+  done || true
+  echo "docker events stream ended or failed; retrying after 1s" >&2
+  sleep 1
+done
