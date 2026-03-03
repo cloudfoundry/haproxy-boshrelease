@@ -4,12 +4,14 @@ set -eu
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "${REPO_DIR}/ci/scripts/functions-ci.sh"
 FOCUS=""
+PARALLELISM=""
 KEEP_RUNNING=""
 
 usage() {
     echo -e "Usage: $0 [-F <ginkgo focus target>] [-k]
 
     -F      Focus on a particular test. Expects a Ginkgo test name. Keep bosh running afterwards.
+    -P      Set Ginkgo parallel node count. Default is '-p' (smart parallelism).
     -k      Keep bosh container running. Useful for debug." 1>&2; exit 1;
 }
 
@@ -18,6 +20,9 @@ while getopts ":F:k" o; do
         F)
             FOCUS=${OPTARG}
             KEEP_RUNNING=true
+            ;;
+        P)
+            PARALLELISM=${OPTARG}
             ;;
         k)
             KEEP_RUNNING=true
@@ -81,9 +86,9 @@ if [ -n "$KEEP_RUNNING" ] ; then
   echo
   echo "*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: ${DOCKER_SCRATCH}"
   echo
-  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="${FOCUS}" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
+  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="${FOCUS}" -e PARALLELISM="${PARALLELISM}" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
 else
-  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" -e PARALLELISM="${PARALLELISM}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
   echo "Cleaning up docker scratch: ${DOCKER_SCRATCH}"
   sudo rm -rf "${DOCKER_SCRATCH}"
 fi

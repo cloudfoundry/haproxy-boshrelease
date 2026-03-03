@@ -11,6 +11,7 @@ RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
 # Copy ops files
 COPY noble-updates.yml /usr/local/bosh-deployment/noble-updates.yml
+COPY bosh-scaled-out.yml /usr/local/bosh-deployment/bosh-scaled-out.yml
 
 # Copy scripts
 COPY scripts/nft/update-monit-nft.sh /usr/local/sbin/update-monit-nft.sh

@@ -34,8 +34,12 @@ run_update_in_container() {
     return 1
   fi
   (
-    while true; do
+    attempt=0
+    max_attempts=100
+    while [ "$attempt" -lt "$max_attempts" ];  do
+      attempt=$((attempt + 1))
       if output=$(docker exec -i "$cid" /bin/sh -s -- < "$SCRIPT_PATH" 2>&1); then
+        echo "successfully ran update-monit-nft.sh inside container $cid" >&2
         exit 0
       fi
       case "$output" in
@@ -48,7 +52,11 @@ run_update_in_container() {
           exit 0
           ;;
         *)
-          echo "failed to run update-monit-nft.sh inside container $cid; retrying in 1s" >&2
+          if [ "$attempt" -ge "$max_attempts" ]; then
+            echo "failed to run update-monit-nft.sh inside container $cid after ${max_attempts} attempts: $output" >&2
+            exit 1
+          fi
+          echo "failed to run update-monit-nft.sh inside container $cid (attempt ${attempt}/${max_attempts}): $output; retrying in 1s" >&2
           sleep 1
           ;;
       esac

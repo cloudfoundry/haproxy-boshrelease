@@ -248,6 +248,7 @@ EOF
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
         -o "$PWD/noble-updates.yml" \
+        -o "$PWD/bosh-scaled-out.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \
