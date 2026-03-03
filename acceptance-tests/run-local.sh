@@ -8,14 +8,14 @@ PARALLELISM=""
 KEEP_RUNNING=""
 
 usage() {
-    echo -e "Usage: $0 [-F <ginkgo focus target>] [-k]
+    echo -e "Usage: $0 [-F <ginkgo focus target>] [-P <ginkgo nodes>] [-k]
 
     -F      Focus on a particular test. Expects a Ginkgo test name. Keep bosh running afterwards.
     -P      Set Ginkgo parallel node count. Default is '-p' (smart parallelism).
     -k      Keep bosh container running. Useful for debug." 1>&2; exit 1;
 }
 
-while getopts ":F:k" o; do
+while getopts ":F:P:k" o; do
     case "${o}" in
         F)
             FOCUS=${OPTARG}
