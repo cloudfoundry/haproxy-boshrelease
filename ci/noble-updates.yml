@@ -4,3 +4,101 @@
 - type: replace
   path: /instance_groups/name=bosh/properties/docker_cpi/start_containers_with_systemd?
   value: true
+- type: replace
+  path: /addons/name=bosh-dns-systemd?
+  value:
+    include:
+      stemcell:
+        - os: ubuntu-noble
+    jobs:
+      - name: bosh-dns
+        properties:
+          api:
+            client:
+              tls: ((/dns_api_client_tls))
+            server:
+              tls: ((/dns_api_server_tls))
+          cache:
+            enabled: true
+          configure_systemd_resolved: true
+          disable_recursors: true
+          health:
+            client:
+              tls: ((/dns_healthcheck_client_tls))
+            enabled: true
+            server:
+              tls: ((/dns_healthcheck_server_tls))
+          override_nameserver: false
+        release: bosh-dns
+    name: bosh-dns-systemd
+- type: replace
+  path: /releases/name=bosh-dns?
+  value:
+    name: bosh-dns
+    sha1: 494d9e6ff68909a3aaddf146464dd4599f9f16a8
+    url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=1.39.21
+    version: 1.39.21
+- type: replace
+  path: /variables/name=/dns_healthcheck_tls_ca?
+  value:
+    name: /dns_healthcheck_tls_ca
+    options:
+      common_name: dns-healthcheck-tls-ca
+      is_ca: true
+    type: certificate
+- type: replace
+  path: /variables/name=/dns_healthcheck_server_tls?
+  value:
+    name: /dns_healthcheck_server_tls
+    options:
+      alternative_names:
+        - health.bosh-dns
+      ca: /dns_healthcheck_tls_ca
+      common_name: health.bosh-dns
+      extended_key_usage:
+        - server_auth
+    type: certificate
+- type: replace
+  path: /variables/name=/dns_healthcheck_client_tls?
+  value:
+    name: /dns_healthcheck_client_tls
+    options:
+      alternative_names:
+        - health.bosh-dns
+      ca: /dns_healthcheck_tls_ca
+      common_name: health.bosh-dns
+      extended_key_usage:
+        - client_auth
+    type: certificate
+- type: replace
+  path: /variables/name=/dns_api_tls_ca?
+  value:
+    name: /dns_api_tls_ca
+    options:
+      common_name: dns-api-tls-ca
+      is_ca: true
+    type: certificate
+- type: replace
+  path: /variables/name=/dns_api_server_tls?
+  value:
+    name: /dns_api_server_tls
+    options:
+      alternative_names:
+        - api.bosh-dns
+      ca: /dns_api_tls_ca
+      common_name: api.bosh-dns
+      extended_key_usage:
+        - server_auth
+    type: certificate
+- type: replace
+  path: /variables/name=/dns_api_client_tls?
+  value:
+    name: /dns_api_client_tls
+    options:
+      alternative_names:
+        - api.bosh-dns
+      ca: /dns_api_tls_ca
+      common_name: api.bosh-dns
+      extended_key_usage:
+        - client_auth
+    type: certificate

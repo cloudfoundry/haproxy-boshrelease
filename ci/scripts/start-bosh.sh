@@ -244,7 +244,6 @@ EOF
 
       echo "Interpolating BOSH deployment manifest with Docker CPI and TLS configuration..." >&2
       bosh int bosh.yml \
-        -o runtime-configs/dns.yml \
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
