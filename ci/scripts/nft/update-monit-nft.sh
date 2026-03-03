@@ -4,7 +4,7 @@ set -eu
 DATE=$(date +%s)
 NFT_FILE=/etc/nftables/monit.nft
 BACKUP="${NFT_FILE}.bak.${DATE}"
-TMP="$(mktemp /tmp/monit.nft.${DATE})"
+TMP="$(mktemp /tmp/monit.nft.XXXXXX)"
 
 # Get ControlGroup value for bosh-agent.service
 cg=$(systemctl show -p ControlGroup --value bosh-agent.service 2>/dev/null || true)
@@ -16,7 +16,8 @@ cg=${cg#/} # remove leading slash if present
 echo "Found ControlGroup for bosh-agent.service: $cg"
 
 # Replace the quoted cgroup path in the socket rule that matches the ip/tcp part
-pattern='(^[[:space:]]*socket[[:space:]]+cgroupv2[[:space:]]+level[[:space:]]+[0-9]+[[:space:]]+")[^"]+("[[:space:]]+ip[[:space:]]+daddr[[:space:]]+127\.0\.0\.1[[:space:]]+tcp[[:space:]]+dport[[:space:]]+2822)'
+# The expected nft rule begins with: socket cgroupv2 level <n> "<path>" ip daddr 127.0.0.1 ...
+pattern='(^[[:space:]]*socket[[:space:]]+cgroupv2[[:space:]]+level[[:space:]]+[0-9]+[[:space:]]+")[^"]+("[[:space:]]+ip[[:space:]]+daddr[[:space:]]+127\.0\.0\.1[[:space:]].*)'
 esc=$(printf '%s' "$cg" | sed 's@[/&]@\&@g') # escape slashes and ampersands for sed
 sed -E "s@$pattern@\1${esc}\2@" "$NFT_FILE" > "$TMP"
 if cmp -s "$NFT_FILE" "$TMP"; then
