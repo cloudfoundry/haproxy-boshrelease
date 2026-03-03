@@ -257,6 +257,9 @@ EOF
         -v docker_tls="$(cat "${local_bosh_dir}/docker_tls.json")" \
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
+      echo "Starting monit-nft-watcher service to correct NF table for any starting container..." >&2
+      systemctl enable --now monit-nft-watcher.service
+
       echo "Creating BOSH director environment..." >&2
       bosh create-env "${local_bosh_dir}/bosh-director.yml" \
         --vars-store="${local_bosh_dir}/creds.yml" \

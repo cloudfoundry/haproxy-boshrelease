@@ -12,6 +12,11 @@ RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 # Copy ops files
 COPY noble-updates.yml /usr/local/bosh-deployment/noble-updates.yml
 
+# Copy scripts
+COPY --chmod=755 scripts/nft/update-monit-nft.sh /usr/local/sbin/update-monit-nft.sh
+COPY --chmod=755 scripts/nft/watch-containers.sh /usr/local/sbin/watch-containers.sh
+COPY scripts/nft/monit-nft-watcher.service /etc/systemd/system/monit-nft-watcher.service
+
 # Install Python libraries needed for scripts
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
