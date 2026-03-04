@@ -3,20 +3,26 @@
 set -eu
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "${REPO_DIR}/ci/scripts/functions-ci.sh"
+FOCUS=""
+PARALLELISM=""
 KEEP_RUNNING=""
 
 usage() {
-    echo -e "Usage: $0 [-F <ginkgo focus target>] [-k]
+    echo -e "Usage: $0 [-F <ginkgo focus target>] [-P <ginkgo nodes>] [-k]
 
     -F      Focus on a particular test. Expects a Ginkgo test name. Keep bosh running afterwards.
+    -P      Set Ginkgo parallel node count. Default is '-p' (smart parallelism).
     -k      Keep bosh container running. Useful for debug." 1>&2; exit 1;
 }
 
-while getopts ":F:k" o; do
+while getopts ":F:P:k" o; do
     case "${o}" in
         F)
             FOCUS=${OPTARG}
             KEEP_RUNNING=true
+            ;;
+        P)
+            PARALLELISM=${OPTARG}
             ;;
         k)
             KEEP_RUNNING=true
@@ -28,25 +34,11 @@ while getopts ":F:k" o; do
 done
 shift $((OPTIND-1))
 
-docker_mac_check_cgroupsv1() {
-    # Force cgroups v1 on Docker for Mac
-    # inspired by https://github.com/docker/for-mac/issues/6073#issuecomment-1018793677
-
-    SETTINGS=~/Library/Group\ Containers/group.com.docker/settings.json
-
-    cgroupsV1Enabled=$(jq '.deprecatedCgroupv1' "$SETTINGS")
-    if [ "$cgroupsV1Enabled" != "true" ]; then 
-        echo "deprecatedCgroupv1 should be enabled in $SETTINGS. Otherwise the acceptance tests will not run on Docker for Mac."
-        echo "Check in the README.md for a convenient script to set deprecatedCgroupv1 and restart Docker."
-        exit 1
-    fi
-}
-
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
-    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
-    ci/scripts/stemcell-bionic/bosh-stemcell-*-ubuntu-bionic-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-bionic-go_agent
+    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-noble
+    ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
   )
 
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
@@ -54,36 +46,45 @@ check_required_files() {
     url=$(cut -f2 -d! <<<"$entry")
     folder=$(realpath "$(dirname "$REPO_DIR/$pattern")")
     filepattern=$(basename "$pattern")
-    pattern=$folder/$filepattern
-
-    # shellcheck disable=SC2086
-    # glob resolution is desired here.
-    if [ -f $pattern ]; then
-      continue
-    fi
 
     (
-      echo "$filepattern not found, downloading latest."
-      cd "$folder" && \
-      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1) && \
-      curl -s --remote-name --remote-header-name --location "$resolved" && \
-      echo "Downloaded '$url' successfully." && \
-      ls -1lh "$folder/"$filepattern
+      # Resolve the redirect URL to get the actual remote filename
+      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n')
+      if [ -z "${resolved}" ]; then
+        echo "ERROR: could not resolve redirect URL for $url" >&2
+        exit 1
+      fi
+      remote_filename=$(basename "${resolved%%\?*}") # strip query string if any
+      echo "Remote file: ${remote_filename}" >&2
+
+      # Check what is already in the folder
+      existing=$(find "${folder}" -maxdepth 1 -name "${filepattern}" 2>/dev/null | head -1)
+
+      if [ -n "${existing}" ]; then
+        existing_filename=$(basename "${existing}")
+        if [ "${existing_filename}" = "${remote_filename}" ]; then
+          echo "${existing_filename} is up to date, skipping download." >&2
+          exit 0
+        fi
+        echo "Version changed: ${existing_filename} -> ${remote_filename}, deleting old file." >&2
+        rm -f "${existing}"
+      fi
+
+      echo "Downloading ${remote_filename} ..." >&2
+      cd "${folder}" && \
+        curl -s --remote-name --remote-header-name --location "${resolved}" && \
+        echo "Downloaded '${remote_filename}' successfully." >&2 && \
+        ls -1lh "${folder}/${remote_filename}" >&2
     )&
 
     PIDS="$PIDS $!"
-
   done
+
   # shellcheck disable=SC2086
-  # expansion is desired, as $PIDS is a list of PIDs. Wait on all of those PIDs.
   wait $PIDS
 }
 
 check_required_files
-
-if [ "$(uname)" == "Darwin" ]; then
-    docker_mac_check_cgroupsv1
-fi
 
 build_image "${REPO_DIR}/ci"
 prepare_docker_scratch
@@ -93,9 +94,9 @@ if [ -n "$KEEP_RUNNING" ] ; then
   echo
   echo "*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: ${DOCKER_SCRATCH}"
   echo
-  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="$FOCUS" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
+  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="${FOCUS}" -e PARALLELISM="${PARALLELISM}" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
 else
-  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" -e PARALLELISM="${PARALLELISM}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
   echo "Cleaning up docker scratch: ${DOCKER_SCRATCH}"
   sudo rm -rf "${DOCKER_SCRATCH}"
 fi
