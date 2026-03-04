@@ -259,10 +259,10 @@ EOF
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
       # TODO: remove this workaround once we have a fix for the underlying issue with nftables
-      echo "Starting monit-nft-watcher to correct NF table for any starting container..." >&2
-      if ! pgrep -f '/usr/local/sbin/watch-containers.sh' >/dev/null; then
-        nohup /usr/local/sbin/watch-containers.sh >/var/log/monit-nft-watcher.log 2>&1 &
-      fi
+      #echo "Starting monit-nft-watcher to correct NF table for any starting container..." >&2
+      #if ! pgrep -f '/usr/local/sbin/watch-containers.sh' >/dev/null; then
+      #  nohup /usr/local/sbin/watch-containers.sh >/var/log/monit-nft-watcher.log 2>&1 &
+      #fi
 
       echo "Creating BOSH director environment..." >&2
       bosh create-env "${local_bosh_dir}/bosh-director.yml" \
