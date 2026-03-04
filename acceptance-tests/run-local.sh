@@ -37,7 +37,7 @@ shift $((OPTIND-1))
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
-    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-noble?v=1.267
+    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-noble
     ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
   )
 
