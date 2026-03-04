@@ -10,13 +10,7 @@ RUN apt-get update && \
 RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
 # Copy ops files
-COPY noble-updates.yml /usr/local/bosh-deployment/noble-updates.yml
 COPY bosh-scaled-out.yml /usr/local/bosh-deployment/bosh-scaled-out.yml
-
-# Copy scripts
-COPY scripts/nft/update-monit-nft.sh /usr/local/sbin/update-monit-nft.sh
-COPY scripts/nft/watch-containers.sh /usr/local/sbin/watch-containers.sh
-RUN chmod 755 /usr/local/sbin/update-monit-nft.sh /usr/local/sbin/watch-containers.sh
 
 # Install Python libraries needed for scripts
 RUN python3 -m venv /opt/venv

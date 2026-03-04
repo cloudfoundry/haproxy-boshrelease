@@ -37,14 +37,14 @@ shift $((OPTIND-1))
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
-    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://storage.googleapis.com/bosh-core-stemcells/1.238/bosh-stemcell-1.238-warden-boshlite-ubuntu-noble.tgz!no
-    ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent!yes
+  bosh upload-stemcell --sha1 fa990a329742e4be8a5ac1402d3ad9c726835f90 \
+    ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-noble?v=1.267
+    ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
   )
 
   for entry in "${REQUIRED_FILE_PATTERNS[@]}"; do
     pattern=$(cut -f1 -d! <<<"$entry")
     url=$(cut -f2 -d! <<<"$entry")
-    to_resolve=$(cut -f3 -d! <<<"$entry")
     folder=$(realpath "$(dirname "$REPO_DIR/$pattern")")
     filepattern=$(basename "$pattern")
     pattern=$folder/$filepattern
@@ -58,10 +58,7 @@ check_required_files() {
     (
       echo "$filepattern not found, downloading."
       cd "$folder"
-      resolved="$url"
-      if [ "$to_resolve" == "yes" ]; then
-        resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n')
-      fi
+      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n')
       echo "Resolved URL: $resolved"
       curl -s --remote-name --remote-header-name --location "$resolved"
       echo "Downloaded '$url' successfully."
