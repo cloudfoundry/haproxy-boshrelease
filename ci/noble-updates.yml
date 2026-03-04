@@ -5,6 +5,12 @@
   path: /instance_groups/name=bosh/properties/docker_cpi/start_containers_with_systemd?
   value: true
 - type: replace
+  path: /stemcells/name=default?
+  value:
+    alias: default
+    os: ubuntu-noble
+    version: latest
+- type: replace
   path: /addons?/name=bosh-dns-systemd?
   value:
     include:
