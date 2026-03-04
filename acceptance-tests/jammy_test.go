@@ -7,14 +7,14 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 )
 
-var _ = Describe("Bionic", func() {
-	It("Correctly proxies HTTP requests when using the Bionic stemcell", func() {
+var _ = Describe("Jammy", func() {
+	It("Correctly proxies HTTP requests when using the Jammy stemcell", func() {
 
-		opsfileBionic := `---
-# Configure Bionic stemcell
+		opsfileJammy := `---
+# Configure Jammy stemcell
 - type: replace
   path: /stemcells/alias=default/os
-  value: ubuntu-bionic
+  value: ubuntu-jammy
 `
 
 		haproxyBackendPort := 12000
@@ -22,7 +22,7 @@ var _ = Describe("Bionic", func() {
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileBionic}, map[string]interface{}{}, true)
+		}, []string{opsfileJammy}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()

@@ -35,10 +35,18 @@ echo "----- Running tests"
 export PATH=$PATH:$GOPATH/bin
 ginkgo version
 
-PARALLELISM="-p"
-if [ -n "$FOCUS" ]; then
+echo "------------------------------------------------------------------"
+if [ -n "${FOCUS:-}" ]; then
   PARALLELISM="--nodes=1"
+  echo "FOCUS is set, thus PARALLELISM is set to '$PARALLELISM'"
+elif [ -n "${PARALLELISM:-}" ]; then
+  PARALLELISM="--nodes=$PARALLELISM"
+  echo "PARALLELISM is set. Will run ginkgo with '$PARALLELISM'"
+else
+  PARALLELISM="-p"
+  echo "PARALLELISM is not set. Using default '$PARALLELISM'"
 fi
+echo "------------------------------------------------------------------"
 
 ginkgo -v "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
 

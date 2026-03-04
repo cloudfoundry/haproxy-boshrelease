@@ -31,15 +31,15 @@ update:
 
 stemcells:
   - alias: default
-    os: ubuntu-jammy
+    os: ubuntu-noble
     version: latest
 
 releases:
 - name: bpm
-  version: 1.2.14
-  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.2.14
-  sha1: 1e357a533654e2067e15231dd8ac5bad2e697dff
+  version: 1.4.26
+  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.4.26
+  sha1: sha256:40af85114d2a8a67812bf65212076581ea42cefcf67ee6b8d78d778ed1ca2b85
 - name: haproxy
   version: 16.4.0+3.2.13
   url: https://github.com/cloudfoundry/haproxy-boshrelease/releases/download/v16.4.0+3.2.13/haproxy-16.4.0+3.2.13.tgz
-  sha1: 80142487932a14800d802e6b0952399f290a745c
+  sha1: sha256:a6544aaab0de421ff7342c7511198c428bfb49e136b9279f2345585b53f8979b
