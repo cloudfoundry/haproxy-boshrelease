@@ -37,7 +37,6 @@ shift $((OPTIND-1))
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
-  bosh upload-stemcell --sha1 fa990a329742e4be8a5ac1402d3ad9c726835f90 \
     ci/scripts/stemcell/bosh-stemcell-*-ubuntu-noble.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-noble?v=1.267
     ci/scripts/stemcell-jammy/bosh-stemcell-*-ubuntu-jammy-*.tgz!https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-jammy-go_agent
   )
