@@ -56,11 +56,11 @@ check_required_files() {
 
     (
       echo "$filepattern not found, downloading."
-      cd "$folder"
-      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n')
-      echo "Resolved URL: $resolved"
-      curl -s --remote-name --remote-header-name --location "$resolved"
-      echo "Downloaded '$url' successfully."
+      cd "$folder" && \
+      resolved=$(curl -s --write-out '\n%{redirect_url}' "$url" | tail -n1 | tr -d '\n') && \
+      echo "Resolved URL: $resolved" && \
+      curl -s --remote-name --remote-header-name --location "$resolved" && \
+      echo "Downloaded '$url' successfully." && \
       ls -1lh "$folder/"$filepattern
     )&
 

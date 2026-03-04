@@ -104,10 +104,6 @@ function sanitize_cgroups() {
   done
 }
 
-function stop_docker() {
-  service docker stop
-}
-
 function start_docker() {
   local certs_dir
   certs_dir="${1}"
