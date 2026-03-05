@@ -355,6 +355,14 @@ defaults
     <%- if properties.ha_proxy.default_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.default_config")) %>
     <%- end -%>
+  <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
+    <%- if_p("ha_proxy.connections_rate_limit.connections") do |connections| -%>
+    set-var proc.conn_rate_limit int(<%= connections %>)
+    <%- end -%>
+    <%- if_p("ha_proxy.connections_rate_limit.block") do |block| -%>
+    set-var proc.conn_rate_limit_enabled bool(<%= block ? 1 : 0 %>)
+    <%- end -%>
+  <%- end -%>
 
 <% if p("ha_proxy.stats_enable") -%>
 listen stats
@@ -430,10 +438,8 @@ frontend http-in
   <%- end -%>
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
-    <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
-      <%-if block -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
-      <%- end -%>
+    <%- if_p("ha_proxy.connections_rate_limit.connections") do -%>
+    tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0) gt,var(proc.conn_rate_limit) }
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
@@ -562,10 +568,8 @@ frontend https-in
   <%- end -%>
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request connection track-sc0 src table st_tcp_conn_rate
-    <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
-      <%-if block -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
-      <%- end -%>
+    <%- if_p("ha_proxy.connections_rate_limit.connections") do -%>
+    tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0) gt,var(proc.conn_rate_limit) }
     <%- end -%>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
