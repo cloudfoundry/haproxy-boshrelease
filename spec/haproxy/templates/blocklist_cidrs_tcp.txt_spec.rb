@@ -73,6 +73,3 @@ describe 'config/blocklist_cidrs_tcp.txt' do
     end
   end
 end
-
-
-

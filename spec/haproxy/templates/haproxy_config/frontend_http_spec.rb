@@ -122,7 +122,7 @@ describe 'config/haproxy.config HTTP frontend' do
     end
   end
 
-  context 'TCP level blocklist (layer4_block)' do
+  context 'with TCP level blocklist (layer4_block)' do
     context 'when ha_proxy.cidr_blocklist_tcp is provided' do
       let(:properties) do
         { 'cidr_blocklist_tcp' => ['172.168.4.1/32', '10.2.0.0/16'] }
