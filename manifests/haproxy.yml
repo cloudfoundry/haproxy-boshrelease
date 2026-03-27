@@ -25,20 +25,20 @@ instance_groups:
 update:
   canaries: 1
   max_in_flight: 1
-  canary_watch_time: 1000-30000
-  update_watch_time: 1000-30000
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000
   serial: false
 
 stemcells:
   - alias: default
-    os: ubuntu-jammy
+    os: ubuntu-noble
     version: latest
 
 releases:
 - name: bpm
-  version: 1.2.14
-  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.2.14
-  sha1: 1e357a533654e2067e15231dd8ac5bad2e697dff
+  version: 1.4.27
+  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.4.27
+  sha1: sha256:94749f8b9cf949e2a972ec6989bd1c7e20c79bcc25e0da63bb471a169aa86e8f
 - name: haproxy
   version: 16.5.0+3.2.14
   url: https://github.com/cloudfoundry/haproxy-boshrelease/releases/download/v16.5.0+3.2.14/haproxy-16.5.0+3.2.14.tgz
