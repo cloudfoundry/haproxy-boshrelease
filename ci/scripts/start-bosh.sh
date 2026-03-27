@@ -121,8 +121,8 @@ function start_docker() {
   mkdir -p /var/log
   mkdir -p /var/run
 
+  echo "Sanitizing cgroups for Docker..." >&2
   sanitize_cgroups
-  echo "Sanitized cgroups for docker" >&2
 
   # systemd inside nested Docker containers requires shared mount propagation
   mount --make-rshared /
@@ -158,15 +158,14 @@ function start_docker() {
 }
 EOF
 
+  echo "Starting Docker daemon..." >&2
   service docker start
-  echo "Started docker service" >&2
 
   rc=1
   for i in $(seq 1 100); do
-    echo "waiting for docker to come up... (${i})"
+    echo "Waiting for Docker to become responsive... (attempt ${i}/100)" >&2
     sleep 1
     set +e
-    echo "Docker started, checking if it's responsive..."
     docker info
     rc=$?
     set -e
@@ -179,7 +178,7 @@ EOF
   done
 
   if [ "$rc" -ne "0" ]; then
-    echo "Failed starting docker. Exiting."
+    echo "ERROR: Docker failed to start after 100 attempts. Exiting." >&2
     exit 1
   fi
 
@@ -197,7 +196,7 @@ function main() {
                          .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
                          .map { |addr| addr.ip_address }.first')
   export OUTER_CONTAINER_IP
-  echo "Determined OUTER_CONTAINER_IP: ${OUTER_CONTAINER_IP}" >&2
+  echo "Using outer container IP: ${OUTER_CONTAINER_IP}" >&2
 
   local certs_dir
   certs_dir=$(mktemp -d)
@@ -211,23 +210,20 @@ export DOCKER_HOST="tcp://${OUTER_CONTAINER_IP}:4243"
 export DOCKER_TLS_VERIFY=1
 export DOCKER_CERT_PATH="${certs_dir}"
 EOF
-  echo "Source '${local_bosh_dir}/docker-env' to run docker" >&2
   source "${local_bosh_dir}/docker-env"
 
   start_docker "${certs_dir}"
-  echo "Docker is up and running with TLS configured" >&2
 
   local docker_network_name="director_network"
   local docker_network_cidr="10.245.0.0/16"
   if docker network ls | grep -q "${docker_network_name}"; then
-    echo "A docker network named '${docker_network_name}' already exists, skipping creation" >&2
+    echo "Docker network '${docker_network_name}' already exists, skipping creation" >&2
   else
+    echo "Creating Docker network '${docker_network_name}' (${docker_network_cidr})..." >&2
     docker network create -d bridge --subnet=${docker_network_cidr} "${docker_network_name}"
-    echo "Created docker network '${docker_network_name}' with subnet '${docker_network_cidr}'" >&2
   fi
 
   pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
-      echo "Current directory: $(pwd)" >&2
 
       export BOSH_DIRECTOR_IP="10.245.0.3"
       export BOSH_ENVIRONMENT="docker-director"
@@ -242,7 +238,6 @@ EOF
 
       local customization_dir="$PWD/haproxy-boshrelease"
 
-      echo "Interpolating BOSH deployment manifest with Docker CPI and TLS configuration..." >&2
       bosh int bosh.yml \
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
@@ -257,16 +252,14 @@ EOF
         -v docker_tls="$(cat "${local_bosh_dir}/docker_tls.json")" \
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
-      echo "Creating BOSH director environment..." >&2
+      echo "Creating BOSH director environment (this may take several minutes)..." >&2
       bosh create-env "${local_bosh_dir}/bosh-director.yml" \
         --vars-store="${local_bosh_dir}/creds.yml" \
         --state="${local_bosh_dir}/state.json"
 
-      echo "Extracting BOSH director credentials and CA certificate..." >&2
       bosh int "${local_bosh_dir}/creds.yml" --path /director_ssl/ca > "${local_bosh_dir}/ca.crt"
       bosh_client_secret="$(bosh int "${local_bosh_dir}/creds.yml" --path /admin_password)"
 
-      echo "Setting up BOSH CLI environment..." >&2
       bosh -e "${BOSH_DIRECTOR_IP}" --ca-cert "${local_bosh_dir}/ca.crt" alias-env "${BOSH_ENVIRONMENT}"
 
       cat <<EOF > "${local_bosh_dir}/env"
@@ -276,10 +269,8 @@ EOF
       export BOSH_CLIENT_SECRET=${bosh_client_secret}
       export BOSH_CA_CERT="${local_bosh_dir}/ca.crt"
 EOF
-      echo "Source '${local_bosh_dir}/env' to run bosh" >&2
       source "${local_bosh_dir}/env"
 
-      echo "Updating BOSH cloud config with Docker network..." >&2
       bosh -n update-cloud-config \
         docker/cloud-config.yml \
         -o "$customization_dir/compilation.yml" \
