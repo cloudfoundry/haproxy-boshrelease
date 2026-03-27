@@ -1,0 +1,25 @@
+# generated from cidrs_to_exclude_from_blocking.txt.erb
+<%
+require "base64"
+require 'zlib'
+require 'stringio'
+
+if_p("ha_proxy.connections_rate_limit.cidrs_to_exclude") do |cidrs|
+  uncompressed = ''
+  if cidrs.is_a?(Array)
+    uncompressed << "\# detected cidrs provided as array in cleartext format\n"
+    cidrs.each do |cidr|
+      uncompressed << cidr << "\n"
+    end
+  else
+    gzplain = Base64.decode64(cidrs)
+    gz = Zlib::GzipReader.new(StringIO.new(gzplain))
+    uncompressed = gz.read
+  end
+%>
+# BEGIN cidrs to exclude from tcp rejection because of connection rate limiting
+<%= uncompressed %>
+# END cidrs to exclude from tcp rejection because of connection rate limiting
+<%
+end
+%>
