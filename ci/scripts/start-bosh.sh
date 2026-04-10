@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+## The adoption to cgroups v2 in this script has been made based on the
+## https://github.com/cloudfoundry/bosh/blob/main/ci/dockerfiles/docker-cpi/start-bosh.sh
+
 set -eo pipefail
 
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")

@@ -138,6 +138,7 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git
+      on_failure:
         put: notify
         params:
           channel:  "#haproxy-boshrelease"
