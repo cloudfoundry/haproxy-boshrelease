@@ -35,11 +35,38 @@ echo "----- Running tests"
 export PATH=$PATH:$GOPATH/bin
 ginkgo version
 
-PARALLELISM="-p"
-if [ -n "$FOCUS" ]; then
+echo "------------------------------------------------------------------"
+if [ -n "${FOCUS:-}" ]; then
   PARALLELISM="--nodes=1"
+  echo "FOCUS is set, thus PARALLELISM is set to '$PARALLELISM'"
+elif [ -n "${PARALLELISM:-}" ]; then
+  PARALLELISM="--nodes=$PARALLELISM"
+  echo "PARALLELISM is set. Will run ginkgo with '$PARALLELISM'"
+else
+  PARALLELISM="-p"
+  echo "PARALLELISM is not set. Using default '$PARALLELISM'"
 fi
+echo "------------------------------------------------------------------"
 
-ginkgo -v "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
+echo "------------------------------------------------------------------"
+if [ "${VERBOSITY:-}" = "vv" ]; then
+  VERBOSITY_FLAG="-vv"
+  echo "VERBOSITY is set to 'vv'. Will run ginkgo with '$VERBOSITY_FLAG'"
+else
+  VERBOSITY_FLAG="-v"
+  echo "VERBOSITY is not set or unrecognised. Using default '$VERBOSITY_FLAG'"
+fi
+echo "------------------------------------------------------------------"
+
+echo "------------------------------------------------------------------"
+if [ -n "${FLAKE_ATTEMPTS:-}" ]; then
+  echo "FLAKE_ATTEMPTS is set. Will run ginkgo with '--flake-attempts=$FLAKE_ATTEMPTS'"
+else
+  FLAKE_ATTEMPTS=5
+  echo "FLAKE_ATTEMPTS is not set. Using default '$FLAKE_ATTEMPTS'"
+fi
+echo "------------------------------------------------------------------"
+
+ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts "$FLAKE_ATTEMPTS" "${ADDITIONAL_ARGS[@]}"
 
 keep_running_info

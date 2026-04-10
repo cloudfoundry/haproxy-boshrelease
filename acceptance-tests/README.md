@@ -14,66 +14,11 @@ cd acceptance-tests
 
 ### Running on Docker for Mac
 
-Unfortunately rosetta on arm based macs doesn't support docker in docker required for bosh docker-cpi used in this test setup. You will either have to run on x86 based mac or some remote x86 workstation. Virtualization using QEMU is possible, but so slow the tests fail on timeouts.
+Acceptance tests cannot be run on Mac with arm64 architecture:
+* Docker-in-Docker, which is required by this test setup, is not supported on arm64.
+* The `ghcr.io/cloudfoundry/bosh/docker-cpi` image is only built for x86 and will not run on arm64.
 
-The BOSH Docker CPI requires cgroups v1 to be active. Docker for Mac since 4.3.x uses cgroups v2 by default.
-
-v1 can be restored with the flag `deprecatedCgroupv1` to `true` in `~/Library/Group Containers/group.com.docker/settings.json`.
-
-A convenience script that does this for you is below.
-
-**WARNING:** This will restart your Docker Desktop!
-
-```shell
-docker_restart_with_cgroupsv1() {
-    SETTINGS=~/Library/Group\ Containers/group.com.docker/settings.json
-
-    if ! command -v jq >/dev/null || ! command -v sponge; then
-        echo "Requires jq and sponge. Consider installing via:"
-        echo "   brew install jq moreutils"
-        return
-    fi
-
-    cgroupsV1Enabled=$(jq '.deprecatedCgroupv1' "$SETTINGS")
-    if [ "$cgroupsV1Enabled" = "true" ]; then
-        echo "deprecatedCgroupv1 is already set to 'true'. Acceptance tests should work."
-    else
-        echo "Stopping Docker to set the config flag deprecatedCgroupv1 = true in $SETTINGS"
-
-        while docker ps -q 2>/dev/null; do
-            launchctl stop $(launchctl list | grep docker.docker | awk '{print $3}')
-            osascript -e 'quit app "Docker"'
-            echo "Waiting for Docker daemon to stop responding."
-            sleep 1
-        done
-        echo 'Setting "deprecatedCgroupv1" to true.'
-
-        # Add the needed cgroup config to docker settings.json
-        # sponge is needed because we're updating the same file in place
-        echo '{"deprecatedCgroupv1": true}' |
-            jq -s '.[0] * .[1]' "$SETTINGS" - |
-            sponge "$SETTINGS"
-        # Restart docker desktop
-        echo "Restarting Docker"
-        open --background -a Docker
-
-        while ! docker ps -q 2>/dev/null; do
-            echo "Waiting for Docker daemon to be back up again. Sleeping 1s."
-            sleep 1
-        done
-    fi
-
-    docker info | grep "Cgroup"
-}
-
-docker_restart_with_cgroupsv1
-```
-
-The output at the end should be:
-```plain
- Cgroup Driver: cgroupfs
- Cgroup Version: 1
-```
+You will need to use an x86-based Mac or a remote x86 workstation instead. Virtualization via QEMU is possible, but is too slow in practice — tests will fail on timeouts.
 
 ### Focussed Tests
 
@@ -99,6 +44,16 @@ However, if you want to run exactly one specific test, make sure you pass the ex
 ```
 
 Running tests in focus will also preserve the bosh container running after tests complete, so that you can easily run tests again without having to wait for bosh set-up again.
+
+### Parallelism
+
+By default, Ginkgo runs the test suite with smart parallelism (`-p`), automatically choosing the number of parallel nodes based on the available CPU count. You can override this with the `-P` flag:
+
+```shell
+./run-local.sh -P 4
+```
+
+This sets the number of Ginkgo parallel nodes to `4`. Set it to `1` to run tests sequentially, which can be useful for debugging flaky tests or when the host machine has limited resources.
 
 ### Persistent BOSH
 

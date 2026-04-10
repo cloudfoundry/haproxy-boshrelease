@@ -14,6 +14,7 @@ groups:
       - major
       - autobump-dependencies
       - build-haproxy-testflight-image
+      - build-haproxy-testflight-image-pr
 
 jobs:
   - name: unit-tests
@@ -65,15 +66,16 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every }
-      - get: haproxy-boshrelease-testflight
+      - { get: git-pull-requests, trigger: true, version: every, passed: [build-haproxy-testflight-image-pr] }
+      - get: haproxy-boshrelease-testflight-pr
+        passed: [build-haproxy-testflight-image-pr]
       - put: git-pull-requests
         params:
           path: git-pull-requests
           status: pending
           context: unit-tests
       - task: lint
-        image: haproxy-boshrelease-testflight
+        image: haproxy-boshrelease-testflight-pr
         config:
           platform: linux
           inputs:
@@ -87,7 +89,7 @@ jobs:
           params:
             REPO_ROOT: git-pull-requests
       - task: unit-tests
-        image: haproxy-boshrelease-testflight
+        image: haproxy-boshrelease-testflight-pr
         config:
           platform: linux
           inputs:
@@ -121,17 +123,18 @@ jobs:
       - in_parallel:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
-        - { get: stemcell-bionic }
+        - { get: stemcell-jammy }
         - get: haproxy-boshrelease-testflight
       - task: acceptance-tests
         privileged: true
+        timeout: 4h
         image: haproxy-boshrelease-testflight
         config:
           platform: linux
           inputs:
             - { name: git }
             - { name: stemcell }
-            - { name: stemcell-bionic }
+            - { name: stemcell-jammy }
           run:
             path: ./git/ci/scripts/acceptance-tests
             args: []
@@ -150,10 +153,11 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every }
+      - { get: git-pull-requests, trigger: true, version: every, passed: [build-haproxy-testflight-image-pr] }
       - { get: stemcell }
-      - { get: stemcell-bionic }
-      - get: haproxy-boshrelease-testflight
+      - { get: stemcell-jammy }
+      - get: haproxy-boshrelease-testflight-pr
+        passed: [build-haproxy-testflight-image-pr]
       - put: git-pull-requests
         params:
           path: git-pull-requests
@@ -163,13 +167,14 @@ jobs:
           list_changed_files: true
       - task: acceptance-tests
         privileged: true
-        image: haproxy-boshrelease-testflight
+        timeout: 4h
+        image: haproxy-boshrelease-testflight-pr
         config:
           platform: linux
           inputs:
             - { name: git-pull-requests }
             - { name: stemcell }
-            - { name: stemcell-bionic }
+            - { name: stemcell-jammy }
           run:
             path: ./git-pull-requests/ci/scripts/acceptance-tests
             args: []
@@ -364,6 +369,34 @@ jobs:
         get_params:
           skip_download: true
 
+  - name: build-haproxy-testflight-image-pr
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - { get: git-pull-requests, trigger: true, version: every }
+          - get: docker-cpi-image
+      - task: create-pr-tag
+        image: docker-cpi-image
+        config:
+          inputs:
+            - name: git-pull-requests
+          outputs:
+            - name: tag
+          platform: linux
+          run:
+            path: sh
+            args:
+              - -exc
+              - jq -r .pr git-pull-requests/.git/resource/version.json | tee tag/pr
+      - put: haproxy-boshrelease-testflight-pr
+        params:
+          tag_as_latest: true
+          tag_file: tag/pr
+          build: git-pull-requests/ci
+        get_params:
+          skip_download: true
+
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -403,15 +436,15 @@ resources:
         - "dependabot"
         - "CFN-CI"
 
-  - name: stemcell-bionic
+  - name: stemcell-jammy
     type: bosh-io-stemcell
     source:
-      name: bosh-warden-boshlite-ubuntu-bionic-go_agent
+      name: bosh-warden-boshlite-ubuntu-jammy-go_agent
 
   - name: stemcell
     type: bosh-io-stemcell
     source:
-      name: bosh-warden-boshlite-ubuntu-jammy-go_agent
+      name: bosh-warden-boshlite-ubuntu-noble
 
   - name: version
     type: semver
@@ -453,7 +486,7 @@ resources:
   - name: docker-cpi-image
     type: docker-image
     source:
-      repository: bosh/docker-cpi
+      repository: ghcr.io/cloudfoundry/bosh/docker-cpi
 
   - name: git-ci
     type: git
@@ -463,6 +496,7 @@ resources:
       paths:
         - ci/Dockerfile
         - ci/scripts/requirements.txt
+        - ci/ops/
 
   - name: haproxy-boshrelease-testflight
     type: docker-image
@@ -470,3 +504,11 @@ resources:
       repository: europe-west3-docker.pkg.dev/app-runtime-platform-wg/arp-wg-docker/haproxy-boshrelease-testflight
       username: _json_key
       password: ((gcp.docker_image_writer_service_key))
+
+  - name: haproxy-boshrelease-testflight-pr
+    type: docker-image
+    source:
+      repository: europe-west3-docker.pkg.dev/app-runtime-platform-wg/arp-wg-docker/haproxy-boshrelease-testflight-pr
+      username: _json_key
+      password: ((gcp.docker_image_writer_service_key))
+      tag: last
