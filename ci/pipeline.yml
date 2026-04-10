@@ -14,6 +14,7 @@ groups:
       - major
       - autobump-dependencies
       - build-haproxy-testflight-image
+      - build-haproxy-testflight-image-pr
 
 jobs:
   - name: unit-tests
@@ -65,15 +66,16 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every }
-      - get: haproxy-boshrelease-testflight
+      - { get: git-pull-requests, trigger: true, version: every, passed: [build-haproxy-testflight-image-pr] }
+      - get: haproxy-boshrelease-testflight-pr
+        passed: [build-haproxy-testflight-image-pr]
       - put: git-pull-requests
         params:
           path: git-pull-requests
           status: pending
           context: unit-tests
       - task: lint
-        image: haproxy-boshrelease-testflight
+        image: haproxy-boshrelease-testflight-pr
         config:
           platform: linux
           inputs:
@@ -87,7 +89,7 @@ jobs:
           params:
             REPO_ROOT: git-pull-requests
       - task: unit-tests
-        image: haproxy-boshrelease-testflight
+        image: haproxy-boshrelease-testflight-pr
         config:
           platform: linux
           inputs:
@@ -151,10 +153,11 @@ jobs:
     serial: true
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every }
+      - { get: git-pull-requests, trigger: true, version: every, passed: [build-haproxy-testflight-image-pr] }
       - { get: stemcell }
       - { get: stemcell-jammy }
-      - get: haproxy-boshrelease-testflight
+      - get: haproxy-boshrelease-testflight-pr
+        passed: [build-haproxy-testflight-image-pr]
       - put: git-pull-requests
         params:
           path: git-pull-requests
@@ -165,7 +168,7 @@ jobs:
       - task: acceptance-tests
         privileged: true
         timeout: 4h
-        image: haproxy-boshrelease-testflight
+        image: haproxy-boshrelease-testflight-pr
         config:
           platform: linux
           inputs:
@@ -366,6 +369,34 @@ jobs:
         get_params:
           skip_download: true
 
+  - name: build-haproxy-testflight-image-pr
+    public: true
+    serial: true
+    plan:
+      - in_parallel:
+          - { get: git-pull-requests, trigger: true, version: every }
+          - get: docker-cpi-image
+      - task: create-pr-tag
+        image: docker-cpi-image
+        config:
+          inputs:
+            - name: git-pull-requests
+          outputs:
+            - name: tag
+          platform: linux
+          run:
+            path: sh
+            args:
+              - -exc
+              - jq -r .pr git-pull-requests/.git/resource/version.json | tee tag/pr
+      - put: haproxy-boshrelease-testflight-pr
+        params:
+          tag_as_latest: true
+          tag_file: tag/pr
+          build: git-pull-requests/ci
+        get_params:
+          skip_download: true
+
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -473,3 +504,11 @@ resources:
       repository: europe-west3-docker.pkg.dev/app-runtime-platform-wg/arp-wg-docker/haproxy-boshrelease-testflight
       username: _json_key
       password: ((gcp.docker_image_writer_service_key))
+
+  - name: haproxy-boshrelease-testflight-pr
+    type: docker-image
+    source:
+      repository: europe-west3-docker.pkg.dev/app-runtime-platform-wg/arp-wg-docker/haproxy-boshrelease-testflight-pr
+      username: _json_key
+      password: ((gcp.docker_image_writer_service_key))
+      tag: last
