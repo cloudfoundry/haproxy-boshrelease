@@ -330,7 +330,7 @@ jobs:
               platform: linux
               run:
                 dir: git
-                path: /usr/bin/python3
+                path: /opt/venv/bin/python3
                 args: ["ci/scripts/autobump-dependencies.py"]
               params:
                 PR_BASE: master
