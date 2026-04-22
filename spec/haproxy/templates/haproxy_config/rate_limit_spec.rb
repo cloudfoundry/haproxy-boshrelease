@@ -9,6 +9,7 @@ describe 'config/haproxy.config rate limiting' do
 
   let(:frontend_http) { haproxy_conf['frontend http-in'] }
   let(:frontend_https) { haproxy_conf['frontend https-in'] }
+  let(:global) { haproxy_conf['global'] }
 
   let(:properties) { {} }
 
@@ -88,16 +89,67 @@ describe 'config/haproxy.config rate limiting' do
       expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
     end
 
-    context 'when "connections" and "block" are also provided' do
+    it 'always adds tcp-request connection reject rule without requiring connections property' do
+      expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+      expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+    end
+
+    it 'does not set proc.conn_rate_limit in global when connections is not provided' do
+      expect(global).not_to include('set-var proc.conn_rate_limit')
+    end
+
+    it 'does not set proc.conn_rate_limit_enabled in global when block is not provided' do
+      expect(global).not_to include('set-var proc.conn_rate_limit_enabled')
+    end
+
+    context 'when "connections" is provided' do
       let(:properties) do
-        temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '5', 'block' => 'true' } })
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '100' } })
       end
 
-      it 'adds http-request deny condition to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
-        expect(frontend_http).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
-        expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
+      it 'sets proc.conn_rate_limit in global section' do
+        expect(global).to include('set-var proc.conn_rate_limit int(100)')
+      end
+
+      it 'still adds tcp-request connection reject rule in both frontends' do
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+      end
+    end
+
+    context 'when "block" is set to true' do
+      let(:properties) do
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'block' => true } })
+      end
+
+      it 'sets proc.conn_rate_limit_enabled to bool(1) in global section' do
+        expect(global).to include('set-var proc.conn_rate_limit_enabled bool(1)')
+      end
+    end
+
+    context 'when "block" is set to false' do
+      let(:properties) do
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'block' => false } })
+      end
+
+      it 'sets proc.conn_rate_limit_enabled to bool(0) in global section' do
+        expect(global).to include('set-var proc.conn_rate_limit_enabled bool(0)')
+      end
+    end
+
+    context 'when both "connections" and "block" are provided' do
+      let(:properties) do
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '50', 'block' => true } })
+      end
+
+      it 'sets both proc vars in global section' do
+        expect(global).to include('set-var proc.conn_rate_limit int(50)')
+        expect(global).to include('set-var proc.conn_rate_limit_enabled bool(1)')
+      end
+
+      it 'adds reject rule controlled by proc vars in both frontends' do
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_limit_enabled) -m bool } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
       end
     end
   end
