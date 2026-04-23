@@ -130,5 +130,36 @@ describe 'config/haproxy.config healthcheck listeners' do
         end
       end
     end
+
+    context 'when ha_proxy.binding_ip is provided' do
+      let(:properties) do
+        {
+          'enable_health_check_http' => true,
+          'enable_additional_health_check_proxy' => true,
+          'binding_ip' => '1.2.3.4'
+        }
+      end
+
+      it 'binds the health check listeners to the provided ip' do
+        expect(healthcheck_listener).to include('bind 1.2.3.4:8080')
+        expect(healthcheck_listener_proxy_protocol).to include('bind 1.2.3.4:8081 accept-proxy')
+      end
+
+      context 'when ha_proxy.v4v6 is true and binding_ip is ::' do
+        let(:properties) do
+          {
+            'enable_health_check_http' => true,
+            'enable_additional_health_check_proxy' => true,
+            'v4v6' => true,
+            'binding_ip' => '::'
+          }
+        end
+
+        it 'enables ipv6 dual-stack on the health check listeners' do
+          expect(healthcheck_listener).to include('bind :::8080 v4v6')
+          expect(healthcheck_listener_proxy_protocol).to include('bind :::8081 accept-proxy v4v6')
+        end
+      end
+    end
   end
 end
