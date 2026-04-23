@@ -40,7 +40,7 @@ properties:
 ## Configuring HAProxy to Pass Client Certificates to Apps
 
 HAProxy can be configured to pass client certificates on to apps requiring them on the backend.
-This does not enforce mutual TLS at the HAPrcxy level, nor does it enable it at the app level.
+This does not enforce mutual TLS at the HAProxy level, nor does it enable it at the app level.
 Instead, it allows for HAProxy to accept client certificates optionally, which are then passed to
 backend apps via the `X-Forwarded-Client-Cert` HTTP Header. Apps must then be written to inspect that
 header, and perform a manual certificate validation based on the value of the `X-Forwarded-Client-Cert`
@@ -61,8 +61,8 @@ were used to issue the client certs.
 certs, to ensure client certs have not been revoked.
 
 If HAProxy has trouble validating a client cert, it will refuse to serve the request, unless
-that specific error has been ignored. This can be configured via `ha_proxy.client_cert_ignore_err`
-An exhaustive list of these error codes can be found here][4]
+that specific error has been ignored. This can be configured via `ha_proxy.client_cert_ignore_err`.
+An exhaustive list of these error codes can be found [here][4].
 
 [1]: https://github.com/cloudfoundry/haproxy-boshrelease
 [2]: #using-haproxy-in-front-of-backends-that-require-mutual-tls
