@@ -29,7 +29,7 @@ it's connecting to, add the following properties to the mix:
 properties:
   haproxy:
     backend_ssl: verify
-    backend_ca: |
+    backend_ca_file: |
       ----- BEGIN CERTIFICATE -----
       CA Certificate for validating backend certs
       ----- END CERTIFICATE -----

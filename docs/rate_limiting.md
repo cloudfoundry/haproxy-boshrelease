@@ -72,7 +72,7 @@ backend st_http_req_rate
 # [...]
 frontend http-in
     http-request track-sc1 src table st_http_req_rate
-    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
+    http-request deny status 429 if { sc_http_req_rate(1) gt 10 }
 ```
 
 
@@ -103,7 +103,7 @@ backend st_tcp_conn_rate
 frontend http-in
     # [...]
     http-request track-sc1 src table st_http_req_rate
-    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt 10 }
+    http-request deny status 429 if { sc_http_req_rate(1) gt 10 }
 
     tcp-request content track-sc0 src table st_tcp_conn_rate
     tcp-request connection reject if { sc_conn_rate(0) gt 10}
