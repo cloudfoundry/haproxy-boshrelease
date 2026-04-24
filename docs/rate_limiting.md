@@ -16,6 +16,8 @@ Both groups contain the (roughly) same attributes :
 - `table_size`: Size of the stick table in which the IPs and counters are stored.
 - `block`: Whether or not to block connections. If `block` is disabled (or not provided), incoming requests/connections will still be tracked in the respective stick-tables, but will not be denied.
 
+> **Note for `connections_rate_limit`:** The `block` flag and `connections` threshold are stored as HAProxy process-level variables (`proc.conn_rate_limit_enabled` and `proc.conn_rate_limit`). The `tcp-request connection reject` rule is always present in the config as long as `table_size` and `window_size` are configured — enforcement is controlled entirely at runtime via these variables. Their initial values are set from the BOSH manifest at startup, but they can be adjusted at runtime without reloading HAProxy via the stats socket. See [Runtime adjustment via stats socket](#runtime-adjustment-of-connections_rate_limit-via-stats-socket) for details.
+
 ## Effects of Rate Limiting
 Once a rate-limit is reached, haproxy-boshrelease will no longer proxy incoming request from the rate-limited client IP to a backend. Depending on the type of rate limiting, haproxy will respond with one of the following:
 
@@ -119,3 +121,72 @@ $ echo "show table st_http_req_rate" | socat /var/vcap/sys/run/haproxy/stats.soc
 ```
 
 > Please note you will likely need 'sudo' permission to run socat.
+
+## Runtime adjustment of connections_rate_limit via stats socket
+
+The `connections_rate_limit.block` flag and `connections_rate_limit.connections` threshold are stored as HAProxy process-level variables and can be changed at runtime without a reload. This requires `ha_proxy.master_cli_enable: true` or `ha_proxy.stats_enable: true`.
+
+The socket is located at `/var/vcap/sys/run/haproxy/stats.sock`. You will likely need `sudo` to access it.
+
+> **Note:** The `tcp-request connection reject` rule is always present in the config as long as `connections_rate_limit.table_size` and `connections_rate_limit.window_size` are set. Enforcement is controlled entirely at runtime via `proc.conn_rate_limit_enabled` and `proc.conn_rate_limit`. Setting `connections_rate_limit.connections` and `connections_rate_limit.block` in the manifest only sets their **initial values** at startup — they can be freely overridden via socket without a reload.
+
+### Inspect current variable values
+
+```bash
+echo "get var proc.conn_rate_limit" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+# => proc.conn_rate_limit: type=sint value=<100>
+
+echo "get var proc.conn_rate_limit_enabled" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+# => proc.conn_rate_limit_enabled: type=bool value=<1>
+```
+
+### Enable or disable blocking at runtime
+
+```bash
+# Enable blocking (equivalent to setting block: true in the manifest)
+echo "experimental-mode on; set var proc.conn_rate_limit_enabled bool(true)" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+
+# Disable blocking without reloading (equivalent to setting block: false in the manifest)
+echo "experimental-mode on; set var proc.conn_rate_limit_enabled bool(false)" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+```
+
+### Adjust the connections threshold at runtime
+
+```bash
+# Allow up to 100 connections per window (equivalent to setting connections: 100 in the manifest)
+echo "experimental-mode on; set var proc.conn_rate_limit int(100)" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+```
+
+### Combine enable + threshold change in one step
+
+```bash
+echo "experimental-mode on; set var proc.conn_rate_limit int(100); set var proc.conn_rate_limit_enabled bool(true)" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+```
+
+### Inspect current stick-table entries
+
+```bash
+echo "show table st_tcp_conn_rate" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+# => # table: st_tcp_conn_rate, type: ipv6, size:1048576, used:2
+# => 0x...: key=::ffff:203.0.113.42 use=0 exp=8123 shard=0 conn_rate(10000)=5
+
+# Show only IPs with an active connection rate
+echo "show table st_tcp_conn_rate data.conn_rate gt 0" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+
+# Find the IP with the highest connection rate
+echo "show table st_tcp_conn_rate" | socat stdio /var/vcap/sys/run/haproxy/stats.sock | sort -t= -k2 -rn | head -1
+```
+
+### Clear an IP from the stick table (unblock a specific client)
+
+> **Note:** IPs are stored as IPv6-mapped IPv4 addresses. Always prefix IPv4 addresses with `::ffff:`.
+
+```bash
+# Remove a specific IP entry (only works when the entry is not actively in use)
+echo "clear table st_tcp_conn_rate key ::ffff:203.0.113.42" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+
+# Clear all entries from the table
+echo "clear table st_tcp_conn_rate" | socat stdio /var/vcap/sys/run/haproxy/stats.sock
+```
+
+> **Note:** Runtime changes to `proc.conn_rate_limit` and `proc.conn_rate_limit_enabled` are lost on HAProxy reload or restart. The values will be re-initialized from the BOSH manifest properties (`connections_rate_limit.connections` and `connections_rate_limit.block`) on next startup.
