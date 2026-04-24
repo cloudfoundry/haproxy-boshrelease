@@ -4,17 +4,29 @@ When debugging crashes or unexpected behavior in HAProxy, it can be useful to en
 
 ## Required Changes
 
-Enabling core dumps requires the following modifications to the BOSH release:
+Enabling core dumps requires a few modifications to the BOSH release.
 
-### 1. Disable BPM
+Depending on the BPM (BOSH Process Manager) version, BPM needs to be either configured or disabled:
 
-BPM (BOSH Process Manager) restricts the process environment in ways that prevent core dumps from being written. To work around this, the monit configuration must be changed to manage HAProxy directly via `haproxy_wrapper` instead of BPM:
+### 1a. Disable BPM (BPM <= 1.4.29)
 
-- **Start program**: `/var/vcap/jobs/haproxy/bin/haproxy_wrapper` (instead of `/var/vcap/jobs/bpm/bin/bpm start haproxy`)
-- **Stop program**: `kill $(cat /var/vcap/sys/run/haproxy/haproxy.pid)` (instead of `bpm stop`)
-- **PID file**: `/var/vcap/sys/run/haproxy/haproxy.pid` (instead of `/var/vcap/sys/run/bpm/haproxy/haproxy.pid`)
+BPM <= 1.4.29 restricts the process environment in ways that prevent core dumps from being written. To work around this, the monit configuration must be changed to manage HAProxy directly via `haproxy_wrapper` instead of BPM:
 
-The PID file path must also be updated in `drain.erb` and `reload.erb` to match.
+- **Start program** in `jobs/haproxy/monit`: Change from `/var/vcap/jobs/bpm/bin/bpm start haproxy` to `/var/vcap/jobs/haproxy/bin/haproxy_wrapper`
+- **Stop program** in `jobs/haproxy/monit`: Change from `/var/vcap/jobs/bpm/bin/bpm stop haproxy` to `/bin/bash -c 'kill $(cat /var/vcap/sys/run/haproxy/haproxy.pid)'`
+- **PID file** in `jobs/haproxy/monit`: Change from `/var/vcap/sys/run/bpm/haproxy/haproxy.pid` to `/var/vcap/sys/run/haproxy/haproxy.pid`
+- **PID file** in `jobs/haproxy/templates/drain.erb`: Change the `pidfile=` variable from `/var/vcap/sys/run/bpm/haproxy/haproxy.pid` to `/var/vcap/sys/run/haproxy/haproxy.pid`
+- **PID file** in `jobs/haproxy/templates/reload.erb`: Change the `pidfile=` variable from `/var/vcap/sys/run/bpm/haproxy/haproxy.pid` to `/var/vcap/sys/run/haproxy/haproxy.pid`
+
+### 1b. Set BPM core_file_size limit (BPM > 1.4.29)
+
+BPM > 1.4.29 allows setting the core dump file size limit. In `jobs/haproxy/templates/bpm.yml`, add `core_file_size` to the existing `limits:` block (alongside `open_files`):
+
+```yaml
+    limits:
+      open_files: <%= p("ha_proxy.max_open_files") %>
+      core_file_size: 1073741824
+```
 
 ### 2. Configure the HAProxy wrapper script
 
