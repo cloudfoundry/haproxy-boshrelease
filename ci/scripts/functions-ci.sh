@@ -54,6 +54,12 @@ function bosh_release() {
     echo "----- Creating candidate BOSH release..."
     bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
+    if [ "${HAPROXY_AWSLC:-}" == "true" ]; then
+        echo "----- Adding AWS-LC blobs to haproxy package spec..."
+        echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+        echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+    fi
+
     bosh create-release --force
     bosh upload-release --rebase
     release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")

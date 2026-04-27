@@ -76,6 +76,8 @@ LUA_VERSION=$(version LUA_VERSION)
 SOCAT_VERSION=$(version SOCAT_VERSION)
 PCRE_VERSION=$(version PCRE_VERSION)
 KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
+AWS_LC_VERSION=$(version AWS_LC_VERSION)
+CMAKE_VERSION=$(version CMAKE_VERSION)
 
 VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
 
@@ -133,6 +135,8 @@ The following versions of upstream components are included in this haproxy-boshr
 | Lua         | \`${LUA_VERSION}\` |
 | PCRE        | \`${PCRE_VERSION}\` |
 | socat       | \`${SOCAT_VERSION}\` |
+| AWS-LC      | \`${AWS_LC_VERSION}\` |
+| cmake       | \`${CMAKE_VERSION}\` |
 
 ### Deployment
 \`\`\`yaml
@@ -180,6 +184,32 @@ pushd "${REPO_ROOT}"
   # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
+
+  # --- AWS-LC variant (unpatched) ---
+  echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-awslc" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-awslc.tgz"
+
+  # Undo changes to repo from creating dev release
+  git clean -df
+  git reset --hard
+
+  # --- AWS-LC + Patched variant ---
+  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+  tar -czvf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+  bosh upload-blobs
+
+  bosh -n create-release --force --version "${VERSION}-awslc-patched" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-awslc-patched.tgz"
+
+  # Undo changes to repo from creating dev release
+  git clean -df
+  git reset --hard
 popd
 
 mkdir -p "${RELEASE_ROOT}/artifacts-patched"
@@ -205,6 +235,58 @@ releases:
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc"
+mv "${RELEASE_NAME}-${VERSION}-awslc.tgz" "${RELEASE_ROOT}/artifacts-awslc"
+
+AWSLC_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc/${RELEASE_NAME}-${VERSION}-awslc.tgz
+# shellcheck disable=SC2155
+export AWSLC_SHA1=$(sha1sum "${AWSLC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_SHA1=${AWSLC_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_SHA256=$(sha256sum "${AWSLC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_SHA256=${AWSLC_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-awslc"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc.tgz"
+  sha1: "${AWSLC_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc-patched"
+mv "${RELEASE_NAME}-${VERSION}-awslc-patched.tgz" "${RELEASE_ROOT}/artifacts-awslc-patched"
+
+AWSLC_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-patched/${RELEASE_NAME}-${VERSION}-awslc-patched.tgz
+# shellcheck disable=SC2155
+export AWSLC_PATCHED_SHA1=$(sha1sum "${AWSLC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_PATCHED_SHA1=${AWSLC_PATCHED_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_PATCHED_SHA256=$(sha256sum "${AWSLC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_PATCHED_SHA256=${AWSLC_PATCHED_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC patched)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-awslc-patched"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc-patched.tgz"
+  sha1: "${AWSLC_PATCHED_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_PATCHED_SHA256}"
 \`\`\`
 EOF
 

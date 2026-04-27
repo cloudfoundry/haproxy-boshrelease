@@ -12,6 +12,9 @@ HAPROXY_VERSION=3.2.19  # https://www.haproxy.org/download/3.2/src/haproxy-3.2.1
 
 HATOP_VERSION=0.8.2  # https://github.com/jhunt/hatop/releases/download/v0.8.2/hatop
 
+AWS_LC_VERSION=1.72.0  # https://github.com/aws/aws-lc/archive/refs/tags/v1.72.0.tar.gz
+CMAKE_VERSION=3.31.6  # https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6.tar.gz
+
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
 echo "Extracting lua..."
@@ -39,6 +42,39 @@ pushd socat-${SOCAT_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
+# --- AWS-LC support (conditional) ---
+# If an AWS-LC source tarball is present, build cmake and AWS-LC from source.
+# HAProxy will be linked against AWS-LC instead of system OpenSSL.
+if ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
+  echo "Building cmake..."
+  tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
+  pushd cmake-${CMAKE_VERSION}
+    ./bootstrap --prefix=${BOSH_INSTALL_TARGET} --parallel=$(nproc)
+    make -j$(nproc)
+    make install
+  popd
+  export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
+
+  echo "Building AWS-LC..."
+  tar xzf haproxy/aws-lc-v${AWS_LC_VERSION}.tar.gz
+  pushd aws-lc-${AWS_LC_VERSION}
+    mkdir -p build && cd build
+    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DBUILD_SHARED_LIBS=0 \
+          -DDISABLE_GO=1 \
+          -DDISABLE_PERL=1 \
+          -DBUILD_TESTING=0 \
+          -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
+          ..
+    make -j$(nproc)
+    make install
+  popd
+
+  SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
+else
+  SSL_MAKE_FLAGS="USE_OPENSSL=1"
+fi
+
 echo "Unpacking HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
@@ -60,7 +96,7 @@ pushd haproxy-${HAPROXY_VERSION}
   fi
 
   echo "Installing HAproxy..."
-  make TARGET=linux-glibc USE_PROMEX=1 USE_OPENSSL=1 USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
+  make TARGET=linux-glibc USE_PROMEX=1 ${SSL_MAKE_FLAGS} USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd

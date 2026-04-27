@@ -24,6 +24,8 @@ HAPROXY_VERSION = "3.2"
 LUA_VERSION = "5.4"
 PCRE_VERSION = "10"
 HATOP_VERSION = "0"
+AWS_LC_VERSION = "1"
+CMAKE_VERSION = "3.31"
 
 # Required Environment Vars
 BLOBSTORE_SECRET_ACCESS_KEY = os.environ["GCP_SERVICE_KEY"]
@@ -500,6 +502,20 @@ def main() -> None:
             "https://github.com/jhunt/hatop",
             tagname_prefix="v",
             filename_suffix="",
+        ),
+        GithubDependency(
+            "aws-lc",
+            "AWS_LC_VERSION",
+            AWS_LC_VERSION,
+            "https://github.com/aws/aws-lc",
+            tagname_prefix="v",
+        ),
+        GithubDependency(
+            "cmake",
+            "CMAKE_VERSION",
+            CMAKE_VERSION,
+            "https://github.com/Kitware/CMake",
+            tagname_prefix="v",
         ),
     ]
 
