@@ -10,21 +10,21 @@ There are two rate limit configuration groups:
 - `connections_rate_limit` for connection based rate limiting on OSI layer 4/TCP
 - `requests_rate_limit` for request based rate limiting on OSI layer 7/HTTP
 
-Both groups contain the (roughly) same attributes :
-- `requests` (for `requests_rate_limit`) and `connections` (for `connections_rate_limit`): the amount of requests/connections that are allowed within a time window (see `window_size`) before further incoming requests/connections are denied/blocked
+Both groups contain roughly the same attributes:
+- `requests` (for `requests_rate_limit`) and `connections` (for `connections_rate_limit`): the number of requests/connections allowed within a time window (see `window_size`) before further incoming requests/connections are denied/blocked
 - `window_size`: Window size for counting connections
 - `table_size`: Size of the stick table in which the IPs and counters are stored.
 - `block`: Whether or not to block connections. If `block` is disabled (or not provided), incoming requests/connections will still be tracked in the respective stick-tables, but will not be denied.
 
 ## Effects of Rate Limiting
-Once a rate-limit is reached, haproxy-boshrelease will no longer proxy incoming request from the rate-limited client IP to a backend. Depending on the type of rate limiting, haproxy will respond with one of the following:
+Once a rate limit is reached, haproxy-boshrelease will no longer proxy incoming requests from the rate-limited client IP to a backend. Depending on the type of rate limiting, HAProxy will respond with one of the following:
 
 ### Request based Rate Limiting
-HAProxy responds the client with HTTP Status Code: `429: Too Many Requests`.
+HAProxy responds to the client with HTTP Status Code: `429: Too Many Requests`.
 
 ### Connection based Rate Limiting
 The TCP connection will be rejected. This would for example show up as `Empty reply from server` for a `curl`-client.
-This will not result in a log statement on HAProxy side, which can make tracing issues more difficult.
+This will not result in a log statement on the HAProxy side, which can make tracing issues more difficult.
 
 > Note:
 > If both rate-limits are reached simultaneously (e.g. if they are configured identically and every incoming HTTP request uses a new TCP connection), connection based rate-limiting will come into effect first, resulting in a dropped TCP connection.
@@ -32,7 +32,7 @@ This will not result in a log statement on HAProxy side, which can make tracing 
 
 ## Configuration Examples
 > Note:
-> The following example assume only a `http-in` frontend is configured, a `https-in` frontend would behave identically
+> The following examples assume only an `http-in` frontend is configured; an `https-in` frontend would behave identically.
 
 ### Count Incoming Requests Only (No blocking)
 #### Configuration (`deployments/haproxy/config.yml`)
@@ -72,7 +72,7 @@ backend st_http_req_rate
 # [...]
 frontend http-in
     http-request track-sc1 src table st_http_req_rate
-    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt <%= p("ha_proxy.requests_rate_limit.requests") %> }
+    http-request deny status 429 if { sc_http_req_rate(1) gt 10 }
 ```
 
 
@@ -103,14 +103,14 @@ backend st_tcp_conn_rate
 frontend http-in
     # [...]
     http-request track-sc1 src table st_http_req_rate
-    http-request deny status 429 content-type "text/plain" string "429: Too Many Requests" if { sc_http_req_rate(1) gt 10 }
+    http-request deny status 429 if { sc_http_req_rate(1) gt 10 }
 
     tcp-request content track-sc0 src table st_tcp_conn_rate
     tcp-request connection reject if { sc_conn_rate(0) gt 10}
 ```
 
-## Querying current stick-table status
-To give us more insights into what is going on inside HAProxy regarding its rate limits we can query the stats socket to get the raw table data:
+## Querying Current Stick-Table Status
+To get more insight into what is going on inside HAProxy regarding its rate limits, you can query the stats socket to get the raw table data:
 
 ```bash
 $ echo "show table st_http_req_rate" | socat /var/vcap/sys/run/haproxy/stats.sock -
@@ -118,4 +118,4 @@ $ echo "show table st_http_req_rate" | socat /var/vcap/sys/run/haproxy/stats.soc
 0x56495f3dc3d0: key=172.18.0.1 use=0 exp=7618 http_req_rate(10000)=10
 ```
 
-> Please note you will likely need 'sudo' permission to run socat.
+> Note: You will likely need `sudo` permission to run socat.
