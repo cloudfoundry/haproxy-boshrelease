@@ -44,6 +44,12 @@ describe 'config/haproxy.config stats listener' do
       end
     end
 
+    context 'when ha_proxy.stats_promex_enable is false (default)' do
+      it 'does not include a prometheus exporter endpoint' do
+        expect(stats_listener).not_to include(a_string_including('prometheus-exporter'))
+      end
+    end
+
     context 'when ha_proxy.trusted_stats_cidrs is set' do
       let(:properties) do
         default_properties.merge({ 'trusted_stats_cidrs' => '1.2.3.4/32' })
