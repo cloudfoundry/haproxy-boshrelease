@@ -1,3 +1,6 @@
+haproxy/aws-lc-fips-3.3.0.tar.gz:
+  size: 117102202
+  sha: sha256:c137191845248c31251972f37a18381db10e579ebc205ebabb464d6f8abb759f
 haproxy/aws-lc-v1.72.0.tar.gz:
   size: 145266600
   sha: sha256:f214c0e06e043c4f18b836059ccb5ecbed781173e8eed106839ee2dd4f4cc157
