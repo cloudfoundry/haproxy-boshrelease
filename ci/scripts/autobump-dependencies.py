@@ -26,6 +26,8 @@ PCRE_VERSION = "10"
 HATOP_VERSION = "0"
 AWS_LC_VERSION = "1"
 CMAKE_VERSION = "3.31"
+AWS_LC_FIPS_VERSION = "3"
+GOLANG_VERSION = "1.26"
 
 # Required Environment Vars
 BLOBSTORE_SECRET_ACCESS_KEY = os.environ["GCP_SERVICE_KEY"]
@@ -336,6 +338,87 @@ class WebLinkDependency(Dependency):
 
 
 @dataclass
+class GolangDependency(Dependency):
+    """
+    Handles Go toolchain downloads from go.dev/dl/.
+    Go binaries are named go1.X.Y.linux-amd64.tar.gz but stored as golang-X.Y.Z.tar.gz in blobs.
+    """
+
+    def fetch_latest_release(self) -> Release:
+        data = requests.get(self.root_url)
+        html = BeautifulSoup(data.text, "html.parser")
+
+        versions = []
+        links = [link for link in html.select("a") if "href" in link.attrs]
+
+        pattern = rf"go({self.pinned_version}(?:\.[0-9]+)*)\.linux-amd64\.tar\.gz"
+
+        for link in links:
+            match = re.search(pattern, link.attrs["href"])
+            if match:
+                ver = version.parse(match.group(1))
+                url = requests.compat.urljoin(self.root_url, link.attrs["href"])
+                versions.append(
+                    Release(
+                        f"golang-{match.group(1)}",
+                        url,
+                        f"golang-{match.group(1)}.tar.gz",
+                        ver,
+                    )
+                )
+
+        if versions:
+            return sorted(versions, key=lambda r: r.version, reverse=True)[0]
+
+        raise Exception(f"Failed to get latest {self.name} version from {self.root_url}")
+
+    def get_release_notes(self) -> str:
+        return f"Make sure to check the [CHANGELOG](https://go.dev/doc/devel/release) for any breaking changes."
+
+
+@dataclass
+class GithubArchiveDependency(Dependency):
+    """
+    For GitHub repos where releases don't have downloadable assets,
+    so we use the archive tarball URL instead.
+    """
+
+    tagname_prefix: str = ""
+
+    def fetch_latest_release(self) -> Release:
+        repo_org_and_name = self.root_url.lstrip("https://github.com/")
+        repo = gh.get_repo(repo_org_and_name)
+        releases = repo.get_releases()
+
+        latest_release = None
+        latest_version = version.parse("0.0.0")
+
+        for rel in releases:
+            if rel.prerelease:
+                continue
+            current_raw = rel.tag_name.lstrip(self.tagname_prefix)
+            current_version = version.parse(current_raw)
+            if latest_version < current_version and current_raw.startswith(self.pinned_version):
+                latest_version = current_version
+                tag = rel.tag_name
+                url = f"{self.root_url}/archive/refs/tags/{tag}.tar.gz"
+                latest_release = Release(
+                    rel.title,
+                    url,
+                    f"{self.name}-{str(current_version)}.tar.gz",
+                    current_version,
+                )
+
+        if latest_version == version.parse("0.0.0") or latest_release is None:
+            raise Exception(f"No release found for '{self.root_url}'")
+
+        return latest_release
+
+    def get_release_notes(self) -> str:
+        return f"Make sure to check the [CHANGELOG]({self.root_url}/releases) for any breaking changes."
+
+
+@dataclass
 class HaproxyDependency(Dependency):
     def __post_init__(self):
         # This takes care of version pinning (only releases of pinned version in releases.json/directory)
@@ -510,12 +593,25 @@ def main() -> None:
             "https://github.com/aws/aws-lc",
             tagname_prefix="v",
         ),
+        GithubArchiveDependency(
+            "aws-lc-fips",
+            "AWS_LC_FIPS_VERSION",
+            AWS_LC_FIPS_VERSION,
+            "https://github.com/aws/aws-lc",
+            tagname_prefix="AWS-LC-FIPS-",
+        ),
         GithubDependency(
             "cmake",
             "CMAKE_VERSION",
             CMAKE_VERSION,
             "https://github.com/Kitware/CMake",
             tagname_prefix="v",
+        ),
+        GolangDependency(
+            "golang",
+            "GOLANG_VERSION",
+            GOLANG_VERSION,
+            "https://go.dev/dl/",
         ),
     ]
 

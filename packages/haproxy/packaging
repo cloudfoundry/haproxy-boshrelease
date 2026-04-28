@@ -13,7 +13,9 @@ HAPROXY_VERSION=3.2.19  # https://www.haproxy.org/download/3.2/src/haproxy-3.2.1
 HATOP_VERSION=0.8.2  # https://github.com/jhunt/hatop/releases/download/v0.8.2/hatop
 
 AWS_LC_VERSION=1.72.0  # https://github.com/aws/aws-lc/archive/refs/tags/v1.72.0.tar.gz
+AWS_LC_FIPS_VERSION=3.3.0  # https://github.com/aws/aws-lc/archive/refs/tags/AWS-LC-FIPS-3.3.0.tar.gz
 CMAKE_VERSION=3.31.6  # https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6.tar.gz
+GOLANG_VERSION=1.26.2  # https://go.dev/dl/go1.26.2.linux-amd64.tar.gz
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
@@ -43,9 +45,43 @@ pushd socat-${SOCAT_VERSION}
 popd
 
 # --- AWS-LC support (conditional) ---
-# If an AWS-LC source tarball is present, build cmake and AWS-LC from source.
-# HAProxy will be linked against AWS-LC instead of system OpenSSL.
-if ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
+# If an AWS-LC FIPS source tarball is present, build with FIPS support.
+# If a non-FIPS AWS-LC source tarball is present, build without FIPS.
+# Otherwise, use system OpenSSL.
+if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
+  # --- AWS-LC FIPS build ---
+  echo "Installing Go toolchain..."
+  tar xzf haproxy/golang-${GOLANG_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}
+  export GOROOT=${BOSH_INSTALL_TARGET}/go
+  export PATH=${GOROOT}/bin:$PATH
+
+  echo "Building cmake..."
+  tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
+  pushd cmake-${CMAKE_VERSION}
+    ./bootstrap --prefix=${BOSH_INSTALL_TARGET} --parallel=$(nproc)
+    make -j$(nproc)
+    make install
+  popd
+  export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
+
+  echo "Building AWS-LC (FIPS)..."
+  tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
+  pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
+    mkdir -p build && cd build
+    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DFIPS=1 \
+          -DBUILD_SHARED_LIBS=0 \
+          -DBUILD_TESTING=0 \
+          -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
+          ..
+    make -j$(nproc)
+    make install
+  popd
+
+  SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
+
+elif ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
+  # --- AWS-LC non-FIPS build ---
   echo "Building cmake..."
   tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
   pushd cmake-${CMAKE_VERSION}
@@ -71,7 +107,9 @@ if ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
   popd
 
   SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
+
 else
+  # --- System OpenSSL ---
   SSL_MAKE_FLAGS="USE_OPENSSL=1"
 fi
 

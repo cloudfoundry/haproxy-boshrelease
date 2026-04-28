@@ -78,6 +78,8 @@ PCRE_VERSION=$(version PCRE_VERSION)
 KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
 AWS_LC_VERSION=$(version AWS_LC_VERSION)
 CMAKE_VERSION=$(version CMAKE_VERSION)
+AWS_LC_FIPS_VERSION=$(version AWS_LC_FIPS_VERSION)
+GOLANG_VERSION=$(version GOLANG_VERSION)
 
 VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
 
@@ -136,7 +138,9 @@ The following versions of upstream components are included in this haproxy-boshr
 | PCRE        | \`${PCRE_VERSION}\` |
 | socat       | \`${SOCAT_VERSION}\` |
 | AWS-LC      | \`${AWS_LC_VERSION}\` |
+| AWS-LC FIPS | \`${AWS_LC_FIPS_VERSION}\` |
 | cmake       | \`${CMAKE_VERSION}\` |
+| Go          | \`${GOLANG_VERSION}\` |
 
 ### Deployment
 \`\`\`yaml
@@ -206,6 +210,34 @@ pushd "${REPO_ROOT}"
 
   bosh -n create-release --force --version "${VERSION}-awslc-patched" \
     --tarball "../${RELEASE_NAME}-${VERSION}-awslc-patched.tgz"
+
+  # Undo changes to repo from creating dev release
+  git clean -df
+  git reset --hard
+
+  # --- AWS-LC FIPS variant (unpatched) ---
+  echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-awslc-fips" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-awslc-fips.tgz"
+
+  # Undo changes to repo from creating dev release
+  git clean -df
+  git reset --hard
+
+  # --- AWS-LC FIPS + Patched variant ---
+  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
+  tar -czvf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+  bosh upload-blobs
+
+  bosh -n create-release --force --version "${VERSION}-awslc-fips-patched" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz"
 
   # Undo changes to repo from creating dev release
   git clean -df
@@ -287,6 +319,58 @@ releases:
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${AWSLC_PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc-fips"
+mv "${RELEASE_NAME}-${VERSION}-awslc-fips.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips"
+
+AWSLC_FIPS_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips/${RELEASE_NAME}-${VERSION}-awslc-fips.tgz
+# shellcheck disable=SC2155
+export AWSLC_FIPS_SHA1=$(sha1sum "${AWSLC_FIPS_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_SHA1=${AWSLC_FIPS_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_FIPS_SHA256=$(sha256sum "${AWSLC_FIPS_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_SHA256=${AWSLC_FIPS_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC FIPS)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-awslc-fips"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc-fips.tgz"
+  sha1: "${AWSLC_FIPS_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_FIPS_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
+mv "${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
+
+AWSLC_FIPS_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips-patched/${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz
+# shellcheck disable=SC2155
+export AWSLC_FIPS_PATCHED_SHA1=$(sha1sum "${AWSLC_FIPS_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_PATCHED_SHA1=${AWSLC_FIPS_PATCHED_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_FIPS_PATCHED_SHA256=$(sha256sum "${AWSLC_FIPS_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_PATCHED_SHA256=${AWSLC_FIPS_PATCHED_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC FIPS patched)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-awslc-fips-patched"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz"
+  sha1: "${AWSLC_FIPS_PATCHED_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_FIPS_PATCHED_SHA256}"
 \`\`\`
 EOF
 

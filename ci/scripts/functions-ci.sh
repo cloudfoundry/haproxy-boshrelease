@@ -54,7 +54,12 @@ function bosh_release() {
     echo "----- Creating candidate BOSH release..."
     bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
-    if [ "${HAPROXY_AWSLC:-}" == "true" ]; then
+    if [ "${HAPROXY_AWSLC_FIPS:-}" == "true" ]; then
+        echo "----- Adding AWS-LC FIPS blobs to haproxy package spec..."
+        echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+        echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+        echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
+    elif [ "${HAPROXY_AWSLC:-}" == "true" ]; then
         echo "----- Adding AWS-LC blobs to haproxy package spec..."
         echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
         echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
