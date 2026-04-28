@@ -53,6 +53,8 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
   echo "Installing Go toolchain..."
   tar xzf haproxy/golang-${GOLANG_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}
   export GOROOT=${BOSH_INSTALL_TARGET}/go
+  export GOPATH=${BOSH_INSTALL_TARGET}/gopath
+  export GOCACHE=${BOSH_INSTALL_TARGET}/gocache
   export PATH=${GOROOT}/bin:$PATH
 
   echo "Building cmake..."
