@@ -152,4 +152,54 @@ describe 'config/haproxy.config custom TCP frontends' do
       expect(haproxy_conf).not_to have_key(/frontend tcp/)
     end
   end
+
+  context 'when a tcp proxy has health_check_http configured' do
+    let(:default_properties) do
+      {
+        'tcp_link_port' => 5432,
+        'tcp' => [{
+          'name' => 'potatoedb',
+          'port' => 6379,
+          'backend_servers' => ['10.0.0.1', '10.0.0.2'],
+          'health_check_http' => 9095
+        }]
+      }
+    end
+
+    let(:healthcheck_listener) { haproxy_conf['listen health_check_http_tcp-potatoedb'] }
+    let(:healthcheck_listener_proxy_protocol) { haproxy_conf['listen health_check_http_tcp-potatoedb_proxy_protocol'] }
+
+    it 'binds the tcp health check listener to all interfaces by default' do
+      expect(healthcheck_listener).to include('bind :9095')
+    end
+
+    context 'when ha_proxy.binding_ip is provided' do
+      let(:properties) do
+        default_properties.merge({
+                                   'binding_ip' => '1.2.3.4',
+                                   'enable_additional_health_check_proxy' => true
+                                 })
+      end
+
+      it 'binds the tcp health check listeners to the provided ip' do
+        expect(healthcheck_listener).to include('bind 1.2.3.4:9095')
+        expect(healthcheck_listener_proxy_protocol).to include('bind 1.2.3.4:9096 accept-proxy')
+      end
+
+      context 'when ha_proxy.v4v6 is true and binding_ip is ::' do
+        let(:properties) do
+          default_properties.merge({
+                                     'v4v6' => true,
+                                     'binding_ip' => '::',
+                                     'enable_additional_health_check_proxy' => true
+                                   })
+        end
+
+        it 'enables ipv6 dual-stack on the tcp health check listeners' do
+          expect(healthcheck_listener).to include('bind :::9095 v4v6')
+          expect(healthcheck_listener_proxy_protocol).to include('bind :::9096 accept-proxy v4v6')
+        end
+      end
+    end
+  end
 end
