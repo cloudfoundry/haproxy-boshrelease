@@ -190,7 +190,7 @@ pushd "${REPO_ROOT}"
   git reset --hard
 
   # --- AWS-LC variant (unpatched) ---
-  echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
 
   bosh -n create-release --force --version "${VERSION}-awslc" \
@@ -202,7 +202,7 @@ pushd "${REPO_ROOT}"
 
   # --- AWS-LC + Patched variant ---
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
-  echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
   tar -czvf haproxy-patches.tar.gz haproxy-patches
   bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz

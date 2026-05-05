@@ -61,7 +61,7 @@ function bosh_release() {
         echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
     elif [ "${HAPROXY_AWSLC:-}" == "true" ]; then
         echo "----- Adding AWS-LC blobs to haproxy package spec..."
-        echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+        echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
         echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
     fi
 
