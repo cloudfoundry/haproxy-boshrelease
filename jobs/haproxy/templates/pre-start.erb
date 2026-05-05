@@ -13,12 +13,17 @@ if [ ! -e /usr/bin/python ] && [ -e /usr/bin/python3 ]; then
   sudo ln -s /usr/bin/python3 /usr/bin/python
 fi
 
+<%
+  ssl_variant = p("ha_proxy.ssl_variant", "openssl")
+  haproxy_package = "haproxy-#{ssl_variant}"
+  package_dir = File.directory?("/var/vcap/packages/#{haproxy_package}") ? haproxy_package : "haproxy"
+%>
 if [ ! -e /usr/local/bin/hatop ]; then
-  sudo ln -s /var/vcap/packages/haproxy/hatop-wrapper /usr/local/bin/hatop
+  sudo ln -s /var/vcap/packages/<%= package_dir %>/hatop-wrapper /usr/local/bin/hatop
 fi
 
 if [ ! -e /usr/local/bin/socat ]; then
-  sudo ln -s /var/vcap/packages/haproxy/bin/socat /usr/local/bin/socat
+  sudo ln -s /var/vcap/packages/<%= package_dir %>/bin/socat /usr/local/bin/socat
 fi
 
 <%- if_p("ha_proxy.pre_start_script") do |script| -%>

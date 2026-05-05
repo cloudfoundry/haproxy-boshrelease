@@ -242,6 +242,22 @@ pushd "${REPO_ROOT}"
   # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
+
+  # --- Multi release (all variants, property-driven selection) ---
+  # Modify job spec to list all variant packages
+  sed -i 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
+
+  # Include patches blob for patched variant packages
+  tar -czvf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+  bosh upload-blobs
+
+  bosh -n create-release --force --version "${VERSION}-multi" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-multi.tgz"
+
+  # Undo changes to repo from creating dev release
+  git clean -df
+  git reset --hard
 popd
 
 mkdir -p "${RELEASE_ROOT}/artifacts-patched"
@@ -371,6 +387,35 @@ releases:
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${AWSLC_FIPS_PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-multi"
+mv "${RELEASE_NAME}-${VERSION}-multi.tgz" "${RELEASE_ROOT}/artifacts-multi"
+
+MULTI_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-multi/${RELEASE_NAME}-${VERSION}-multi.tgz
+# shellcheck disable=SC2155
+export MULTI_SHA1=$(sha1sum "${MULTI_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "MULTI_SHA1=${MULTI_SHA1}"
+# shellcheck disable=SC2155
+export MULTI_SHA256=$(sha256sum "${MULTI_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "MULTI_SHA256=${MULTI_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (multi - all variants, property-driven selection)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-multi"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-multi.tgz"
+  sha1: "${MULTI_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${MULTI_SHA256}"
+
+# Select SSL variant via deployment property:
+# ha_proxy.ssl_variant: openssl | openssl-patched | awslc | awslc-patched | awslc-fips | awslc-fips-patched
 \`\`\`
 EOF
 

@@ -370,7 +370,7 @@ jobs:
           name:   gh/name
           tag:    gh/tag
           body:   gh/notes.md
-          globs:  [gh/artifacts/*, gh/artifacts-patched/*, gh/artifacts-awslc/*, gh/artifacts-awslc-patched/*, gh/artifacts-awslc-fips/*, gh/artifacts-awslc-fips-patched/*]
+          globs:  [gh/artifacts/*, gh/artifacts-patched/*, gh/artifacts-awslc/*, gh/artifacts-awslc-patched/*, gh/artifacts-awslc-fips/*, gh/artifacts-awslc-fips-patched/*, gh/artifacts-multi/*]
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"

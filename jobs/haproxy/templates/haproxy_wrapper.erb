@@ -3,7 +3,13 @@
 
 set -e
 
-export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
+<%
+  ssl_variant = p("ha_proxy.ssl_variant", "openssl")
+  haproxy_package = "haproxy-#{ssl_variant}"
+  # Fall back to legacy 'haproxy' package if variant packages are not present (non-multi release)
+  package_dir = File.directory?("/var/vcap/packages/#{haproxy_package}") ? haproxy_package : "haproxy"
+%>
+export PATH=$PATH:/var/vcap/packages/<%= package_dir %>/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock
