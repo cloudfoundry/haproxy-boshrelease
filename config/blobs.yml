@@ -1,12 +1,19 @@
 haproxy/aws-lc-fips-3.3.0.tar.gz:
   size: 117102202
+  object_id: 68d8fb56-d66c-46e7-425c-fe94a6b240e2
   sha: sha256:c137191845248c31251972f37a18381db10e579ebc205ebabb464d6f8abb759f
 haproxy/aws-lc-v1.72.0.tar.gz:
   size: 145266600
+  object_id: a1438c0e-62b7-4d71-736a-663927ad2342
   sha: sha256:f214c0e06e043c4f18b836059ccb5ecbed781173e8eed106839ee2dd4f4cc157
 haproxy/cmake-3.31.6.tar.gz:
   size: 11710589
+  object_id: 59c88eb0-ae6a-43dd-7262-c59ffb28b0a4
   sha: sha256:653427f0f5014750aafff22727fb2aa60c6c732ca91808cfb78ce22ddd9e55f0
+haproxy/golang-1.26.2.tar.gz:
+  size: 66798306
+  object_id: 03f22328-ba02-4ad7-7c8b-fd4b442c7579
+  sha: sha256:990e6b4bbba816dc3ee129eaeaf4b42f17c2800b88a2166c265ac1a200262282
 haproxy/haproxy-3.2.19.tar.gz:
   size: 5152214
   object_id: 74c810ac-6fa7-401e-4bd3-05471c6d5ed0
