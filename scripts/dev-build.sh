@@ -101,14 +101,16 @@ trap cleanup EXIT
 reset_spec() {
   echo "$SPEC_ORIG" > "$SPEC_FILE"
   echo "$JOB_SPEC_ORIG" > "$JOB_SPEC_FILE"
-  rm -f haproxy-patches.tar.gz
 }
 
-add_patches() {
+add_patches_to_spec() {
   echo "- haproxy/patches.tar.gz" >> "$SPEC_FILE"
-  tar -czf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
 }
+
+# Always create and register the patches blob upfront.
+# The patched variant packages (which are always present in packages/) reference it.
+tar -czf haproxy-patches.tar.gz haproxy-patches
+bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
 
 build_release() {
   local variant="$1"
@@ -139,7 +141,7 @@ fi
 # --- 2. OpenSSL + Patched ---
 if should_build openssl-patched; then
   reset_spec
-  add_patches
+  add_patches_to_spec
   build_release "patched"
 fi
 
@@ -154,7 +156,7 @@ fi
 # --- 4. AWS-LC + Patched ---
 if should_build awslc-patched; then
   reset_spec
-  add_patches
+  add_patches_to_spec
   echo "- haproxy/aws-lc-v*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/cmake-*.tar.gz" >> "$SPEC_FILE"
   build_release "awslc-patched"
@@ -172,7 +174,7 @@ fi
 # --- 6. AWS-LC FIPS + Patched ---
 if should_build awslc-fips-patched; then
   reset_spec
-  add_patches
+  add_patches_to_spec
   echo "- haproxy/aws-lc-fips-*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/cmake-*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/golang-*.tar.gz" >> "$SPEC_FILE"
@@ -186,7 +188,7 @@ if should_build multi; then
   sed -i.bak 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' "$JOB_SPEC_FILE"
   rm -f "${JOB_SPEC_FILE}.bak"
   # Include patches blob for patched variant packages
-  add_patches
+  add_patches_to_spec
   build_release "multi"
 fi
 
