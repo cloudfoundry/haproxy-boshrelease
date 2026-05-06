@@ -1,9 +1,7 @@
 ---
 name: haproxy-openssl
+dependencies:
+- haproxy-deps
 files:
 - haproxy/haproxy-*.tar.gz
-- haproxy/pcre2-*.tar.gz
-- haproxy/socat-*.tar.gz
-- haproxy/lua-*.tar.gz
-- haproxy/hatop-*
-- hatop-wrapper
+- haproxy-versions.sh

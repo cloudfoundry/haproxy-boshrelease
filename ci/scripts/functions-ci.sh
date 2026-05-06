@@ -59,7 +59,7 @@ function bosh_release() {
         cp -r packages-multi/* packages/
         tar -czvf haproxy-patches.tar.gz haproxy-patches
         bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-        sed -i 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
+        sed -i 's/^- haproxy$/- haproxy-deps\n- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
     elif [ "${HAPROXY_AWSLC_FIPS:-}" == "true" ]; then
         echo "----- Adding AWS-LC FIPS blobs to haproxy package spec..."
         echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec

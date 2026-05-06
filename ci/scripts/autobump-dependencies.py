@@ -40,6 +40,7 @@ DRY_RUN = "DRY_RUN" in os.environ
 
 # Other Global Variables
 BLOBS_PATH = "config/blobs.yml"
+VERSIONS_PATH = "src/haproxy-versions.sh"
 PACKAGING_PATH = "packages/{}/packaging"
 
 
@@ -119,17 +120,22 @@ class Dependency:
         return f"{self.name}-auto-bump-{PR_BASE}"
 
     @property
+    def versions_file(self) -> str:
+        if self.package == "haproxy":
+            return VERSIONS_PATH
+        return PACKAGING_PATH.format(self.package)
+
+    @property
     def current_version(self) -> version.Version:
         """
-        Fetches the current version of the release from the packaging file if not already known.
+        Fetches the current version of the release from the versions file if not already known.
         (Should always be identical to the version in blobs.yml)
         """
         if self._current_version:
             return self._current_version
-        with open(PACKAGING_PATH.format(self.package), "r") as packaging_file:
-            for line in packaging_file.readlines():
+        with open(self.versions_file, "r") as versions_file:
+            for line in versions_file.readlines():
                 if line.startswith(self.version_var_name):
-                    # Regex: expecting e.g. "RELEASE_VERSION=1.2.3  # http://release.org/download". extracting Semver Group
                     rgx = rf"{self.version_var_name}=((?:[0-9]+\.){{1,3}}[0-9]+)\s+#.*$"
                     match = re.match(rgx, line)
                     if match:
@@ -159,8 +165,11 @@ class Dependency:
         """
         raise NotImplementedError
 
+    def blob_filename(self, ver) -> str:
+        return f"{self.name}-{ver}.tar.gz"
+
     def remove_current_blob(self):
-        current_blob_path = f"{self.package}/{self.name}-{self.current_version}.tar.gz"
+        current_blob_path = f"{self.package}/{self.blob_filename(self.current_version)}"
         if self._check_blob_exists(current_blob_path):
             BoshHelper.remove_blob(current_blob_path)
         else:
@@ -176,17 +185,17 @@ class Dependency:
 
     def update_packaging_file(self):
         """
-        Writes the new dependency version and download-url into packages/haproxy/packaging
+        Writes the new dependency version and download-url into the versions file.
         """
-        with open(PACKAGING_PATH.format(self.package), "r") as packaging_file:
+        with open(self.versions_file, "r") as f:
             replacement = ""
-            for line in packaging_file.readlines():
+            for line in f.readlines():
                 if line.startswith(self.version_var_name):
                     line = f"{self.version_var_name}={self.latest_release.version}  # {self.latest_release.url}\n"
                 replacement += line
 
-        with open(PACKAGING_PATH.format(self.package), "w") as packaging_file_write:
-            packaging_file_write.write(replacement)
+        with open(self.versions_file, "w") as f:
+            f.write(replacement)
 
     def open_pr_exists(self) -> bool:
         prs_exist = False
@@ -212,7 +221,7 @@ class Dependency:
 
             self._update_file(
                 self.remote_repo,
-                PACKAGING_PATH.format(self.package),
+                self.versions_file,
                 self.pr_branch,
                 f"Bump {self.name} version to {self.latest_release.version}",
             )
@@ -259,6 +268,10 @@ class GithubDependency(Dependency):
 
     tagname_prefix: str = ""
     filename_suffix: str = ".tar.gz"
+    blob_version_prefix: str = ""
+
+    def blob_filename(self, ver) -> str:
+        return f"{self.name}-{self.blob_version_prefix}{ver}{self.filename_suffix}"
 
     def fetch_latest_release(self) -> Release:
         repo_org_and_name = self.root_url.lstrip("https://github.com/")
@@ -285,7 +298,7 @@ class GithubDependency(Dependency):
                 latest_release = Release(
                     rel.title,
                     get_release_download_url(rel),
-                    f"{self.name}-{str(current_version)}{self.filename_suffix}",
+                    self.blob_filename(current_version),
                     current_version,
                 )
 
@@ -362,7 +375,7 @@ class GolangDependency(Dependency):
                     Release(
                         f"golang-{match.group(1)}",
                         url,
-                        f"golang-{match.group(1)}.tar.gz",
+                        self.blob_filename(ver),
                         ver,
                     )
                 )
@@ -405,7 +418,7 @@ class GithubArchiveDependency(Dependency):
                 latest_release = Release(
                     rel.title,
                     url,
-                    f"{self.name}-{str(current_version)}.tar.gz",
+                    self.blob_filename(current_version),
                     current_version,
                 )
 
@@ -592,6 +605,7 @@ def main() -> None:
             AWS_LC_VERSION,
             "https://github.com/aws/aws-lc",
             tagname_prefix="v",
+            blob_version_prefix="v",
         ),
         GithubArchiveDependency(
             "aws-lc-fips",

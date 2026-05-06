@@ -199,7 +199,7 @@ if should_build multi; then
   copy_multi_packages
   tar -czf haproxy-patches.tar.gz haproxy-patches
   bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  sed -i.bak 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' "$JOB_SPEC_FILE"
+  sed -i.bak 's/^- haproxy$/- haproxy-deps\n- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' "$JOB_SPEC_FILE"
   rm -f "${JOB_SPEC_FILE}.bak"
   build_release "multi"
   remove_multi_packages

@@ -4,3 +4,4 @@ dependencies:
 - cmake
 files:
 - haproxy/aws-lc-v*.tar.gz
+- haproxy-versions.sh

@@ -5,3 +5,4 @@ dependencies:
 files:
 - haproxy/aws-lc-fips-*.tar.gz
 - haproxy/golang-*.tar.gz
+- haproxy-versions.sh

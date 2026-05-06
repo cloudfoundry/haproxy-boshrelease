@@ -1,6 +1,6 @@
 set -euxo pipefail
 
-CMAKE_VERSION=3.31.6  # https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6.tar.gz
+source haproxy-versions.sh
 
 tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
 pushd cmake-${CMAKE_VERSION}

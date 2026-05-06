@@ -69,11 +69,14 @@ ensure_patches_blob() {
 }
 
 version() {
-  # extract the version variable $1 from the packaging script $2 (default 'haproxy')
   pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
-  package=${2:-haproxy}
-  # extract version and remove all spaces
-  sed -n -E "${pattern//VERSION/${1:?}}" "${REPO_ROOT}/packages/${package}/packaging" | sed 's/ *//g'
+  package=${2:-}
+  if [[ -n "${package}" ]]; then
+    source_file="${REPO_ROOT}/packages/${package}/packaging"
+  else
+    source_file="${REPO_ROOT}/src/haproxy-versions.sh"
+  fi
+  sed -n -E "${pattern//VERSION/${1:?}}" "${source_file}" | sed 's/ *//g'
 }
 
 HAPROXY_VERSION=$(version HAPROXY_VERSION)
@@ -244,7 +247,7 @@ pushd "${REPO_ROOT}"
   # --- Multi release (all variants, property-driven selection) ---
   cp -r packages-multi/* packages/
   ensure_patches_blob
-  sed -i 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
+  sed -i 's/^- haproxy$/- haproxy-deps\n- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
 
   bosh -n create-release --force --version "${VERSION}-multi" \
     --tarball "../${RELEASE_NAME}-${VERSION}-multi.tgz"

@@ -1,6 +1,6 @@
 set -euxo pipefail
 
-AWS_LC_VERSION=1.72.0  # https://github.com/aws/aws-lc/archive/refs/tags/v1.72.0.tar.gz
+source haproxy-versions.sh
 
 export PATH=/var/vcap/packages/cmake/bin:$PATH
 
