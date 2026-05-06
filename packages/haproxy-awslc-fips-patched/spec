@@ -1,0 +1,12 @@
+---
+name: haproxy-awslc-fips-patched
+dependencies:
+- aws-lc-fips
+files:
+- haproxy/haproxy-*.tar.gz
+- haproxy/pcre2-*.tar.gz
+- haproxy/socat-*.tar.gz
+- haproxy/lua-*.tar.gz
+- haproxy/hatop-*
+- haproxy/patches.tar.gz
+- hatop-wrapper

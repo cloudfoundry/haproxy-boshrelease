@@ -1,0 +1,61 @@
+set -euxo pipefail
+
+LUA_VERSION=5.4.8  # https://www.lua.org/ftp/lua-5.4.8.tar.gz
+PCRE_VERSION=10.47  # https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.47/pcre2-10.47.tar.gz
+SOCAT_VERSION=1.8.1.1  # http://www.dest-unreach.org/socat/download/socat-1.8.1.1.tar.gz
+HAPROXY_VERSION=3.2.16  # https://www.haproxy.org/download/3.2/src/haproxy-3.2.16.tar.gz
+HATOP_VERSION=0.8.2  # https://github.com/jhunt/hatop/releases/download/v0.8.2/hatop
+
+mkdir ${BOSH_INSTALL_TARGET}/bin
+
+echo "Extracting lua..."
+tar xzf haproxy/lua-${LUA_VERSION}.tar.gz
+pushd lua-${LUA_VERSION}
+  make linux install INSTALL_TOP=${BOSH_INSTALL_TARGET}
+popd
+
+echo "Extracting pcre..."
+tar xzf haproxy/pcre2-${PCRE_VERSION}.tar.gz
+pushd pcre2-${PCRE_VERSION}
+  ./configure \
+    --enable-jit \
+    --prefix ${BOSH_INSTALL_TARGET}
+  make
+  make install
+popd
+
+echo "Installing socat..."
+tar xzf haproxy/socat-${SOCAT_VERSION}.tar.gz
+pushd socat-${SOCAT_VERSION}
+  ./configure
+  make
+  cp socat ${BOSH_INSTALL_TARGET}/bin
+  chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
+popd
+
+SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=/var/vcap/packages/aws-lc-fips/include SSL_LIB=/var/vcap/packages/aws-lc-fips/lib"
+
+echo "Unpacking HAproxy..."
+tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
+pushd haproxy-${HAPROXY_VERSION}
+  mkdir -p ${BOSH_INSTALL_TARGET}/applied-patches
+  tar xf ../haproxy/patches.tar.gz
+
+  for patchfile in haproxy-patches/*.patch; do
+    echo "Applying patch file ${patchfile}"
+    patch -F 0 -p0 < ${patchfile}
+    cp ${patchfile} ${BOSH_INSTALL_TARGET}/applied-patches
+  done
+  rm -r haproxy-patches
+
+  echo "Installing HAproxy..."
+  make TARGET=linux-glibc USE_PROMEX=1 ${SSL_MAKE_FLAGS} USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
+  cp haproxy ${BOSH_INSTALL_TARGET}/bin/
+  chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
+popd
+
+echo "Installing hatop..."
+cp haproxy/hatop-${HATOP_VERSION} ${BOSH_INSTALL_TARGET}/bin/hatop
+chmod 755 ${BOSH_INSTALL_TARGET}/bin/hatop
+cp hatop-wrapper ${BOSH_INSTALL_TARGET}/
+chmod 755 ${BOSH_INSTALL_TARGET}/hatop-wrapper

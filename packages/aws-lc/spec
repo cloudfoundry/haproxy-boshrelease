@@ -1,0 +1,6 @@
+---
+name: aws-lc
+dependencies:
+- cmake
+files:
+- haproxy/aws-lc-v*.tar.gz

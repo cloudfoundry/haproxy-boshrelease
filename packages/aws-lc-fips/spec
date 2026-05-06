@@ -1,0 +1,7 @@
+---
+name: aws-lc-fips
+dependencies:
+- cmake
+files:
+- haproxy/aws-lc-fips-*.tar.gz
+- haproxy/golang-*.tar.gz

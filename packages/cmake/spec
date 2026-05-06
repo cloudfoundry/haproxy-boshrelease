@@ -1,0 +1,4 @@
+---
+name: cmake
+files:
+- haproxy/cmake-*.tar.gz
