@@ -91,9 +91,20 @@ SPEC_ORIG=$(cat "$SPEC_FILE")
 JOB_SPEC_FILE="jobs/haproxy/spec"
 JOB_SPEC_ORIG=$(cat "$JOB_SPEC_FILE")
 
+copy_multi_packages() {
+  cp -r packages-multi/* packages/
+}
+
+remove_multi_packages() {
+  for dir in packages-multi/*/; do
+    rm -rf "packages/$(basename "$dir")"
+  done
+}
+
 cleanup() {
   echo "$SPEC_ORIG" > "$SPEC_FILE"
   echo "$JOB_SPEC_ORIG" > "$JOB_SPEC_FILE"
+  remove_multi_packages
   rm -f haproxy-patches.tar.gz
 }
 trap cleanup EXIT
@@ -106,11 +117,6 @@ reset_spec() {
 add_patches_to_spec() {
   echo "- haproxy/patches.tar.gz" >> "$SPEC_FILE"
 }
-
-# Always create and register the patches blob upfront.
-# The patched variant packages (which are always present in packages/) reference it.
-tar -czf haproxy-patches.tar.gz haproxy-patches
-bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
 
 build_release() {
   local variant="$1"
@@ -142,6 +148,8 @@ fi
 if should_build openssl-patched; then
   reset_spec
   add_patches_to_spec
+  tar -czf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
   build_release "patched"
 fi
 
@@ -159,6 +167,8 @@ if should_build awslc-patched; then
   add_patches_to_spec
   echo "- haproxy/aws-lc-v*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/cmake-*.tar.gz" >> "$SPEC_FILE"
+  tar -czf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
   build_release "awslc-patched"
 fi
 
@@ -178,18 +188,21 @@ if should_build awslc-fips-patched; then
   echo "- haproxy/aws-lc-fips-*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/cmake-*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/golang-*.tar.gz" >> "$SPEC_FILE"
+  tar -czf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
   build_release "awslc-fips-patched"
 fi
 
 # --- 7. Multi (all variants, property-driven selection) ---
 if should_build multi; then
   reset_spec
-  # Modify job spec: replace '- haproxy' package with all variant packages
+  copy_multi_packages
+  tar -czf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
   sed -i.bak 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' "$JOB_SPEC_FILE"
   rm -f "${JOB_SPEC_FILE}.bak"
-  # Include patches blob for patched variant packages
-  add_patches_to_spec
   build_release "multi"
+  remove_multi_packages
 fi
 
 fi # UPLOAD_ONLY

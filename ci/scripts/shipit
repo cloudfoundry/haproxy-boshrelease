@@ -63,6 +63,11 @@ header "Pulling in any git submodules..."
 git submodule update --init --recursive --force
 cd -
 
+ensure_patches_blob() {
+  tar -czvf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+}
+
 version() {
   # extract the version variable $1 from the packaging script $2 (default 'haproxy')
   pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
@@ -85,6 +90,9 @@ VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
 
 cd "${REPO_ROOT}"
 header "Create final release..."
+
+bosh upload-blobs
+
 bosh -n create-release --final --version "${VERSION}"
 bosh -n create-release "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.yml" \
               --tarball "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.tgz"
@@ -176,16 +184,14 @@ pushd "${REPO_ROOT}"
   git status
   git commit -m "release v${VERSION}"
 
-  # After creating a final release we will also create a dev release patches from haproxy-patches directory
-  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
-  tar -czvf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  bosh upload-blobs
+  # Create additional release variants.
 
+  # --- OpenSSL + Patched ---
+  ensure_patches_blob
+  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
   bosh -n create-release --force --version "${VERSION}-patched" \
     --tarball "../${RELEASE_NAME}-${VERSION}-patched.tgz"
 
-  # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 
@@ -196,22 +202,18 @@ pushd "${REPO_ROOT}"
   bosh -n create-release --force --version "${VERSION}-awslc" \
     --tarball "../${RELEASE_NAME}-${VERSION}-awslc.tgz"
 
-  # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 
   # --- AWS-LC + Patched variant ---
+  ensure_patches_blob
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
-  tar -czvf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  bosh upload-blobs
 
   bosh -n create-release --force --version "${VERSION}-awslc-patched" \
     --tarball "../${RELEASE_NAME}-${VERSION}-awslc-patched.tgz"
 
-  # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 
@@ -223,39 +225,30 @@ pushd "${REPO_ROOT}"
   bosh -n create-release --force --version "${VERSION}-awslc-fips" \
     --tarball "../${RELEASE_NAME}-${VERSION}-awslc-fips.tgz"
 
-  # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 
   # --- AWS-LC FIPS + Patched variant ---
+  ensure_patches_blob
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
-  tar -czvf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  bosh upload-blobs
 
   bosh -n create-release --force --version "${VERSION}-awslc-fips-patched" \
     --tarball "../${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz"
 
-  # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 
   # --- Multi release (all variants, property-driven selection) ---
-  # Modify job spec to list all variant packages
+  cp -r packages-multi/* packages/
+  ensure_patches_blob
   sed -i 's/^- haproxy$/- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
-
-  # Include patches blob for patched variant packages
-  tar -czvf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  bosh upload-blobs
 
   bosh -n create-release --force --version "${VERSION}-multi" \
     --tarball "../${RELEASE_NAME}-${VERSION}-multi.tgz"
 
-  # Undo changes to repo from creating dev release
   git clean -df
   git reset --hard
 popd
