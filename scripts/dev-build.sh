@@ -4,12 +4,19 @@
 #
 # Builds HAProxy release variants locally and uploads them to the BOSH director.
 #
-# Usage: ./dev-build.sh [--upload-only] [version] [output_dir] [variant...]
+# Usage: ./scripts/dev-build.sh [--upload-only] [--version VERSION] [--output-dir DIR] [variant...]
 #
 # Variants:
 #   openssl, openssl-patched, awslc, awslc-patched, awslc-fips, awslc-fips-patched, multi
 #
 # If no variants are specified, all 7 are built.
+#
+# Examples:
+#   ./scripts/dev-build.sh                          # build all 7, version=dev
+#   ./scripts/dev-build.sh multi                    # build only multi, version=dev
+#   ./scripts/dev-build.sh --version 1.0 multi      # build only multi, version=1.0
+#   ./scripts/dev-build.sh awslc awslc-fips         # build awslc and awslc-fips
+#   ./scripts/dev-build.sh --upload-only            # upload previously built releases
 #
 # Prerequisites:
 #   - All blobs present locally (bosh add-blob done for aws-lc, cmake, golang, aws-lc-fips)
@@ -21,19 +28,50 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
+ALL_VARIANTS=(openssl openssl-patched awslc awslc-patched awslc-fips awslc-fips-patched multi)
+
+is_variant() {
+  local arg="$1"
+  for v in "${ALL_VARIANTS[@]}"; do
+    [[ "$v" == "$arg" ]] && return 0
+  done
+  return 1
+}
+
 UPLOAD_ONLY=false
-if [[ "${1:-}" == "--upload-only" ]]; then
-  UPLOAD_ONLY=true
-  shift
-fi
+VERSION="dev"
+OUTPUT_DIR="./dev-releases"
+VARIANTS=()
 
-VERSION="${1:-dev}"
-OUTPUT_DIR="${2:-./dev-releases}"
-shift 2 2>/dev/null || true
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --upload-only)
+      UPLOAD_ONLY=true
+      shift
+      ;;
+    --version)
+      VERSION="$2"
+      shift 2
+      ;;
+    --output-dir)
+      OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    *)
+      if is_variant "$1"; then
+        VARIANTS+=("$1")
+      else
+        echo "Unknown argument: $1" >&2
+        echo "Valid variants: ${ALL_VARIANTS[*]}" >&2
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
 
-VARIANTS=("$@")
 if [[ ${#VARIANTS[@]} -eq 0 ]]; then
-  VARIANTS=(openssl openssl-patched awslc awslc-patched awslc-fips awslc-fips-patched multi)
+  VARIANTS=("${ALL_VARIANTS[@]}")
 fi
 
 should_build() {
