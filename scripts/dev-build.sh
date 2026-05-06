@@ -19,7 +19,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/.."
 
 UPLOAD_ONLY=false
 if [[ "${1:-}" == "--upload-only" ]]; then
@@ -33,7 +33,7 @@ shift 2 2>/dev/null || true
 
 VARIANTS=("$@")
 if [[ ${#VARIANTS[@]} -eq 0 ]]; then
-  VARIANTS=(openssl openssl-patched multi)
+  VARIANTS=(openssl openssl-patched awslc awslc-patched awslc-fips awslc-fips-patched multi)
 fi
 
 should_build() {
