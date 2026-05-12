@@ -68,6 +68,7 @@ jobs:
     - do:
       - { get: git-pull-requests, trigger: true, version: every, passed: [build-haproxy-testflight-image-pr] }
       - get: haproxy-boshrelease-testflight-pr
+        trigger: true
         passed: [build-haproxy-testflight-image-pr]
       - put: git-pull-requests
         params:
@@ -157,6 +158,7 @@ jobs:
       - { get: stemcell }
       - { get: stemcell-jammy }
       - get: haproxy-boshrelease-testflight-pr
+        trigger: true
         passed: [build-haproxy-testflight-image-pr]
       - put: git-pull-requests
         params:
