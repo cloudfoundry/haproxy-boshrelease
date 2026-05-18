@@ -362,7 +362,7 @@ listen stats
     acl private src <%= p("ha_proxy.trusted_stats_cidrs") %>
     http-request deny unless private
     mode http
-  <%- if_p("ha_proxy.stats_promex_enable") do -%>
+  <%- if p("ha_proxy.stats_promex_enable") -%>
     http-request use-service prometheus-exporter if { path <%= p("ha_proxy.stats_promex_path") %> }
   <%- end -%>
     stats enable
