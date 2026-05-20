@@ -2,7 +2,7 @@
 # Shared version definitions for all HAProxy packages.
 # Sourced by packaging scripts in packages/ and packages-multi/.
 
-HAPROXY_VERSION=3.2.16  # https://www.haproxy.org/download/3.2/src/haproxy-3.2.16.tar.gz
+HAPROXY_VERSION=3.2.19  # https://www.haproxy.org/download/3.2/src/haproxy-3.2.19.tar.gz
 LUA_VERSION=5.4.8  # https://www.lua.org/ftp/lua-5.4.8.tar.gz
 PCRE_VERSION=10.47  # https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.47/pcre2-10.47.tar.gz
 SOCAT_VERSION=1.8.1.1  # http://www.dest-unreach.org/socat/download/socat-1.8.1.1.tar.gz

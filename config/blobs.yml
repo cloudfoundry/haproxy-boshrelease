@@ -26,9 +26,6 @@ haproxy/lua-5.4.8.tar.gz:
   size: 374332
   object_id: 11cb896a-5089-432c-7652-fb5504bd13ff
   sha: sha256:4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
-haproxy/patches.tar.gz:
-  size: 1009
-  sha: sha256:2369508362be682d749171f3875105e2e7b0dfe6f33dbefcaef5d07bddecb7f8
 haproxy/pcre2-10.47.tar.gz:
   size: 2792969
   object_id: 37761873-8904-4a27-4b0c-df645dffd609
