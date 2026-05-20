@@ -94,9 +94,9 @@ if [ -n "$KEEP_RUNNING" ] ; then
   echo
   echo "*** KEEP_RUNNING enabled. Please clean up docker scratch after removing containers: ${DOCKER_SCRATCH}"
   echo
-  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="${FOCUS}" -e PARALLELISM="${PARALLELISM}" -e KEEP_RUNNING="${KEEP_RUNNING}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
+  docker run --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e FOCUS="${FOCUS}" -e PARALLELISM="${PARALLELISM}" -e KEEP_RUNNING="${KEEP_RUNNING}" -e VARIANT="${VARIANT:-}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
 else
-  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" -e PARALLELISM="${PARALLELISM}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+  docker run --rm --privileged -v "$REPO_DIR":/repo -v "${DOCKER_SCRATCH}":/scratch/docker -e REPO_ROOT=/repo -e KEEP_RUNNING="" -e PARALLELISM="${PARALLELISM}" -e VARIANT="${VARIANT:-}" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
   echo "Cleaning up docker scratch: ${DOCKER_SCRATCH}"
   sudo rm -rf "${DOCKER_SCRATCH}"
 fi

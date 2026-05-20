@@ -176,7 +176,7 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git
-            HAPROXY_AWSLC:        "true"
+            VARIANT:              awslc
       on_failure:
         put: notify
         params:
@@ -210,7 +210,7 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git
-            HAPROXY_AWSLC_FIPS:   "true"
+            VARIANT:              awslc-fips
       on_failure:
         put: notify
         params:
