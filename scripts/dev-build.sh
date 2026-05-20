@@ -4,19 +4,27 @@
 #
 # Builds HAProxy release variants locally and uploads them to the BOSH director.
 #
-# Usage: ./scripts/dev-build.sh [--upload-only] [--version VERSION] [--output-dir DIR] [variant...]
+# Usage: ./scripts/dev-build.sh [--upload-only] [--version BASE] [--output-dir DIR] [variant...]
 #
 # Variants:
 #   openssl, openssl-patched, awslc, awslc-patched, awslc-fips, awslc-fips-patched, multi
 #
 # If no variants are specified, all 7 are built.
 #
+# Versioning:
+#   Each invocation produces release versions of the form
+#       <BASE>+dev[-<variant>].<unix_timestamp>
+#   e.g. "16.9.0+dev.1779286286" (openssl), "16.9.0+dev-awslc.1779286286" (awslc).
+#   BASE defaults to the highest existing final release in releases/haproxy/ (or 0.0.0 if none),
+#   and can be overridden with --version. Each run uses a fresh timestamp, so previously
+#   built tarballs do not need to be deleted before rebuilding.
+#
 # Examples:
-#   ./scripts/dev-build.sh                          # build all 7, version=dev
-#   ./scripts/dev-build.sh multi                    # build only multi, version=dev
-#   ./scripts/dev-build.sh --version 1.0 multi      # build only multi, version=1.0
+#   ./scripts/dev-build.sh                          # build all 7, BASE=highest final release
+#   ./scripts/dev-build.sh multi                    # build only multi
+#   ./scripts/dev-build.sh --version 17.0.0 multi   # override BASE
 #   ./scripts/dev-build.sh awslc awslc-fips         # build awslc and awslc-fips
-#   ./scripts/dev-build.sh --upload-only            # upload previously built releases
+#   ./scripts/dev-build.sh --upload-only            # upload everything in dev-releases/
 #
 # Prerequisites:
 #   - All blobs present locally (bosh add-blob done for aws-lc, cmake, golang, aws-lc-fips)
@@ -39,7 +47,7 @@ is_variant() {
 }
 
 UPLOAD_ONLY=false
-VERSION="dev"
+BASE_VERSION=""
 OUTPUT_DIR="./dev-releases"
 VARIANTS=()
 
@@ -50,7 +58,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --version)
-      VERSION="$2"
+      BASE_VERSION="$2"
       shift 2
       ;;
     --output-dir)
@@ -73,6 +81,20 @@ done
 if [[ ${#VARIANTS[@]} -eq 0 ]]; then
   VARIANTS=("${ALL_VARIANTS[@]}")
 fi
+
+# Derive base version from the highest existing final release if --version not given.
+# Final releases live in releases/haproxy/haproxy-<MAJOR.MINOR.PATCH>[+meta].yml
+if [[ -z "$BASE_VERSION" ]]; then
+  BASE_VERSION=$(
+    ls releases/haproxy/haproxy-*.yml 2>/dev/null \
+      | sed 's|.*/haproxy-||;s|\.yml$||;s|+.*||' \
+      | sort -V \
+      | tail -1
+  )
+  BASE_VERSION="${BASE_VERSION:-0.0.0}"
+fi
+
+TIMESTAMP=$(date +%s)
 
 should_build() {
   local variant="$1"
@@ -120,8 +142,9 @@ add_patches_to_spec() {
 
 build_release() {
   local variant="$1"
-  local version="$VERSION"
-  [[ -n "$variant" ]] && version="${VERSION}-${variant}"
+  local suffix="dev"
+  [[ -n "$variant" ]] && suffix="dev-${variant}"
+  local version="${BASE_VERSION}+${suffix}.${TIMESTAMP}"
   local tarball="$OUTPUT_DIR/haproxy-${version}.tgz"
 
   echo ""
@@ -214,10 +237,25 @@ echo "  Uploading releases to BOSH director"
 echo "========================================"
 echo ""
 
-for tgz in "$OUTPUT_DIR"/haproxy-"${VERSION}"*.tgz; do
+if [[ "$UPLOAD_ONLY" == true ]]; then
+  upload_glob="$OUTPUT_DIR/haproxy-*.tgz"
+else
+  upload_glob="$OUTPUT_DIR/haproxy-*.${TIMESTAMP}.tgz"
+fi
+
+shopt -s nullglob
+uploaded=0
+for tgz in $upload_glob; do
   echo "Uploading: $tgz"
   bosh upload-release "$tgz" --fix
+  uploaded=$((uploaded + 1))
 done
+shopt -u nullglob
+
+if [[ $uploaded -eq 0 ]]; then
+  echo "No tarballs matching '$upload_glob' to upload." >&2
+  exit 1
+fi
 
 echo ""
 echo "Done."
