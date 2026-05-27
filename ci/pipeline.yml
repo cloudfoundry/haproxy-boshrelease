@@ -25,6 +25,7 @@ jobs:
       - get: git
         trigger: true
       - get: haproxy-boshrelease-testflight
+        trigger: true
       - task: lint
         image: haproxy-boshrelease-testflight
         config:
@@ -125,7 +126,7 @@ jobs:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
         - { get: stemcell-jammy }
-        - get: haproxy-boshrelease-testflight
+        - { get: haproxy-boshrelease-testflight, trigger: true, passed: [build-haproxy-testflight-image] }
       - task: acceptance-tests
         privileged: true
         timeout: 4h
@@ -377,7 +378,7 @@ jobs:
     plan:
       - in_parallel:
           - { get: git-pull-requests, trigger: true, version: every }
-          - get: docker-cpi-image
+          - { get: docker-cpi-image, trigger: true }
       - task: create-pr-tag
         image: docker-cpi-image
         config:
@@ -486,9 +487,11 @@ resources:
       interval: 24h
 
   - name: docker-cpi-image
-    type: docker-image
+    type: registry-image
     source:
       repository: ghcr.io/cloudfoundry/bosh/docker-cpi
+    version:
+      digest: "sha256:1ce361cdc6a26b6382a542b889da8bd56c28220065c5185bf6e7bdd21f4a8931"
 
   - name: git-ci
     type: git
