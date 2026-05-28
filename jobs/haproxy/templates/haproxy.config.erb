@@ -39,6 +39,11 @@ tcp_accept_proxy = accept_proxy
 if p("ha_proxy.disable_tcp_accept_proxy")
   tcp_accept_proxy = ""
 end
+# When proxy protocol is active, the real client IP is only known after the
+# proxy header is parsed (session phase), so reject must use tcp-request session.
+# Without proxy protocol, tcp-request connection is sufficient.
+conn_rate_limit_phase = p("ha_proxy.accept_proxy") ? "tcp-request session" : "tcp-request connection"
+
 # }}}
 # Global SSL Flags {{{
 ssl_flags = ""
@@ -431,10 +436,10 @@ frontend http-in
     acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
     tcp-request connection reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
-    tcp-request connection track-sc0 src table st_tcp_conn_rate
+    <%= conn_rate_limit_phase %> track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
       <%-if block -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
+    <%= conn_rate_limit_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
       <%- end -%>
     <%- end -%>
   <%- end -%>
@@ -565,10 +570,10 @@ frontend https-in
     acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
     tcp-request connection reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
-    tcp-request connection track-sc0 src table st_tcp_conn_rate
+    <%= conn_rate_limit_phase %> track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
       <%-if block -%>
-    tcp-request connection reject if { sc_conn_rate(0) gt <%= connections %> }
+    <%= conn_rate_limit_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
       <%- end -%>
     <%- end -%>
   <%- end -%>
