@@ -42,7 +42,7 @@ end
 # When proxy protocol is active, the real client IP is only known after the
 # proxy header is parsed (session phase), so reject must use tcp-request session.
 # Without proxy protocol, tcp-request connection is sufficient.
-conn_rate_limit_phase = p("ha_proxy.accept_proxy") ? "tcp-request session" : "tcp-request connection"
+tcp_request_phase = p("ha_proxy.accept_proxy") ? "session" : "connection"
 
 # }}}
 # Global SSL Flags {{{
@@ -434,12 +434,12 @@ frontend http-in
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
     acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
-    tcp-request connection reject if layer4_block
+    tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
-    <%= conn_rate_limit_phase %> track-sc0 src table st_tcp_conn_rate
+    tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
       <%-if block -%>
-    <%= conn_rate_limit_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
+    tcp-request <%= tcp_request_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
       <%- end -%>
     <%- end -%>
   <%- end -%>
@@ -568,12 +568,12 @@ frontend https-in
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
     acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
-    tcp-request connection reject if layer4_block
+    tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
-    <%= conn_rate_limit_phase %> track-sc0 src table st_tcp_conn_rate
+    tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
     <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
       <%-if block -%>
-    <%= conn_rate_limit_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
+    tcp-request <%= tcp_request_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
       <%- end -%>
     <%- end -%>
   <%- end -%>
