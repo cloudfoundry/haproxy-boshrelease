@@ -1,4 +1,4 @@
-FROM ghcr.io/cloudfoundry/bosh/docker-cpi@sha256:1ce361cdc6a26b6382a542b889da8bd56c28220065c5185bf6e7bdd21f4a8931
+FROM ghcr.io/cloudfoundry/bosh/docker-cpi:latest
 
 # Install all necessary tools for haproxy testflight and dependency autobump
 ENV DEBIAN_FRONTEND=noninteractive
