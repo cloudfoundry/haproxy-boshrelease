@@ -140,4 +140,42 @@ var _ = Describe("Access Control", func() {
 		By("Allowing TCP connections from non-blocklisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
 		expectTestServer200(http.Get("http://127.0.0.1:11000"))
 	})
+
+	It("Rejects IPs in TCP-layer blocklisted CIDRs when proxy protocol is enabled", func() {
+		haproxyBackendPort := 12000
+
+		opsfileTCPBlocklistWithProxyProtocol := opsfileTCPBlocklist + `
+# Enable Proxy Protocol
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  value: true
+`
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileTCPBlocklistWithProxyProtocol}, map[string]interface{}{
+			// traffic from test runner appears to come from this CIDR block
+			"cidr_blocklist_tcp": []string{"10.1.1.1/32"},
+		}, true)
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeBackendTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeBackendTunnel()
+
+		By("Denying TCP connections from blocklisted CIDRs via Proxy Protocol header (source IP 10.1.1.1)")
+		// Send a request with a Proxy Protocol header advertising a source IP in the blocked 10.0.0.0/8 CIDR.
+		// With accept_proxy enabled, HAProxy parses the PROXY header and uses the advertised source IP
+		// for the tcp-request session phase ACL evaluation — so this must be rejected.
+		err := performProxyProtocolRequestWithSourceIP(haproxyInfo.PublicIP, 80, "/", "10.1.1.1")
+		Expect(err).To(HaveOccurred())
+		Expect(errors.Is(err, syscall.ECONNRESET)).To(BeTrue())
+
+		By("Allowing TCP connections from non-blocklisted CIDRs via Proxy Protocol header (source IP 192.168.1.1)")
+		// Send a request with a Proxy Protocol header advertising a source IP outside the blocked CIDR.
+		err = performProxyProtocolRequestWithSourceIP(haproxyInfo.PublicIP, 80, "/", "192.168.1.1")
+		Expect(err).NotTo(HaveOccurred())
+	})
 })

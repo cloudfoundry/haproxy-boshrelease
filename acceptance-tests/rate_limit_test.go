@@ -165,6 +165,61 @@ var _ = Describe("Rate-Limiting", func() {
 		Expect(successfulRequestCount).To(Equal(connLimit))
 	})
 
+	It("Connection Based Limiting Works with Proxy Protocol enabled", func() {
+		connLimit := 5
+		opsfileConnRateLimitWithProxyProtocol := fmt.Sprintf(`---
+# Enable Proxy Protocol
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  value: true
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
+  value: %d
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
+  value: 100s
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
+  value: 100
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
+  value: true
+`, connLimit)
+
+		haproxyBackendPort := 12000
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileConnRateLimitWithProxyProtocol}, map[string]interface{}{}, true)
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
+
+		By("Sending requests via Proxy Protocol, each on a new TCP connection, expecting connection rate limiting to apply")
+		testRequestCount := int(float64(connLimit) * 1.5)
+		firstFailure := -1
+		successfulRequestCount := 0
+		for i := 0; i < testRequestCount; i++ {
+			err := performProxyProtocolRequest(haproxyInfo.PublicIP, 80, "/foo")
+			if err == nil {
+				successfulRequestCount++
+			} else {
+				if firstFailure == -1 {
+					firstFailure = i
+				}
+			}
+		}
+
+		By("The first connection should fail after we've sent the amount of connections specified in the Connection Rate Limit")
+		Expect(firstFailure).To(Equal(connLimit))
+		By("The total amount of successful connections per time window should equal the Connection Rate Limit")
+		Expect(successfulRequestCount).To(Equal(connLimit))
+	})
+
 	It("Both types of rate limiting work in parallel", func() {
 		requestLimit := 5
 		connLimit := 6 // needs to be higher than request limit for this test

@@ -138,6 +138,10 @@ var _ = Describe("Proxy Protocol", func() {
 })
 
 func performProxyProtocolRequest(ip string, port int, endpoint string) error {
+	return performProxyProtocolRequestWithSourceIP(ip, port, endpoint, "10.1.1.1")
+}
+
+func performProxyProtocolRequestWithSourceIP(ip string, port int, endpoint string, sourceIP string) error {
 	// Create a connection to the HAProxy instance
 	conn, err := net.Dial("tcp", net.JoinHostPort(ip, strconv.Itoa(port)))
 	if err != nil {
@@ -152,7 +156,7 @@ func performProxyProtocolRequest(ip string, port int, endpoint string) error {
 		Command:           proxyproto.PROXY,
 		TransportProtocol: proxyproto.TCPv4,
 		SourceAddr: &net.TCPAddr{
-			IP:   net.ParseIP("10.1.1.1"),
+			IP:   net.ParseIP(sourceIP),
 			Port: 1000,
 		},
 		DestinationAddr: &net.TCPAddr{

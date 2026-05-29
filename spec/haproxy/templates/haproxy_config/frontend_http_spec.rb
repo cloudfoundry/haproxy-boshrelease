@@ -153,6 +153,41 @@ describe 'config/haproxy.config HTTP frontend' do
         expect(frontend_http).to include('tcp-request connection reject if layer4_block')
       end
     end
+
+    context 'when ha_proxy.accept_proxy set to true' do
+      context 'when ha_proxy.cidr_blocklist_tcp is provided' do
+        let(:properties) do
+          { 'accept_proxy' => true, 'cidr_blocklist_tcp' => ['172.168.4.1/32', '10.2.0.0/16'] }
+        end
+
+        it 'sets the correct acl and connection reject rules' do
+          expect(frontend_http).to include('acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt')
+          expect(frontend_http).to include('tcp-request session reject if layer4_block')
+        end
+      end
+
+      context 'when ha_proxy.cidr_blocklist_tcp is not provided' do
+        let(:properties) do
+          { 'accept_proxy' => true }
+        end
+
+        it 'still includes the layer4_block acl and reject rule (always present)' do
+          expect(frontend_http).to include('acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt')
+          expect(frontend_http).to include('tcp-request session reject if layer4_block')
+        end
+      end
+
+      context 'when ha_proxy.cidr_blocklist_tcp is an empty array' do
+        let(:properties) do
+          { 'accept_proxy' => true, 'cidr_blocklist_tcp' => [] }
+        end
+
+        it 'still includes the layer4_block acl and reject rule (always present)' do
+          expect(frontend_http).to include('acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt')
+          expect(frontend_http).to include('tcp-request session reject if layer4_block')
+        end
+      end
+    end
   end
 
   context 'when ha_proxy.block_all is provided' do
