@@ -61,6 +61,21 @@ describe 'config/haproxy.config rate limiting' do
     end
   end
 
+  context 'when ha_proxy.connections_rate_limit "window_size" and "table_size" are NOT provided' do
+    context 'when "connections" and "block" are set in manifest' do
+      let(:properties) do
+        default_properties.deep_merge({
+          'connections_rate_limit' => { 'connections' => '5', 'block' => true }
+        })
+      end
+
+      it 'does not set proc.conn_rate_limit or proc.conn_rate_block in global section' do
+        expect(haproxy_conf['global']).not_to include('set-var proc.conn_rate_limit')
+        expect(haproxy_conf['global']).not_to include('set-var proc.conn_rate_block')
+      end
+    end
+  end
+
   context 'when ha_proxy.connections_rate_limit properties "window_size", "table_size" are provided' do
     let(:backend_conn_rate) { haproxy_conf['backend st_tcp_conn_rate'] }
 
@@ -88,6 +103,16 @@ describe 'config/haproxy.config rate limiting' do
       expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
     end
 
+    it 'always emits the reject rule (even without connections or block set in manifest)' do
+      expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+      expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+    end
+
+    it 'always sets proc.conn_rate_block to false in global when block is not configured in manifest' do
+      expect(haproxy_conf['global']).to include('set-var proc.conn_rate_block bool(false)')
+      expect(haproxy_conf['global']).not_to include('set-var proc.conn_rate_limit')
+    end
+
     context 'when proxy protocol used' do
       let(:properties) do
         temp_properties.deep_merge({ 'accept_proxy' => true })
@@ -104,23 +129,49 @@ describe 'config/haproxy.config rate limiting' do
         temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '5', 'block' => 'true' } })
       end
 
-      it 'adds tcp-request connection reject to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
+      it 'adds tcp-request connection reject using process variables to http-in and https-in frontends' do
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
         expect(frontend_http).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request connection reject if { sc_conn_rate(0) gt 5 }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
         expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
+      end
+    end
+
+    context 'when "connections" is provided but "block" is false' do
+      let(:properties) do
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '10', 'block' => false } })
+      end
+
+      it 'sets proc.conn_rate_limit and proc.conn_rate_block process variables in global section' do
+        expect(haproxy_conf['global']).to include('set-var proc.conn_rate_limit int(10)')
+        expect(haproxy_conf['global']).to include('set-var proc.conn_rate_block bool(false)')
+      end
+
+      it 'still emits reject rule (rejection controlled at runtime via proc.conn_rate_block variable)' do
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+      end
+    end
+
+    context 'when only "block" is true but "connections" is not set in manifest' do
+      let(:properties) do
+        temp_properties.deep_merge({ 'connections_rate_limit' => { 'block' => true } })
+      end
+
+      it 'raises a validation error to prevent total lockout (every client with >= 1 connection would be blocked)' do
+        expect { haproxy_conf }.to raise_error(/connections_rate_limit.connections must be set when connections_rate_limit.block is true/)
       end
     end
 
     context 'when proxy protocol used and "connections" and "block" are also provided' do
       let(:properties) do
-        temp_properties.deep_merge({ 'accept_proxy' => true, 'connections_rate_limit' => { 'connections' => '5', 'block' => 'true' } })
+        temp_properties.deep_merge({ 'accept_proxy' => true, 'connections_rate_limit' => { 'connections' => '5', 'block' => true } })
       end
 
-      it 'adds tcp-request session reject to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request session reject if { sc_conn_rate(0) gt 5 }')
+      it 'adds tcp-request session reject using process variables to http-in and https-in frontends' do
+        expect(frontend_http).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
         expect(frontend_http).to include('tcp-request session track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request session reject if { sc_conn_rate(0) gt 5 }')
+        expect(frontend_https).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
         expect(frontend_https).to include('tcp-request session track-sc0 src table st_tcp_conn_rate')
       end
     end
