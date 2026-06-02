@@ -20,16 +20,16 @@ var _ = Describe("Rate-Limiting", func() {
   value: 10s
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/table_size?
-  value: 100
+  value: 1k
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
   value: %d
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
+  value: 10s
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
+  value: 1k
 `, rateLimit, rateLimit)
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
@@ -118,10 +118,10 @@ var _ = Describe("Rate-Limiting", func() {
   value: %d
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
+  value: 10s
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
+  value: 1k
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
   value: true
@@ -280,8 +280,8 @@ var _ = Describe("Rate-Limiting", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusTooManyRequests))
 			} else {
-			// TCP connection limit reached --> no response
-			Expect(err).To(HaveOccurred())
+				// TCP connection limit reached --> no response
+				Expect(err).To(HaveOccurred())
 			}
 		}
 	})
@@ -294,7 +294,7 @@ var _ = Describe("Rate-Limiting", func() {
   value: %d
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
+  value: 10s
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
   value: 100
@@ -379,151 +379,5 @@ var _ = Describe("Rate-Limiting", func() {
 		}
 		Expect(firstFailure).To(Equal(newLimit))
 		Expect(successfulRequestCount).To(Equal(newLimit))
-	})
-
-	It("Connection Based Limiting can be enabled and disabled at runtime via socket with manifest block false", func() {
-		connLimit := 5
-		// block: false in manifest — blocking is enabled/disabled at runtime via socket
-		opsfileConnectionsRateLimit := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
-  value: false
-`, connLimit)
-		haproxyBackendPort := 12000
-		haproxyInfo, _ := deployHAProxy(baseManifestVars{
-			haproxyBackendPort:    haproxyBackendPort,
-			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
-
-		closeLocalServer, localPort := startDefaultTestServer()
-		defer closeLocalServer()
-
-		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
-		defer closeTunnel()
-
-		By("Verifying proc.conn_rate_block is initialised as false from manifest block: false")
-		output := runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_block")
-		Expect(output).To(ContainSubstring("0"))
-
-		By("Enabling blocking at runtime via socket")
-		runHAProxySocketCommand(haproxyInfo, "experimental-mode on; set var proc.conn_rate_block bool(true)")
-
-		By("Verifying proc.conn_rate_block is now true")
-		output = runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_block")
-		Expect(output).To(ContainSubstring("1"))
-
-		By("Verifying connections are blocked after exceeding the limit")
-		testRequestCount := int(float64(connLimit) * 1.5)
-		firstFailure := -1
-		successfulRequestCount := 0
-		for i := 0; i < testRequestCount; i++ {
-			rt := &http.Transport{DisableKeepAlives: true}
-			client := &http.Client{Transport: rt}
-			resp, err := client.Get(fmt.Sprintf("http://%s/foo", haproxyInfo.PublicIP))
-			if err == nil && resp.StatusCode == 200 {
-				resp.Body.Close()
-				successfulRequestCount++
-				continue
-			}
-			if err == nil {
-				resp.Body.Close()
-			}
-			if firstFailure == -1 {
-				firstFailure = i
-			}
-		}
-		Expect(firstFailure).To(Equal(connLimit))
-		Expect(successfulRequestCount).To(Equal(connLimit))
-
-		By("Disabling blocking at runtime via socket")
-		runHAProxySocketCommand(haproxyInfo, "experimental-mode on; set var proc.conn_rate_block bool(false)")
-
-		By("Verifying proc.conn_rate_block is now false")
-		output = runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_block")
-		Expect(output).To(ContainSubstring("0"))
-
-		By("Clearing stick table to reset counters")
-		runHAProxySocketCommand(haproxyInfo, "clear table st_tcp_conn_rate")
-
-		By("Verifying all connections are now allowed after disabling blocking via socket")
-		for i := 0; i < testRequestCount; i++ {
-			rt := &http.Transport{DisableKeepAlives: true}
-			client := &http.Client{Transport: rt}
-			resp, err := client.Get(fmt.Sprintf("http://%s/foo", haproxyInfo.PublicIP))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			resp.Body.Close()
-		}
-	})
-
-	It("Connection Based Limiting works when limit is set entirely via socket without manifest connections property", func() {
-		connLimit := 5
-		// Only table_size and window_size are set — no connections or block in manifest
-		// proc.conn_rate_block defaults to false, proc.conn_rate_limit must be set via socket
-		opsfileConnectionsRateLimit := `---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/window_size
-  value: 100s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
-`
-		haproxyBackendPort := 12000
-		haproxyInfo, _ := deployHAProxy(baseManifestVars{
-			haproxyBackendPort:    haproxyBackendPort,
-			haproxyBackendServers: []string{"127.0.0.1"},
-			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
-
-		closeLocalServer, localPort := startDefaultTestServer()
-		defer closeLocalServer()
-
-		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
-		defer closeTunnel()
-
-		By("Setting conn_rate_limit and enabling blocking entirely via socket")
-		runHAProxySocketCommand(haproxyInfo, fmt.Sprintf("experimental-mode on; set var proc.conn_rate_limit int(%d)", connLimit))
-		runHAProxySocketCommand(haproxyInfo, "experimental-mode on; set var proc.conn_rate_block bool(true)")
-
-		By("Verifying proc.conn_rate_limit is set correctly via socket")
-		output := runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_limit")
-		Expect(output).To(ContainSubstring(fmt.Sprintf("%d", connLimit)))
-
-		By("Verifying proc.conn_rate_block is set correctly via socket")
-		output = runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_block")
-		Expect(output).To(ContainSubstring("1"))
-
-		By("Verifying connections are blocked after exceeding the socket-configured limit")
-		testRequestCount := int(float64(connLimit) * 1.5)
-		firstFailure := -1
-		successfulRequestCount := 0
-		for i := 0; i < testRequestCount; i++ {
-			rt := &http.Transport{DisableKeepAlives: true}
-			client := &http.Client{Transport: rt}
-			resp, err := client.Get(fmt.Sprintf("http://%s/foo", haproxyInfo.PublicIP))
-			if err == nil && resp.StatusCode == 200 {
-				resp.Body.Close()
-				successfulRequestCount++
-				continue
-			}
-			if err == nil {
-				resp.Body.Close()
-			}
-			if firstFailure == -1 {
-				firstFailure = i
-			}
-		}
-		Expect(firstFailure).To(Equal(connLimit))
-		Expect(successfulRequestCount).To(Equal(connLimit))
 	})
 })

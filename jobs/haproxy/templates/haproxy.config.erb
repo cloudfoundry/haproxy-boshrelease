@@ -452,7 +452,8 @@ frontend http-in
     tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
-    tcp-request <%= tcp_request_phase %> reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }
+    # use sub() converter as variable references are only accepted as arguments to converters
+    tcp-request <%= tcp_request_phase %> reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     http-request track-sc1 src table st_http_req_rate
@@ -582,7 +583,8 @@ frontend https-in
     tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
-    tcp-request <%= tcp_request_phase %> reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }
+    # use sub() converter as variable references are only accepted as arguments to converters
+    tcp-request <%= tcp_request_phase %> reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     http-request track-sc1 src table st_http_req_rate

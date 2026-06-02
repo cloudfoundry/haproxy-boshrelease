@@ -104,8 +104,8 @@ describe 'config/haproxy.config rate limiting' do
     end
 
     it 'always emits the reject rule (even without connections or block set in manifest)' do
-      expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
-      expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+      expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+      expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
     end
 
     it 'always sets proc.conn_rate_block to false in global when block is not configured in manifest' do
@@ -130,9 +130,9 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'adds tcp-request connection reject using process variables to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
         expect(frontend_http).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
         expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
       end
     end
@@ -148,8 +148,8 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'still emits reject rule (rejection controlled at runtime via proc.conn_rate_block variable)' do
-        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
-        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
       end
     end
 
@@ -169,9 +169,9 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'adds tcp-request session reject using process variables to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+        expect(frontend_http).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
         expect(frontend_http).to include('tcp-request session track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) gt 0 } { sc_conn_rate(0) gt var(proc.conn_rate_limit) }')
+        expect(frontend_https).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
         expect(frontend_https).to include('tcp-request session track-sc0 src table st_tcp_conn_rate')
       end
     end
