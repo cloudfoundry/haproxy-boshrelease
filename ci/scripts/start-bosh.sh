@@ -256,9 +256,22 @@ EOF
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
       echo "Creating BOSH director environment (this may take several minutes)..." >&2
+      set +e
       bosh create-env "${local_bosh_dir}/bosh-director.yml" \
         --vars-store="${local_bosh_dir}/creds.yml" \
         --state="${local_bosh_dir}/state.json"
+      create_env_rc=$?
+      set -e
+      if [ "$create_env_rc" -ne "0" ]; then
+        echo "" >&2
+        echo "ERROR: 'bosh create-env' failed." >&2
+        echo "This could be caused by a new version of the docker-cpi image which sets up the latest bosh and bosh-deployment releases that may introduce bugs." >&2
+        echo "You can:" >&2
+        echo "  1) Check the bosh release changelog for breaking changes" >&2
+        echo "  2) Communicate with the BOSH team to report/confirm the issue" >&2
+        echo "  3) Pin an older version of the docker-cpi image and start a new job" >&2
+        exit 1
+      fi
 
       bosh int "${local_bosh_dir}/creds.yml" --path /director_ssl/ca > "${local_bosh_dir}/ca.crt"
       bosh_client_secret="$(bosh int "${local_bosh_dir}/creds.yml" --path /admin_password)"

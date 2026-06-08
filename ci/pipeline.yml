@@ -25,6 +25,7 @@ jobs:
       - get: git
         trigger: true
       - get: haproxy-boshrelease-testflight
+        trigger: true
       - task: lint
         image: haproxy-boshrelease-testflight
         config:
@@ -125,7 +126,7 @@ jobs:
         - { get: git, trigger: true, passed: [unit-tests] }
         - { get: stemcell }
         - { get: stemcell-jammy }
-        - get: haproxy-boshrelease-testflight
+        - { get: haproxy-boshrelease-testflight, trigger: true, passed: [build-haproxy-testflight-image] }
       - task: acceptance-tests
         privileged: true
         timeout: 4h
@@ -377,7 +378,7 @@ jobs:
     plan:
       - in_parallel:
           - { get: git-pull-requests, trigger: true, version: every }
-          - get: docker-cpi-image
+          - { get: docker-cpi-image, trigger: true }
       - task: create-pr-tag
         image: docker-cpi-image
         config:
