@@ -69,9 +69,9 @@ describe 'config/haproxy.config rate limiting' do
         })
       end
 
-      it 'does not set proc.conn_rate_limit or proc.conn_rate_block in global section' do
-        expect(haproxy_conf['global']).not_to include('set-var proc.conn_rate_limit')
-        expect(haproxy_conf['global']).not_to include('set-var proc.conn_rate_block')
+      it 'does not set proc.connections_rate_limit_connections or proc.connections_rate_limit_block in global section' do
+        expect(haproxy_conf['global']).not_to include('set-var proc.connections_rate_limit_connections')
+        expect(haproxy_conf['global']).not_to include('set-var proc.connections_rate_limit_block')
       end
     end
   end
@@ -104,13 +104,13 @@ describe 'config/haproxy.config rate limiting' do
     end
 
     it 'always emits the reject rule (even without connections or block set in manifest)' do
-      expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
-      expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+      expect(frontend_http).to include('tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
+      expect(frontend_https).to include('tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
     end
 
-    it 'always sets proc.conn_rate_block to false in global when block is not configured in manifest' do
-      expect(haproxy_conf['global']).to include('set-var proc.conn_rate_block bool(false)')
-      expect(haproxy_conf['global']).not_to include('set-var proc.conn_rate_limit')
+    it 'always sets proc.connections_rate_limit_block to false in global when block is not configured in manifest' do
+      expect(haproxy_conf['global']).to include('set-var proc.connections_rate_limit_block bool(false)')
+      expect(haproxy_conf['global']).not_to include('set-var proc.connections_rate_limit_connections')
     end
 
     context 'when proxy protocol used' do
@@ -130,9 +130,9 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'adds tcp-request connection reject using process variables to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
         expect(frontend_http).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
         expect(frontend_https).to include('tcp-request connection track-sc0 src table st_tcp_conn_rate')
       end
     end
@@ -142,14 +142,14 @@ describe 'config/haproxy.config rate limiting' do
         temp_properties.deep_merge({ 'connections_rate_limit' => { 'connections' => '10', 'block' => false } })
       end
 
-      it 'sets proc.conn_rate_limit and proc.conn_rate_block process variables in global section' do
-        expect(haproxy_conf['global']).to include('set-var proc.conn_rate_limit int(10)')
-        expect(haproxy_conf['global']).to include('set-var proc.conn_rate_block bool(false)')
+      it 'sets proc.connections_rate_limit_connections and proc.connections_rate_limit_block process variables in global section' do
+        expect(haproxy_conf['global']).to include('set-var proc.connections_rate_limit_connections int(10)')
+        expect(haproxy_conf['global']).to include('set-var proc.connections_rate_limit_block bool(false)')
       end
 
-      it 'still emits reject rule (rejection controlled at runtime via proc.conn_rate_block variable)' do
-        expect(frontend_http).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
-        expect(frontend_https).to include('tcp-request connection reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+      it 'still emits reject rule (rejection controlled at runtime via proc.connections_rate_limit_block variable)' do
+        expect(frontend_http).to include('tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
+        expect(frontend_https).to include('tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
       end
     end
 
@@ -159,7 +159,7 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'raises a validation error to prevent total lockout (every client with >= 1 connection would be blocked)' do
-        expect { haproxy_conf }.to raise_error(/connections_rate_limit.connections must be set when connections_rate_limit.block is true/)
+        expect { haproxy_conf }.to raise_error(/connections_rate_limit.connections must be set in the manifest as the initial threshold when block is true/)
       end
     end
 
@@ -169,9 +169,9 @@ describe 'config/haproxy.config rate limiting' do
       end
 
       it 'adds tcp-request session reject using process variables to http-in and https-in frontends' do
-        expect(frontend_http).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_http).to include('tcp-request session reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
         expect(frontend_http).to include('tcp-request session track-sc0 src table st_tcp_conn_rate')
-        expect(frontend_https).to include('tcp-request session reject if { var(proc.conn_rate_block) -m bool } { var(proc.conn_rate_limit) -m int gt 0 } { sc_conn_rate(0),sub(proc.conn_rate_limit) gt 0 }')
+        expect(frontend_https).to include('tcp-request session reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }')
         expect(frontend_https).to include('tcp-request session track-sc0 src table st_tcp_conn_rate')
       end
     end

@@ -315,12 +315,12 @@ var _ = Describe("Rate-Limiting", func() {
 		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 		defer closeTunnel()
 
-		By("Verifying proc.conn_rate_limit is initialised from manifest value")
-		output := runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_limit")
+		By("Verifying proc.connections_rate_limit_connections is initialised from manifest value")
+		output := runHAProxySocketCommand(haproxyInfo, "get var proc.connections_rate_limit_connections")
 		Expect(output).To(ContainSubstring(fmt.Sprintf("%d", connLimit)))
 
-		By("Verifying proc.conn_rate_block is initialised as true from manifest block: true")
-		output = runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_block")
+		By("Verifying proc.connections_rate_limit_block is initialised as true from manifest block: true")
+		output = runHAProxySocketCommand(haproxyInfo, "get var proc.connections_rate_limit_block")
 		Expect(output).To(ContainSubstring("1"))
 
 		By("Verifying connections are blocked after exceeding the manifest-configured limit")
@@ -351,10 +351,10 @@ var _ = Describe("Rate-Limiting", func() {
 
 		By("Overriding the limit at runtime via socket to a higher value")
 		newLimit := connLimit * 3
-		runHAProxySocketCommand(haproxyInfo, fmt.Sprintf("experimental-mode on; set var proc.conn_rate_limit int(%d)", newLimit))
+		runHAProxySocketCommand(haproxyInfo, fmt.Sprintf("experimental-mode on; set var proc.connections_rate_limit_connections int(%d)", newLimit))
 
 		By("Verifying the override is reflected via get var")
-		output = runHAProxySocketCommand(haproxyInfo, "get var proc.conn_rate_limit")
+		output = runHAProxySocketCommand(haproxyInfo, "get var proc.connections_rate_limit_connections")
 		Expect(output).To(ContainSubstring(fmt.Sprintf("%d", newLimit)))
 
 		By("Verifying connections are allowed up to the new higher socket-configured limit")

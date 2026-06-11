@@ -110,7 +110,7 @@ frontend http-in
 ```
 
 ## Querying Current Stick-Table Status
-To get more insight into what is going on inside HAProxy regarding its rate limits, you can query the stats socket to get the raw table data:
+To get more insight into what is going on inside HAProxy regarding its rate limits, you can query the stats socket at `/var/vcap/sys/run/haproxy/stats.sock` to get the raw table data:
 
 ```bash
 $ echo "show table st_http_req_rate" | socat /var/vcap/sys/run/haproxy/stats.sock -
@@ -132,42 +132,52 @@ echo "show table st_tcp_conn_rate" | socat stdio /var/vcap/sys/run/haproxy/stats
 
 ## Control Connection Rate Limiting via HAProxy Runtime API
 
-The `connections_rate_limit.block` flag and `connections_rate_limit.connections` threshold are stored as HAProxy process-level variables (`proc.conn_rate_block` and `proc.conn_rate_limit`) and can be changed at runtime without a reload. This requires `ha_proxy.master_cli_enable: true` or `ha_proxy.stats_enable: true`.
+Normally, changing rate-limit settings requires updating the manifest and reloading HAProxy. Using the HAProxy Runtime API, blocking can be enabled or disabled, and the connection threshold can be tightened or loosened while HAProxy continues running and serving traffic. This is particularly useful during an active incident, when a rapid reaction is needed.
 
-The socket is located at `/var/vcap/sys/run/haproxy/stats.sock`. You will likely need `root` permissions to access it.
+### Prerequisites
 
-> **Note:** The `tcp-request connection reject` rule is always present in the config as long as `connections_rate_limit.table_size` and `connections_rate_limit.window_size` are set. Enforcement is controlled entirely at runtime via `proc.conn_rate_block` and `proc.conn_rate_limit`. Setting `connections_rate_limit.connections` and `connections_rate_limit.block` in the manifest only sets their **initial values** at startup — they can be freely overridden via socket without a reload.
+- `ha_proxy.master_cli_enable: true` or `ha_proxy.stats_enable: true` must be set in the manifest to enable the HAProxy Runtime API.
+- `ha_proxy.connections_rate_limit.table_size` and `ha_proxy.connections_rate_limit.window_size`  must be defined in the manifest to create the stick table and enable connection tracking.
+- `root` permissions are required to write to the socket.
+
+### How Runtime Control Works
+
+When HAProxy starts, it reads `connections_rate_limit.block` and `connections_rate_limit.connections` from the manifest and stores them as process-level variables inside the running HAProxy process. Updating a variable instantly changes the behavior for all subsequent connections, as every new TCP connection is evaluated against these variables in real time.
+
+These variables are updated by sending plain-text commands to the HAProxy stats socket. The socket is available as long as HAProxy is running, and any change persists until the next redeploy, at which point the manifest values are restored.
+
+> Note: the connections threshold is applied per the defined window_size, which is also used for counting connections. For example, if `window_size` is set to `10s` and `connections` is set to `100`, then the threshold of 100 connections applies to every 10-second window.
 
 ### Inspect Current Variable Values
 
 ```bash
-echo "get var proc.conn_rate_limit" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
-# => proc.conn_rate_limit: type=sint value=<100>
+echo "get var proc.connections_rate_limit_connections" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
+# => proc.connections_rate_limit_connections: type=sint value=<600>
 
-echo "get var proc.conn_rate_block" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
-# => proc.conn_rate_block: type=bool value=<1>
+echo "get var proc.connections_rate_limit_block" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
+# => proc.connections_rate_limit_block: type=bool value=<1>
 ```
 
 ### Enable or Disable Blocking at Runtime
 
 ```bash
 # Enable blocking (equivalent to setting block: true in the manifest)
-echo "experimental-mode on; set var proc.conn_rate_block bool(true)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
+echo "experimental-mode on; set var proc.connections_rate_limit_block bool(true)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
 
 # Disable blocking without reloading (equivalent to setting block: false in the manifest)
-echo "experimental-mode on; set var proc.conn_rate_block bool(false)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
+echo "experimental-mode on; set var proc.connections_rate_limit_block bool(false)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
 ```
 
 ### Adjust the Connections Threshold at Runtime
 
 ```bash
 # Allow up to 100 connections per window (equivalent to setting connections: 100 in the manifest)
-echo "experimental-mode on; set var proc.conn_rate_limit int(100)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
+echo "experimental-mode on; set var proc.connections_rate_limit_connections int(100)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
 ```
 
 ### Enable Rate Limiting and Set Threshold in One Step
 
 ```bash
-echo "experimental-mode on; set var proc.conn_rate_limit int(100); set var proc.conn_rate_block bool(true)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
+echo "experimental-mode on; set var proc.connections_rate_limit_connections int(100); set var proc.connections_rate_limit_block bool(true)" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock
 ```
 
