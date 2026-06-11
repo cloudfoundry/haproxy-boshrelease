@@ -134,7 +134,7 @@ echo "show table st_tcp_conn_rate" | socat stdio /var/vcap/sys/run/haproxy/stats
 
 The `connections_rate_limit.block` flag and `connections_rate_limit.connections` threshold are stored as HAProxy process-level variables (`proc.conn_rate_block` and `proc.conn_rate_limit`) and can be changed at runtime without a reload. This requires `ha_proxy.master_cli_enable: true` or `ha_proxy.stats_enable: true`.
 
-The socket is located at `/var/vcap/sys/run/haproxy/stats.sock`. You will likely need `sudo` to access it.
+The socket is located at `/var/vcap/sys/run/haproxy/stats.sock`. You will likely need `root` permissions to access it.
 
 > **Note:** The `tcp-request connection reject` rule is always present in the config as long as `connections_rate_limit.table_size` and `connections_rate_limit.window_size` are set. Enforcement is controlled entirely at runtime via `proc.conn_rate_block` and `proc.conn_rate_limit`. Setting `connections_rate_limit.connections` and `connections_rate_limit.block` in the manifest only sets their **initial values** at startup — they can be freely overridden via socket without a reload.
 

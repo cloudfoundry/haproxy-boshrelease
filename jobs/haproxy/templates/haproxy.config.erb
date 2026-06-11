@@ -234,7 +234,7 @@ end
   if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do
     if p("ha_proxy.connections_rate_limit.block", false)
       if !p("ha_proxy.connections_rate_limit.connections", nil)
-        abort "Conflicting configuration: connections_rate_limit.connections must be set when connections_rate_limit.block is true (otherwise every client with >= 1 connection would be blocked)"
+        abort "connections_rate_limit.connections must be set in the manifest as the initial threshold when block is true; otherwise rate-limiting will be silently disabled until a value is set via the runtime API."
       end
     end
   end
