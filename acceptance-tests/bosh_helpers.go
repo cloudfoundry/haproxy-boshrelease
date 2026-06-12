@@ -322,3 +322,13 @@ func crashHAProxy(haproxyInfo haproxyInfo) {
 	_, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, "sudo pkill -9 -x haproxy")
 	Expect(err).NotTo(HaveOccurred())
 }
+
+// runHAProxySocketCommand sends a command to the HAProxy Runtime API via the stats socket using socat.
+// Returns the trimmed stdout output.
+func runHAProxySocketCommand(haproxyInfo haproxyInfo, command string) string {
+	cmd := fmt.Sprintf(`echo "%s" | sudo socat stdio /var/vcap/sys/run/haproxy/stats.sock`, command)
+	stdout, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, cmd)
+	Expect(err).NotTo(HaveOccurred())
+	return strings.TrimSpace(stdout)
+}
+

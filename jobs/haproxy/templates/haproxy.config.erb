@@ -230,6 +230,15 @@ end
     abort "Conflicting configuration: enable_redispatch works only with retries > 0"
   end
 
+  # Safety guard: block=true without connections would cause every client with >= 1 connection to be blocked (total lockout)
+  if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do
+    if p("ha_proxy.connections_rate_limit.block", false)
+      if !p("ha_proxy.connections_rate_limit.connections", nil)
+        abort "connections_rate_limit.connections must be set in the manifest as the initial threshold when block is true; otherwise rate-limiting will be silently disabled until a value is set via the runtime API."
+      end
+    end
+  end
+
   backend_servers = []
   backend_servers_local = []
   backend_port = nil
@@ -323,6 +332,12 @@ global
   <%- end -%>
   <%- if backend_match_http_protocol && backends.length == 2 -%>
     set-var proc.h2_alpn_tag str(h2)
+  <%- end -%>
+  <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
+    <%- if_p("ha_proxy.connections_rate_limit.connections") do |conn_rate_connections| -%>
+    set-var proc.connections_rate_limit_connections int(<%= conn_rate_connections %>)
+    <%- end -%>
+    set-var proc.connections_rate_limit_block bool(<%= p("ha_proxy.connections_rate_limit.block", false) %>)
   <%- end -%>
   <%- if p("ha_proxy.always_allow_body_http10") %>
     h1-accept-payload-with-any-method
@@ -437,11 +452,8 @@ frontend http-in
     tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
-    <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
-      <%-if block -%>
-    tcp-request <%= tcp_request_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
-      <%- end -%>
-    <%- end -%>
+    # use sub() converter as variable references are only accepted as arguments to converters
+    tcp-request <%= tcp_request_phase %> reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     http-request track-sc1 src table st_http_req_rate
@@ -571,11 +583,8 @@ frontend https-in
     tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
     tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
-    <%- if_p("ha_proxy.connections_rate_limit.block", "ha_proxy.connections_rate_limit.connections") do |block, connections| -%>
-      <%-if block -%>
-    tcp-request <%= tcp_request_phase %> reject if { sc_conn_rate(0) gt <%= connections %> }
-      <%- end -%>
-    <%- end -%>
+    # use sub() converter as variable references are only accepted as arguments to converters
+    tcp-request <%= tcp_request_phase %> reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     http-request track-sc1 src table st_http_req_rate
