@@ -71,6 +71,8 @@ builds:
     version: 12.0.0+2.7.6
   53d69e13-909b-42da-56c6-6abb3b9e6203:
     version: 9.1.0
+  5a4805af-43bc-4e52-6f1e-48a23ed61fad:
+    version: 16.10.0+3.2.19
   629cf530-f528-40ab-56e2-eb9fd5ebacb0:
     version: 10.6.0
   64711483-b4b1-48da-7e31-13cf6fbc47b6:
