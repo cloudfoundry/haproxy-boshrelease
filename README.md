@@ -97,4 +97,4 @@ without going through CI.
 ./scripts/dev-build.sh --upload-only         # re-upload previously built tarballs
 ```
 
-Tarballs are written to `./dev-releases/` and uploaded with `bosh upload-release --fix`.
+Tarballs are written to `./builds/` and uploaded with `bosh upload-release --fix`.

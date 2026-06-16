@@ -24,7 +24,7 @@
 #   ./scripts/dev-build.sh multi                    # build only multi
 #   ./scripts/dev-build.sh --version 17.0.0 multi   # override BASE
 #   ./scripts/dev-build.sh awslc awslc-fips         # build awslc and awslc-fips
-#   ./scripts/dev-build.sh --upload-only            # upload everything in dev-releases/
+#   ./scripts/dev-build.sh --upload-only            # upload everything in builds/
 #
 # Prerequisites:
 #   - All blobs present locally (bosh add-blob done for aws-lc, cmake, golang, aws-lc-fips)
@@ -36,6 +36,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
+# Pull in AWS_LC_VERSION / AWS_LC_FIPS_VERSION so they can be embedded in
+# variant suffixes — keeps dev tarball filenames self-describing.
+# shellcheck disable=SC1091
+source src/haproxy-versions.sh
+
 ALL_VARIANTS=(openssl openssl-patched awslc awslc-patched awslc-fips awslc-fips-patched multi)
 
 is_variant() {
@@ -46,9 +51,23 @@ is_variant() {
   return 1
 }
 
+# Map a variant name to the suffix used in the BOSH release version, embedding
+# the upstream AWS-LC versions so tarballs are self-describing. Mirrors the
+# scheme in ci/scripts/shipit so dev and CI artifacts agree.
+variant_suffix() {
+  case "$1" in
+    awslc)              echo "awslc-${AWS_LC_VERSION}" ;;
+    awslc-patched)      echo "awslc-${AWS_LC_VERSION}-patched" ;;
+    awslc-fips)         echo "awslc-fips-${AWS_LC_FIPS_VERSION}" ;;
+    awslc-fips-patched) echo "awslc-fips-${AWS_LC_FIPS_VERSION}-patched" ;;
+    multi)              echo "multi-awslc-${AWS_LC_VERSION}-fips-${AWS_LC_FIPS_VERSION}" ;;
+    *)                  echo "$1" ;;
+  esac
+}
+
 UPLOAD_ONLY=false
 BASE_VERSION=""
-OUTPUT_DIR="./dev-releases"
+OUTPUT_DIR="./builds"
 VARIANTS=()
 
 while [[ $# -gt 0 ]]; do
@@ -143,7 +162,7 @@ add_patches_to_spec() {
 build_release() {
   local variant="$1"
   local suffix="dev"
-  [[ -n "$variant" ]] && suffix="dev-${variant}"
+  [[ -n "$variant" ]] && suffix="dev-$(variant_suffix "$variant")"
   local version="${BASE_VERSION}+${suffix}.${TIMESTAMP}"
   local tarball="$OUTPUT_DIR/haproxy-${version}.tgz"
 

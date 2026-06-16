@@ -6,6 +6,7 @@ releases/**/*.tgz
 ci/scripts/stemcell/*.tgz
 ci/scripts/stemcell-jammy/*.tgz
 dev_releases
+builds
 blobs/*
 .blobs
 .dev_builds

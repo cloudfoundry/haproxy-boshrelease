@@ -91,6 +91,16 @@ GOLANG_VERSION=$(version GOLANG_VERSION)
 
 VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
 
+# Variant suffixes embed the upstream AWS-LC versions so the resulting
+# release versions (and tarball filenames) are self-describing. Mirrors the
+# scheme used by scripts/dev-build.sh.
+PATCHED_SUFFIX="patched"
+AWSLC_SUFFIX="awslc-${AWS_LC_VERSION}"
+AWSLC_PATCHED_SUFFIX="awslc-${AWS_LC_VERSION}-patched"
+AWSLC_FIPS_SUFFIX="awslc-fips-${AWS_LC_FIPS_VERSION}"
+AWSLC_FIPS_PATCHED_SUFFIX="awslc-fips-${AWS_LC_FIPS_VERSION}-patched"
+MULTI_SUFFIX="multi-awslc-${AWS_LC_VERSION}-fips-${AWS_LC_FIPS_VERSION}"
+
 cd "${REPO_ROOT}"
 header "Create final release..."
 
@@ -192,8 +202,8 @@ pushd "${REPO_ROOT}"
   # --- OpenSSL + Patched ---
   ensure_patches_blob
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
-  bosh -n create-release --force --version "${VERSION}-patched" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-patched.tgz"
+  bosh -n create-release --force --version "${VERSION}-${PATCHED_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz"
 
   git clean -df
   git reset --hard
@@ -202,8 +212,8 @@ pushd "${REPO_ROOT}"
   echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
 
-  bosh -n create-release --force --version "${VERSION}-awslc" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-awslc.tgz"
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz"
 
   git clean -df
   git reset --hard
@@ -214,8 +224,8 @@ pushd "${REPO_ROOT}"
   echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
 
-  bosh -n create-release --force --version "${VERSION}-awslc-patched" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-awslc-patched.tgz"
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_PATCHED_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz"
 
   git clean -df
   git reset --hard
@@ -225,8 +235,8 @@ pushd "${REPO_ROOT}"
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
 
-  bosh -n create-release --force --version "${VERSION}-awslc-fips" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-awslc-fips.tgz"
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_FIPS_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz"
 
   git clean -df
   git reset --hard
@@ -238,8 +248,8 @@ pushd "${REPO_ROOT}"
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
 
-  bosh -n create-release --force --version "${VERSION}-awslc-fips-patched" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz"
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz"
 
   git clean -df
   git reset --hard
@@ -249,17 +259,17 @@ pushd "${REPO_ROOT}"
   ensure_patches_blob
   sed -i 's/^- haproxy$/- haproxy-deps\n- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
 
-  bosh -n create-release --force --version "${VERSION}-multi" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-multi.tgz"
+  bosh -n create-release --force --version "${VERSION}-${MULTI_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz"
 
   git clean -df
   git reset --hard
 popd
 
 mkdir -p "${RELEASE_ROOT}/artifacts-patched"
-mv "${RELEASE_NAME}-${VERSION}-patched.tgz" "${RELEASE_ROOT}/artifacts-patched"
+mv "${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-patched"
 
-PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-patched.tgz
+PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export PATCHED_SHA1=$(sha1sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "PATCHED_SHA1=${PATCHED_SHA1}"
@@ -273,8 +283,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-patched"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-patched.tgz"
+  version: "${VERSION}-${PATCHED_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz"
   sha1: "${PATCHED_SHA1}"
 
 # for deployments with sha256, use the following line instead:
@@ -283,9 +293,9 @@ releases:
 EOF
 
 mkdir -p "${RELEASE_ROOT}/artifacts-awslc"
-mv "${RELEASE_NAME}-${VERSION}-awslc.tgz" "${RELEASE_ROOT}/artifacts-awslc"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc"
 
-AWSLC_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc/${RELEASE_NAME}-${VERSION}-awslc.tgz
+AWSLC_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc/${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export AWSLC_SHA1=$(sha1sum "${AWSLC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "AWSLC_SHA1=${AWSLC_SHA1}"
@@ -299,8 +309,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-awslc"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc.tgz"
+  version: "${VERSION}-${AWSLC_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz"
   sha1: "${AWSLC_SHA1}"
 
 # for deployments with sha256, use the following line instead:
@@ -309,9 +319,9 @@ releases:
 EOF
 
 mkdir -p "${RELEASE_ROOT}/artifacts-awslc-patched"
-mv "${RELEASE_NAME}-${VERSION}-awslc-patched.tgz" "${RELEASE_ROOT}/artifacts-awslc-patched"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc-patched"
 
-AWSLC_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-patched/${RELEASE_NAME}-${VERSION}-awslc-patched.tgz
+AWSLC_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-patched/${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export AWSLC_PATCHED_SHA1=$(sha1sum "${AWSLC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "AWSLC_PATCHED_SHA1=${AWSLC_PATCHED_SHA1}"
@@ -325,8 +335,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-awslc-patched"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc-patched.tgz"
+  version: "${VERSION}-${AWSLC_PATCHED_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz"
   sha1: "${AWSLC_PATCHED_SHA1}"
 
 # for deployments with sha256, use the following line instead:
@@ -335,9 +345,9 @@ releases:
 EOF
 
 mkdir -p "${RELEASE_ROOT}/artifacts-awslc-fips"
-mv "${RELEASE_NAME}-${VERSION}-awslc-fips.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips"
 
-AWSLC_FIPS_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips/${RELEASE_NAME}-${VERSION}-awslc-fips.tgz
+AWSLC_FIPS_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export AWSLC_FIPS_SHA1=$(sha1sum "${AWSLC_FIPS_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "AWSLC_FIPS_SHA1=${AWSLC_FIPS_SHA1}"
@@ -351,8 +361,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-awslc-fips"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc-fips.tgz"
+  version: "${VERSION}-${AWSLC_FIPS_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz"
   sha1: "${AWSLC_FIPS_SHA1}"
 
 # for deployments with sha256, use the following line instead:
@@ -361,9 +371,9 @@ releases:
 EOF
 
 mkdir -p "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
-mv "${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
 
-AWSLC_FIPS_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips-patched/${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz
+AWSLC_FIPS_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips-patched/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export AWSLC_FIPS_PATCHED_SHA1=$(sha1sum "${AWSLC_FIPS_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "AWSLC_FIPS_PATCHED_SHA1=${AWSLC_FIPS_PATCHED_SHA1}"
@@ -377,8 +387,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-awslc-fips-patched"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-awslc-fips-patched.tgz"
+  version: "${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz"
   sha1: "${AWSLC_FIPS_PATCHED_SHA1}"
 
 # for deployments with sha256, use the following line instead:
@@ -387,9 +397,9 @@ releases:
 EOF
 
 mkdir -p "${RELEASE_ROOT}/artifacts-multi"
-mv "${RELEASE_NAME}-${VERSION}-multi.tgz" "${RELEASE_ROOT}/artifacts-multi"
+mv "${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-multi"
 
-MULTI_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-multi/${RELEASE_NAME}-${VERSION}-multi.tgz
+MULTI_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-multi/${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export MULTI_SHA1=$(sha1sum "${MULTI_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "MULTI_SHA1=${MULTI_SHA1}"
@@ -403,8 +413,8 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-multi"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-multi.tgz"
+  version: "${VERSION}-${MULTI_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz"
   sha1: "${MULTI_SHA1}"
 
 # for deployments with sha256, use the following line instead:
