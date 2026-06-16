@@ -60,6 +60,7 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
           -DFIPS=1 \
           -DBUILD_SHARED_LIBS=0 \
           -DBUILD_TESTING=0 \
+          -DBUILD_TOOL=0 \
           -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
           ..
     make -j$(nproc)
@@ -88,6 +89,7 @@ elif ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
           -DDISABLE_GO=1 \
           -DDISABLE_PERL=1 \
           -DBUILD_TESTING=0 \
+          -DBUILD_TOOL=0 \
           -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
           ..
     make -j$(nproc)

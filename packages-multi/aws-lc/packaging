@@ -12,6 +12,7 @@ pushd aws-lc-${AWS_LC_VERSION}
         -DDISABLE_GO=1 \
         -DDISABLE_PERL=1 \
         -DBUILD_TESTING=0 \
+        -DBUILD_TOOL=0 \
         -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
         ..
   make -j$(nproc)

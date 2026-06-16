@@ -18,6 +18,7 @@ pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
         -DFIPS=1 \
         -DBUILD_SHARED_LIBS=0 \
         -DBUILD_TESTING=0 \
+        -DBUILD_TOOL=0 \
         -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
         ..
   make -j$(nproc)
