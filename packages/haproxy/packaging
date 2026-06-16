@@ -43,13 +43,9 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
   export GOCACHE=${BOSH_INSTALL_TARGET}/gocache
   export PATH=${GOROOT}/bin:$PATH
 
-  echo "Building cmake..."
-  tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
-  pushd cmake-${CMAKE_VERSION}
-    ./bootstrap --prefix=${BOSH_INSTALL_TARGET} --parallel=$(nproc)
-    make -j$(nproc)
-    make install
-  popd
+  echo "Installing cmake (prebuilt binary)..."
+  tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+  cp -r cmake-${CMAKE_VERSION}-linux-x86_64/. ${BOSH_INSTALL_TARGET}/
   export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
 
   echo "Building AWS-LC (FIPS)..."
@@ -71,13 +67,9 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
 
 elif ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
   # --- AWS-LC non-FIPS build ---
-  echo "Building cmake..."
-  tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
-  pushd cmake-${CMAKE_VERSION}
-    ./bootstrap --prefix=${BOSH_INSTALL_TARGET} --parallel=$(nproc)
-    make -j$(nproc)
-    make install
-  popd
+  echo "Installing cmake (prebuilt binary)..."
+  tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+  cp -r cmake-${CMAKE_VERSION}-linux-x86_64/. ${BOSH_INSTALL_TARGET}/
   export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
 
   echo "Building AWS-LC..."

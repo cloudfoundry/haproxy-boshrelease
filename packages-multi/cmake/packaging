@@ -2,9 +2,6 @@ set -euxo pipefail
 
 source haproxy-versions.sh
 
-tar xzf haproxy/cmake-${CMAKE_VERSION}.tar.gz
-pushd cmake-${CMAKE_VERSION}
-  ./bootstrap --prefix=${BOSH_INSTALL_TARGET} --parallel=$(nproc)
-  make -j$(nproc)
-  make install
-popd
+# Install prebuilt cmake binary tarball — no compile step needed.
+tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+cp -r cmake-${CMAKE_VERSION}-linux-x86_64/. ${BOSH_INSTALL_TARGET}/
