@@ -14,7 +14,7 @@ export PATH=${GOROOT}/bin:$PATH
 tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
 pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
   mkdir -p build && cd build
-  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  cmake -DCMAKE_BUILD_TYPE=Release \
         -DFIPS=1 \
         -DBUILD_SHARED_LIBS=0 \
         -DBUILD_TESTING=0 \

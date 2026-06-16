@@ -7,7 +7,7 @@ export PATH=/var/vcap/packages/cmake/bin:$PATH
 tar xzf haproxy/aws-lc-v${AWS_LC_VERSION}.tar.gz
 pushd aws-lc-${AWS_LC_VERSION}
   mkdir -p build && cd build
-  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  cmake -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=0 \
         -DDISABLE_GO=1 \
         -DDISABLE_PERL=1 \

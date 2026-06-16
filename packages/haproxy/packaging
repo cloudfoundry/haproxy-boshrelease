@@ -56,7 +56,7 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
   tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
   pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
     mkdir -p build && cd build
-    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    cmake -DCMAKE_BUILD_TYPE=Release \
           -DFIPS=1 \
           -DBUILD_SHARED_LIBS=0 \
           -DBUILD_TESTING=0 \
@@ -83,7 +83,7 @@ elif ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
   tar xzf haproxy/aws-lc-v${AWS_LC_VERSION}.tar.gz
   pushd aws-lc-${AWS_LC_VERSION}
     mkdir -p build && cd build
-    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    cmake -DCMAKE_BUILD_TYPE=Release \
           -DBUILD_SHARED_LIBS=0 \
           -DDISABLE_GO=1 \
           -DDISABLE_PERL=1 \
