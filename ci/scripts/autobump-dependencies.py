@@ -279,7 +279,7 @@ class GithubDependency(Dependency):
             if latest_version < current_version and current_raw.startswith(self.pinned_version):
                 latest_version = current_version
                 latest_release = Release(
-                    rel.title,
+                    rel.name,
                     get_release_download_url(rel),
                     f"{self.name}-{str(current_version)}{self.filename_suffix}",
                     current_version,
@@ -462,9 +462,8 @@ def main() -> None:
             "keepalived",
             "KEEPALIVED_VERSION",
             KEEPALIVED_VERSION,
-            "https://keepalived.org/download.html",
+            "https://keepalived.org/download",
             package="keepalived",
-            selector="div.content a",
             changelog_url="https://keepalived.org/release-notes/"
         ),
         WebLinkDependency(
