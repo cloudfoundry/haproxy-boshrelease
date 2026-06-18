@@ -63,12 +63,20 @@ header "Pulling in any git submodules..."
 git submodule update --init --recursive --force
 cd -
 
+ensure_patches_blob() {
+  tar -czvf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+}
+
 version() {
-  # extract the version variable $1 from the packaging script $2 (default 'haproxy')
   pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
-  package=${2:-haproxy}
-  # extract version and remove all spaces
-  sed -n -E "${pattern//VERSION/${1:?}}" "${REPO_ROOT}/packages/${package}/packaging" | sed 's/ *//g'
+  package=${2:-}
+  if [[ -n "${package}" ]]; then
+    source_file="${REPO_ROOT}/packages/${package}/packaging"
+  else
+    source_file="${REPO_ROOT}/src/haproxy-versions.sh"
+  fi
+  sed -n -E "${pattern//VERSION/${1:?}}" "${source_file}" | sed 's/ *//g'
 }
 
 HAPROXY_VERSION=$(version HAPROXY_VERSION)
@@ -76,11 +84,28 @@ LUA_VERSION=$(version LUA_VERSION)
 SOCAT_VERSION=$(version SOCAT_VERSION)
 PCRE_VERSION=$(version PCRE_VERSION)
 KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
+AWS_LC_VERSION=$(version AWS_LC_VERSION)
+CMAKE_VERSION=$(version CMAKE_VERSION)
+AWS_LC_FIPS_VERSION=$(version AWS_LC_FIPS_VERSION)
+GOLANG_VERSION=$(version GOLANG_VERSION)
 
 VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
 
+# Variant suffixes embed the upstream AWS-LC versions so the resulting
+# release versions (and tarball filenames) are self-describing. Mirrors the
+# scheme used by scripts/dev-build.sh.
+PATCHED_SUFFIX="patched"
+AWSLC_SUFFIX="awslc-${AWS_LC_VERSION}"
+AWSLC_PATCHED_SUFFIX="awslc-${AWS_LC_VERSION}-patched"
+AWSLC_FIPS_SUFFIX="awslc-fips-${AWS_LC_FIPS_VERSION}"
+AWSLC_FIPS_PATCHED_SUFFIX="awslc-fips-${AWS_LC_FIPS_VERSION}-patched"
+MULTI_SUFFIX="multi-awslc-${AWS_LC_VERSION}-fips-${AWS_LC_FIPS_VERSION}"
+
 cd "${REPO_ROOT}"
 header "Create final release..."
+
+bosh upload-blobs
+
 bosh -n create-release --final --version "${VERSION}"
 bosh -n create-release "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.yml" \
               --tarball "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.tgz"
@@ -133,6 +158,10 @@ The following versions of upstream components are included in this haproxy-boshr
 | Lua         | \`${LUA_VERSION}\` |
 | PCRE        | \`${PCRE_VERSION}\` |
 | socat       | \`${SOCAT_VERSION}\` |
+| AWS-LC      | \`${AWS_LC_VERSION}\` |
+| AWS-LC FIPS | \`${AWS_LC_FIPS_VERSION}\` |
+| cmake       | \`${CMAKE_VERSION}\` |
+| Go          | \`${GOLANG_VERSION}\` |
 
 ### Deployment
 \`\`\`yaml
@@ -168,24 +197,79 @@ pushd "${REPO_ROOT}"
   git status
   git commit -m "release v${VERSION}"
 
-  # After creating a final release we will also create a dev release patches from haproxy-patches directory
+  # Create additional release variants.
+
+  # --- OpenSSL + Patched ---
+  ensure_patches_blob
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
-  tar -czvf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  bosh upload-blobs
+  bosh -n create-release --force --version "${VERSION}-${PATCHED_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz"
 
-  bosh -n create-release --force --version "${VERSION}-patched" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-patched.tgz"
+  git clean -df
+  git reset --hard
 
-  # Undo changes to repo from creating dev release
+  # --- AWS-LC variant (unpatched) ---
+  echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz"
+
+  git clean -df
+  git reset --hard
+
+  # --- AWS-LC + Patched variant ---
+  ensure_patches_blob
+  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_PATCHED_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz"
+
+  git clean -df
+  git reset --hard
+
+  # --- AWS-LC FIPS variant (unpatched) ---
+  echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_FIPS_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz"
+
+  git clean -df
+  git reset --hard
+
+  # --- AWS-LC FIPS + Patched variant ---
+  ensure_patches_blob
+  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz"
+
+  git clean -df
+  git reset --hard
+
+  # --- Multi release (all variants, property-driven selection) ---
+  cp -r packages-multi/* packages/
+  ensure_patches_blob
+  sed -i 's/^- haproxy$/- haproxy-deps\n- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
+
+  bosh -n create-release --force --version "${VERSION}-${MULTI_SUFFIX}" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz"
+
   git clean -df
   git reset --hard
 popd
 
 mkdir -p "${RELEASE_ROOT}/artifacts-patched"
-mv "${RELEASE_NAME}-${VERSION}-patched.tgz" "${RELEASE_ROOT}/artifacts-patched"
+mv "${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-patched"
 
-PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-patched.tgz
+PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz
 # shellcheck disable=SC2155
 export PATCHED_SHA1=$(sha1sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "PATCHED_SHA1=${PATCHED_SHA1}"
@@ -199,12 +283,145 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 \`\`\`yaml
 releases:
 - name: "${RELEASE_NAME}"
-  version: "${VERSION}-patched"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-patched.tgz"
+  version: "${VERSION}-${PATCHED_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${PATCHED_SUFFIX}.tgz"
   sha1: "${PATCHED_SHA1}"
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc"
+
+AWSLC_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc/${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz
+# shellcheck disable=SC2155
+export AWSLC_SHA1=$(sha1sum "${AWSLC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_SHA1=${AWSLC_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_SHA256=$(sha256sum "${AWSLC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_SHA256=${AWSLC_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-${AWSLC_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_SUFFIX}.tgz"
+  sha1: "${AWSLC_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc-patched"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc-patched"
+
+AWSLC_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-patched/${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz
+# shellcheck disable=SC2155
+export AWSLC_PATCHED_SHA1=$(sha1sum "${AWSLC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_PATCHED_SHA1=${AWSLC_PATCHED_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_PATCHED_SHA256=$(sha256sum "${AWSLC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_PATCHED_SHA256=${AWSLC_PATCHED_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC patched)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-${AWSLC_PATCHED_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_PATCHED_SUFFIX}.tgz"
+  sha1: "${AWSLC_PATCHED_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc-fips"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips"
+
+AWSLC_FIPS_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz
+# shellcheck disable=SC2155
+export AWSLC_FIPS_SHA1=$(sha1sum "${AWSLC_FIPS_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_SHA1=${AWSLC_FIPS_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_FIPS_SHA256=$(sha256sum "${AWSLC_FIPS_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_SHA256=${AWSLC_FIPS_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC FIPS)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-${AWSLC_FIPS_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_SUFFIX}.tgz"
+  sha1: "${AWSLC_FIPS_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_FIPS_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
+mv "${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-awslc-fips-patched"
+
+AWSLC_FIPS_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-awslc-fips-patched/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz
+# shellcheck disable=SC2155
+export AWSLC_FIPS_PATCHED_SHA1=$(sha1sum "${AWSLC_FIPS_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_PATCHED_SHA1=${AWSLC_FIPS_PATCHED_SHA1}"
+# shellcheck disable=SC2155
+export AWSLC_FIPS_PATCHED_SHA256=$(sha256sum "${AWSLC_FIPS_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWSLC_FIPS_PATCHED_SHA256=${AWSLC_FIPS_PATCHED_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (AWS-LC FIPS patched)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${AWSLC_FIPS_PATCHED_SUFFIX}.tgz"
+  sha1: "${AWSLC_FIPS_PATCHED_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWSLC_FIPS_PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-multi"
+mv "${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz" "${RELEASE_ROOT}/artifacts-multi"
+
+MULTI_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-multi/${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz
+# shellcheck disable=SC2155
+export MULTI_SHA1=$(sha1sum "${MULTI_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "MULTI_SHA1=${MULTI_SHA1}"
+# shellcheck disable=SC2155
+export MULTI_SHA256=$(sha256sum "${MULTI_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "MULTI_SHA256=${MULTI_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (multi - all variants, property-driven selection)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-${MULTI_SUFFIX}"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-${MULTI_SUFFIX}.tgz"
+  sha1: "${MULTI_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${MULTI_SHA256}"
+
+# Select SSL variant via deployment property:
+# ha_proxy.ssl_variant: openssl | openssl-patched | awslc | awslc-patched | awslc-fips | awslc-fips-patched
 \`\`\`
 EOF
 

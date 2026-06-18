@@ -1,16 +1,7 @@
 # abort script on failures
 set -euxo pipefail
 
-
-LUA_VERSION=5.4.8  # https://www.lua.org/ftp/lua-5.4.8.tar.gz
-
-PCRE_VERSION=10.47  # https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.47/pcre2-10.47.tar.gz
-
-SOCAT_VERSION=1.8.1.1  # http://www.dest-unreach.org/socat/download/socat-1.8.1.1.tar.gz
-
-HAPROXY_VERSION=3.2.19  # https://www.haproxy.org/download/3.2/src/haproxy-3.2.19.tar.gz
-
-HATOP_VERSION=0.8.2  # https://github.com/jhunt/hatop/releases/download/v0.8.2/hatop
+source haproxy-versions.sh
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
@@ -39,6 +30,71 @@ pushd socat-${SOCAT_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
+# --- AWS-LC support (conditional) ---
+# If an AWS-LC FIPS source tarball is present, build with FIPS support.
+# If a non-FIPS AWS-LC source tarball is present, build without FIPS.
+# Otherwise, use system OpenSSL.
+if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
+  # --- AWS-LC FIPS build ---
+  echo "Installing Go toolchain..."
+  tar xzf haproxy/golang-${GOLANG_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}
+  export GOROOT=${BOSH_INSTALL_TARGET}/go
+  export GOPATH=${BOSH_INSTALL_TARGET}/gopath
+  export GOCACHE=${BOSH_INSTALL_TARGET}/gocache
+  export PATH=${GOROOT}/bin:$PATH
+
+  echo "Installing cmake (prebuilt binary)..."
+  tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+  cp -r cmake-${CMAKE_VERSION}-linux-x86_64/. ${BOSH_INSTALL_TARGET}/
+  export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
+
+  echo "Building AWS-LC (FIPS)..."
+  tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
+  pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
+    mkdir -p build && cd build
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DFIPS=1 \
+          -DBUILD_SHARED_LIBS=0 \
+          -DBUILD_TESTING=0 \
+          -DBUILD_TOOL=0 \
+          -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
+          ..
+    make -j$(nproc)
+    make install
+  popd
+
+  SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
+
+elif ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
+  # --- AWS-LC non-FIPS build ---
+  echo "Installing cmake (prebuilt binary)..."
+  tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+  cp -r cmake-${CMAKE_VERSION}-linux-x86_64/. ${BOSH_INSTALL_TARGET}/
+  export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
+
+  echo "Building AWS-LC..."
+  tar xzf haproxy/aws-lc-v${AWS_LC_VERSION}.tar.gz
+  pushd aws-lc-${AWS_LC_VERSION}
+    mkdir -p build && cd build
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_SHARED_LIBS=0 \
+          -DDISABLE_GO=1 \
+          -DDISABLE_PERL=1 \
+          -DBUILD_TESTING=0 \
+          -DBUILD_TOOL=0 \
+          -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
+          ..
+    make -j$(nproc)
+    make install
+  popd
+
+  SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
+
+else
+  # --- System OpenSSL ---
+  SSL_MAKE_FLAGS="USE_OPENSSL=1"
+fi
+
 echo "Unpacking HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
@@ -60,7 +116,7 @@ pushd haproxy-${HAPROXY_VERSION}
   fi
 
   echo "Installing HAproxy..."
-  make TARGET=linux-glibc USE_PROMEX=1 USE_OPENSSL=1 USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
+  make TARGET=linux-glibc USE_PROMEX=1 ${SSL_MAKE_FLAGS} USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 PCRE2DIR=${BOSH_INSTALL_TARGET} USE_LUA=1 LUA_LIB=${BOSH_INSTALL_TARGET}/lib LUA_INC=${BOSH_INSTALL_TARGET}/include
   cp haproxy ${BOSH_INSTALL_TARGET}/bin/
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
 popd

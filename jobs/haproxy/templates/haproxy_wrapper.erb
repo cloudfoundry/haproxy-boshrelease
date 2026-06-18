@@ -3,7 +3,13 @@
 
 set -e
 
-export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
+<% ssl_variant = p("ha_proxy.ssl_variant", "openssl") %>
+if [ -d "/var/vcap/packages/haproxy-<%= ssl_variant %>" ]; then
+  HAPROXY_PKG="/var/vcap/packages/haproxy-<%= ssl_variant %>"
+else
+  HAPROXY_PKG="/var/vcap/packages/haproxy"
+fi
+export PATH=$PATH:${HAPROXY_PKG}/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock

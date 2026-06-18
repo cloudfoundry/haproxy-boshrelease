@@ -81,3 +81,20 @@ Unit/RSpec tests can also be debugged/stepped through when needed. See for examp
 ### Acceptance Tests
 
 See [acceptance-tests README](/acceptance-tests/README.md).
+
+### Local Dev Builds
+
+`scripts/dev-build.sh` builds release tarballs for any combination of the seven variants
+(`openssl`, `openssl-patched`, `awslc`, `awslc-patched`, `awslc-fips`, `awslc-fips-patched`, `multi`)
+and uploads them to the targeted BOSH director. Useful for iterating on packaging changes
+without going through CI.
+
+```bash
+./scripts/dev-build.sh                       # build all 7 variants, version=dev
+./scripts/dev-build.sh multi                 # build only the multi release
+./scripts/dev-build.sh awslc awslc-fips      # build a subset
+./scripts/dev-build.sh --version 1.0 multi   # custom version tag
+./scripts/dev-build.sh --upload-only         # re-upload previously built tarballs
+```
+
+Tarballs are written to `./builds/` and uploaded with `bosh upload-release --fix`.

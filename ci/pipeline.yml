@@ -6,6 +6,8 @@ groups:
       - unit-tests
       - unit-tests-pr
       - acceptance-tests
+      - acceptance-tests-awslc
+      - acceptance-tests-awslc-fips
       - acceptance-tests-pr
       - rc
       - shipit
@@ -149,6 +151,74 @@ jobs:
           username: ci-bot
           icon_url: "((slack.icon))"
           text:     "((slack.fail_url)) haproxy-boshrelease : acceptance tests failed"
+
+  - name: acceptance-tests-awslc
+    public: true
+    serial: true
+    plan:
+    - do:
+      - in_parallel:
+        - { get: git, trigger: true, passed: [unit-tests] }
+        - { get: stemcell }
+        - { get: stemcell-jammy }
+        - get: haproxy-boshrelease-testflight
+      - task: acceptance-tests-awslc
+        privileged: true
+        timeout: 4h
+        image: haproxy-boshrelease-testflight
+        config:
+          platform: linux
+          inputs:
+            - { name: git }
+            - { name: stemcell }
+            - { name: stemcell-jammy }
+          run:
+            path: ./git/ci/scripts/acceptance-tests
+            args: []
+          params:
+            REPO_ROOT:            git
+            VARIANT:              awslc
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:     "((slack.fail_url)) haproxy-boshrelease : acceptance tests (AWS-LC) failed"
+
+  - name: acceptance-tests-awslc-fips
+    public: true
+    serial: true
+    plan:
+    - do:
+      - in_parallel:
+        - { get: git, trigger: true, passed: [unit-tests] }
+        - { get: stemcell }
+        - { get: stemcell-jammy }
+        - get: haproxy-boshrelease-testflight
+      - task: acceptance-tests-awslc-fips
+        privileged: true
+        timeout: 4h
+        image: haproxy-boshrelease-testflight
+        config:
+          platform: linux
+          inputs:
+            - { name: git }
+            - { name: stemcell }
+            - { name: stemcell-jammy }
+          run:
+            path: ./git/ci/scripts/acceptance-tests
+            args: []
+          params:
+            REPO_ROOT:            git
+            VARIANT:              awslc-fips
+      on_failure:
+        put: notify
+        params:
+          channel:  "#haproxy-boshrelease"
+          username: ci-bot
+          icon_url: "((slack.icon))"
+          text:     "((slack.fail_url)) haproxy-boshrelease : acceptance tests (AWS-LC FIPS) failed"
 
   - name: acceptance-tests-pr
     public: true
@@ -301,7 +371,7 @@ jobs:
           name:   gh/name
           tag:    gh/tag
           body:   gh/notes.md
-          globs:  [gh/artifacts/*, gh/artifacts-patched/*]
+          globs:  [gh/artifacts/*, gh/artifacts-patched/*, gh/artifacts-awslc/*, gh/artifacts-awslc-patched/*, gh/artifacts-awslc-fips/*, gh/artifacts-awslc-fips-patched/*, gh/artifacts-multi/*]
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"

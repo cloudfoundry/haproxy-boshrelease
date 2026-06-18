@@ -1,0 +1,20 @@
+set -euxo pipefail
+
+source haproxy-versions.sh
+DEPS_DIR=/var/vcap/packages/haproxy-deps
+
+mkdir ${BOSH_INSTALL_TARGET}/bin
+
+SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=/var/vcap/packages/aws-lc/include SSL_LIB=/var/vcap/packages/aws-lc/lib"
+
+echo "Unpacking HAproxy..."
+tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
+pushd haproxy-${HAPROXY_VERSION}
+  echo "Installing HAproxy..."
+  make TARGET=linux-glibc USE_PROMEX=1 ${SSL_MAKE_FLAGS} \
+    USE_PCRE2=1 USE_PCRE2_JIT=yes USE_STATIC_PCRE2=1 USE_ZLIB=1 \
+    PCRE2DIR=${DEPS_DIR} \
+    USE_LUA=1 LUA_LIB=${DEPS_DIR}/lib LUA_INC=${DEPS_DIR}/include
+  cp haproxy ${BOSH_INSTALL_TARGET}/bin/
+  chmod 755 ${BOSH_INSTALL_TARGET}/bin/haproxy
+popd

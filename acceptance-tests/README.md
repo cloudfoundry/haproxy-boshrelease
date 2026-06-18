@@ -12,6 +12,23 @@ cd acceptance-tests
 ./run-local.sh
 ```
 
+### TLS Backend Variant
+
+By default the tests run against HAProxy linked to the system OpenSSL from the stemcell. To exercise a different TLS backend, set the `VARIANT` environment variable:
+
+```shell
+VARIANT=awslc              ./run-local.sh   # AWS-LC, non-FIPS
+VARIANT=awslc-fips         ./run-local.sh   # AWS-LC FIPS
+VARIANT=patched            ./run-local.sh   # system OpenSSL + HAProxy patches
+VARIANT=awslc-patched      ./run-local.sh   # AWS-LC + patches
+VARIANT=awslc-fips-patched ./run-local.sh   # AWS-LC FIPS + patches
+VARIANT=multi              ./run-local.sh   # multi release (all binaries bundled)
+```
+
+A single invocation runs the suite **once** against the chosen variant — `run-local.sh` is not a matrix runner. To cover several variants, invoke it once per variant in a shell loop. Each run rebuilds the BOSH release from scratch, and AWS-LC variants compile the library inside the BOSH compilation VM, so a full sweep takes hours rather than minutes.
+
+When using `-k` (keep BOSH running, see below) the cached state belongs to whichever variant ran last — switching `VARIANT` inside a kept container is not supported. Stop the container between variants, or run without `-k`.
+
 ### Running on Docker for Mac
 
 Acceptance tests cannot be run on Mac with arm64 architecture:

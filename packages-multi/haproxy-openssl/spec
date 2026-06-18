@@ -1,0 +1,7 @@
+---
+name: haproxy-openssl
+dependencies:
+- haproxy-deps
+files:
+- haproxy/haproxy-*.tar.gz
+- haproxy-versions.sh

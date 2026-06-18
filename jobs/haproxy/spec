@@ -41,6 +41,11 @@ consumes:
     optional: true
 
 properties:
+  ha_proxy.ssl_variant:
+    description: |
+      SSL library variant to use. Only effective when deploying the multi-variant release.
+      Valid values: openssl, openssl-patched, awslc, awslc-patched, awslc-fips, awslc-fips-patched
+    default: openssl
   ha_proxy.pre_start_script:
     description: |
       This script will be appended to the pre-start script and run before the job starts.

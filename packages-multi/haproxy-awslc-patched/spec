@@ -1,0 +1,9 @@
+---
+name: haproxy-awslc-patched
+dependencies:
+- haproxy-deps
+- aws-lc
+files:
+- haproxy/haproxy-*.tar.gz
+- haproxy/patches.tar.gz
+- haproxy-versions.sh

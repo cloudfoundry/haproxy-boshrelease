@@ -54,6 +54,75 @@ function bosh_release() {
     echo "----- Creating candidate BOSH release..."
     bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
+    local variant="${VARIANT:-}"
+    local add_patches=false
+    local base=""
+
+    case "$variant" in
+        ""|openssl)
+            base="openssl"
+            ;;
+        patched)
+            base="openssl"
+            add_patches=true
+            ;;
+        awslc)
+            base="awslc"
+            ;;
+        awslc-patched)
+            base="awslc"
+            add_patches=true
+            ;;
+        awslc-fips)
+            base="awslc-fips"
+            ;;
+        awslc-fips-patched)
+            base="awslc-fips"
+            add_patches=true
+            ;;
+        multi)
+            base="multi"
+            ;;
+        *)
+            echo "ERROR: unknown VARIANT '$variant' (valid: '', patched, awslc, awslc-patched, awslc-fips, awslc-fips-patched, multi)" >&2
+            return 1
+            ;;
+    esac
+
+    echo "----- VARIANT='${variant}' -> base='${base}', patched=${add_patches}"
+
+    case "$base" in
+        openssl)
+            ;;
+        awslc)
+            echo "----- Adding AWS-LC blobs to haproxy package spec..."
+            echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
+            echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+            ;;
+        awslc-fips)
+            echo "----- Adding AWS-LC FIPS blobs to haproxy package spec..."
+            echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+            echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
+            echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
+            ;;
+        multi)
+            echo "----- Building multi release (all variants, property-driven selection)..."
+            cp -r packages-multi/* packages/
+            sed -i 's/^- haproxy$/- haproxy-deps\n- haproxy-openssl\n- haproxy-openssl-patched\n- haproxy-awslc\n- haproxy-awslc-patched\n- haproxy-awslc-fips\n- haproxy-awslc-fips-patched/' jobs/haproxy/spec
+            # multi always bundles the patched binaries, so the patches blob is required
+            add_patches=true
+            ;;
+    esac
+
+    if [ "$add_patches" == "true" ]; then
+        echo "----- Adding HAProxy patches blob..."
+        tar -czvf haproxy-patches.tar.gz haproxy-patches
+        bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+        if [ "$base" != "multi" ]; then
+            echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+        fi
+    fi
+
     bosh create-release --force
     bosh upload-release --rebase
     release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")

@@ -1,0 +1,29 @@
+set -euxo pipefail
+
+source haproxy-versions.sh
+
+export PATH=/var/vcap/packages/cmake/bin:$PATH
+
+# Install Go toolchain (required for FIPS delocate/inject_hash)
+tar xzf haproxy/golang-${GOLANG_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}
+export GOROOT=${BOSH_INSTALL_TARGET}/go
+export GOPATH=${BOSH_INSTALL_TARGET}/gopath
+export GOCACHE=${BOSH_INSTALL_TARGET}/gocache
+export PATH=${GOROOT}/bin:$PATH
+
+tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
+pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
+  mkdir -p build && cd build
+  cmake -DCMAKE_BUILD_TYPE=Release \
+        -DFIPS=1 \
+        -DBUILD_SHARED_LIBS=0 \
+        -DBUILD_TESTING=0 \
+        -DBUILD_TOOL=0 \
+        -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
+        ..
+  make -j$(nproc)
+  make install
+popd
+
+# Clean up Go toolchain to save disk space
+rm -rf ${BOSH_INSTALL_TARGET}/go ${BOSH_INSTALL_TARGET}/gopath ${BOSH_INSTALL_TARGET}/gocache
