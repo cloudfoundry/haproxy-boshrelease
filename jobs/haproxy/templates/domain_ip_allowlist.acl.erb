@@ -1,0 +1,25 @@
+# generated from domain_ip_allowlist.acl.erb
+<%
+  require "base64"
+  require 'zlib'
+  require 'stringio'
+
+  if_p("ha_proxy.domain_ip_allowlist") do |lines|
+    uncompressed = ''
+    if lines.is_a?(Array)
+      uncompressed << "\# detected ACL entries provided as array in cleartext format\n"
+      lines.each do |line|
+        uncompressed << line << "\n"
+      end
+    else
+      gzplain = Base64.decode64(lines)
+      gz = Zlib::GzipReader.new(StringIO.new(gzplain))
+      uncompressed = gz.read
+    end
+%>
+# BEGIN domain-ip allowlist
+<%= uncompressed %>
+# END domain-ip allowlist
+<%
+  end
+%>
