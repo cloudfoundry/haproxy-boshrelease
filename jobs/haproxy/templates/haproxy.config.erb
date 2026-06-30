@@ -289,6 +289,28 @@ end
   # to keep backward compatibility enable_additional_health_check_proxy if expect_proxy_cidrs is not empty.
   enable_additional_health_check_proxy = p("ha_proxy.enable_additional_health_check_proxy", p("ha_proxy.expect_proxy_cidrs", []).size > 0)
 
+  domain_ip_allowlist_config = <<~TXTBLOCK
+
+# Checks the request's host header and source IP against an ACL file.
+# Each ACL entry has the format: domain|ip-version|ip-binary-prefix
+#   - A domain starting with "." matches all subdomains (e.g. ".example.com" matches "foo.example.com")
+#   - ip-binary-prefix is the IP address in binary; a shorter prefix matches a wider range (like CIDR)
+# Examples: .bar.example.com|4|010101010101     (IPv4, matches /12 prefix)
+#           foo.bar.example.com|6|010101...01   (IPv6 exact host)
+http-request set-var(req.ip_bin) src,base2
+http-request set-var(req.ip_proto) str(4)
+http-request set-var(req.ip_proto) str(6) if { var(req.ip_bin),length gt 32 }
+http-request set-var(req.domain) hdr(host),host_only,lower
+http-request set-var-fmt(req.domain_key) %[var(req.domain)]|%[var(req.ip_proto)]|%[var(req.ip_bin)]
+http-request set-var(req.parent_domain) var(req.domain),regsub(^[^\.]+,)
+http-request set-var-fmt(req.parent_domain_key) %[var(req.parent_domain)]|%[var(req.ip_proto)]|%[var(req.ip_bin)]
+acl domain_ip_matched var(req.domain_key) -m beg -f opt@/var/vcap/jobs/haproxy/config/domain_ip_allowlist.acl
+acl parent_domain_ip_matched var(req.parent_domain_key) -m beg -f opt@/var/vcap/jobs/haproxy/config/domain_ip_allowlist.acl
+http-request set-var-fmt(txn.block_reason) "blocked by domain-ip allowlist, key=%[var(req.domain_key)]" if !domain_ip_matched !parent_domain_ip_matched
+http-request deny status 403 content-type text/plain string "blocked by domain-ip allowlist" if !domain_ip_matched !parent_domain_ip_matched
+
+  TXTBLOCK
+
 -%>
 
 global
@@ -475,6 +497,9 @@ frontend http-in
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
   <%- end -%>
+  <%- if_p("ha_proxy.enable_domain_ip_allowlist") do -%>
+    <%= format_indented_multiline_config(domain_ip_allowlist_config) %>
+  <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
   <%- end -%>
@@ -605,6 +630,9 @@ frontend https-in
   <%- if_p("ha_proxy.cidr_blacklist") do -%>
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
+  <%- end -%>
+  <%- if_p("ha_proxy.enable_domain_ip_allowlist") do -%>
+    <%= format_indented_multiline_config(domain_ip_allowlist_config) %>
   <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
@@ -789,6 +817,9 @@ frontend wss-in
   <%- if_p("ha_proxy.cidr_blacklist") do -%>
     acl blacklist src -f /var/vcap/jobs/haproxy/config/blacklist_cidrs.txt
     tcp-request content reject if blacklist
+  <%- end -%>
+  <%- if_p("ha_proxy.enable_domain_ip_allowlist") do -%>
+    <%= format_indented_multiline_config(domain_ip_allowlist_config) %>
   <%- end -%>
   <%- if p("ha_proxy.block_all")  -%>
     tcp-request content reject
