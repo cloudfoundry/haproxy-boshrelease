@@ -239,6 +239,12 @@ end
     end
   end
 
+  # Connections rate-limit exclusion: sources matching exclude_cidrs are tracked but never rejected
+  conn_rate_limit_exclude = ""
+  if_p("ha_proxy.connections_rate_limit.exclude_cidrs") do
+    conn_rate_limit_exclude = " !rate_limit_exclude"
+  end
+
   backend_servers = []
   backend_servers_local = []
   backend_port = nil
@@ -451,9 +457,12 @@ frontend http-in
     acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
     tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
+    <%- if_p("ha_proxy.connections_rate_limit.exclude_cidrs") do -%>
+    acl rate_limit_exclude src -f /var/vcap/jobs/haproxy/config/rate_limit_exclusion_cidrs.txt
+    <%- end -%>
     tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
     # use sub() converter as variable references are only accepted as arguments to converters
-    tcp-request <%= tcp_request_phase %> reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }
+    tcp-request <%= tcp_request_phase %> reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }<%= conn_rate_limit_exclude %>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     http-request track-sc1 src table st_http_req_rate
@@ -582,9 +591,12 @@ frontend https-in
     acl layer4_block src -f /var/vcap/jobs/haproxy/config/blocklist_cidrs_tcp.txt
     tcp-request <%= tcp_request_phase %> reject if layer4_block
   <%- if_p("ha_proxy.connections_rate_limit.table_size", "ha_proxy.connections_rate_limit.window_size") do -%>
+    <%- if_p("ha_proxy.connections_rate_limit.exclude_cidrs") do -%>
+    acl rate_limit_exclude src -f /var/vcap/jobs/haproxy/config/rate_limit_exclusion_cidrs.txt
+    <%- end -%>
     tcp-request <%= tcp_request_phase %> track-sc0 src table st_tcp_conn_rate
     # use sub() converter as variable references are only accepted as arguments to converters
-    tcp-request <%= tcp_request_phase %> reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }
+    tcp-request <%= tcp_request_phase %> reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 }<%= conn_rate_limit_exclude %>
   <%- end -%>
   <%- if_p("ha_proxy.requests_rate_limit.table_size", "ha_proxy.requests_rate_limit.window_size") do -%>
     http-request track-sc1 src table st_http_req_rate

@@ -26,6 +26,7 @@ templates:
   whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
   expect_proxy_cidrs.txt.erb:   config/expect_proxy_cidrs.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
+  rate_limit_exclusion_cidrs.txt.erb: config/rate_limit_exclusion_cidrs.txt
 
 consumes:
   - name: http_backend
@@ -827,3 +828,12 @@ properties:
   ha_proxy.connections_rate_limit.block:
     description: Whether or not to block connections. See docs/rate_limiting.md
     default: false
+  ha_proxy.connections_rate_limit.exclude_cidrs:
+    description: "List of CIDRs (e.g. private/NAT ranges) to exclude from connection based rate-limiting. Excluded sources are still tracked in the stick-table but are never rejected. Format is string array of CIDRs or single string of base64 encoded gzip. See docs/rate_limiting.md"
+    default: ~
+    example:
+      connections_rate_limit:
+        exclude_cidrs:
+        - 10.0.0.0/8
+        - 192.168.0.0/16
+        - 2001:db8::/32
