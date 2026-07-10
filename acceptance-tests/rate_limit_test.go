@@ -165,6 +165,54 @@ var _ = Describe("Rate-Limiting", func() {
 		Expect(successfulRequestCount).To(Equal(connLimit))
 	})
 
+	It("Excluded CIDRs are never connection rate-limited", func() {
+		connLimit := 5
+		// exclude_cidrs covers all IPv4 sources so the test runner's egress IP is
+		// guaranteed to match, proving the negated reject rule lets excluded sources through
+		opsfileConnRateLimitExclude := fmt.Sprintf(`---
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
+  value: %d
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
+  value: 100s
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
+  value: 100
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
+  value: true
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/exclude_cidrs?
+  value:
+  - 0.0.0.0/0
+`, connLimit)
+		haproxyBackendPort := 12000
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileConnRateLimitExclude}, map[string]interface{}{}, true)
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeTunnel()
+
+		By("Sending more connections than the limit, expecting none to be blocked because the source is excluded")
+		testRequestCount := connLimit * 3
+		for i := 0; i < testRequestCount; i++ {
+			rt := &http.Transport{
+				DisableKeepAlives: true,
+			}
+			client := &http.Client{Transport: rt}
+			resp, err := client.Get(fmt.Sprintf("http://%s/foo", haproxyInfo.PublicIP))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		}
+	})
+
 	It("Connection Based Limiting Works with Proxy Protocol enabled", func() {
 		connLimit := 5
 		opsfileConnRateLimitWithProxyProtocol := fmt.Sprintf(`---
