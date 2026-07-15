@@ -20,12 +20,10 @@ describe 'config/rate_limit_exclusion_cidrs.txt' do
         })).to eq(<<~EXPECTED)
           # generated from rate_limit_exclusion_cidrs.txt.erb
 
-          # BEGIN rate limit exclusion cidrs
+          # This list contains CIDRs excluded from connection based rate-limiting (tracked but never rejected).
           # detected cidrs provided as array in cleartext format
           10.0.0.0/8
           192.168.2.0/24
-
-          # END rate limit exclusion cidrs
 
         EXPECTED
       end
@@ -45,11 +43,9 @@ describe 'config/rate_limit_exclusion_cidrs.txt' do
         })).to eq(<<~EXPECTED)
           # generated from rate_limit_exclusion_cidrs.txt.erb
 
-          # BEGIN rate limit exclusion cidrs
+          # This list contains CIDRs excluded from connection based rate-limiting (tracked but never rejected).
           10.0.0.0/8
           192.168.2.0/24
-
-          # END rate limit exclusion cidrs
 
         EXPECTED
       end
@@ -57,8 +53,13 @@ describe 'config/rate_limit_exclusion_cidrs.txt' do
   end
 
   context 'when ha_proxy.connections_rate_limit.exclude_cidrs is not provided' do
-    it 'is empty' do
-      expect(template.render({})).to be_a_blank_string
+    it 'renders only the header comment (empty exclusion list is a no-op)' do
+      expect(template.render({})).to eq(<<~EXPECTED)
+        # generated from rate_limit_exclusion_cidrs.txt.erb
+
+        # This list contains CIDRs excluded from connection based rate-limiting (tracked but never rejected).
+
+      EXPECTED
     end
   end
 end
