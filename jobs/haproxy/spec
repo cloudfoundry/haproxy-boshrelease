@@ -24,6 +24,7 @@ templates:
   blacklist_cidrs.txt.erb:      config/blacklist_cidrs.txt
   blocklist_cidrs_tcp.txt.erb:  config/blocklist_cidrs_tcp.txt
   whitelist_cidrs.txt.erb:      config/whitelist_cidrs.txt
+  domain_ip_allowlist.acl.erb:  config/domain_ip_allowlist.acl
   expect_proxy_cidrs.txt.erb:   config/expect_proxy_cidrs.txt
   trusted_domain_cidrs.txt.erb: config/trusted_domain_cidrs.txt
 
@@ -608,6 +609,16 @@ properties:
       cidr_whitelist:
       - 172.168.4.1/32
       - 10.2.0.0/16
+  ha_proxy.enable_domain_ip_allowlist:
+    description: "Enables dynamic allowlisting by domain and IP prefix. ACL rules can be updated at runtime via socket."
+    default: ~
+  ha_proxy.domain_ip_allowlist:
+    description: "List of entries 'domain|IP-version|IP-binary-prefix' to allow requests to the domain for the IP addresses that have the given prefix in binary form. List format is array of strings or single string of base64-encoded gzip data. Ignored if enable_domain_ip_allowlist not set to true."
+    default: ~
+    example:
+      domain_ip_allowlist:
+      - .bar.example.com|4|0101010101010
+      - foo.bar.example.com|6|010101010101001010101010100101010101010
   ha_proxy.expect_proxy_cidrs:
     description: "List of CIDRs to enable proxy protocol for. This enables the forwarding of the client source IP for hyperscalers that do not support IP dual stack (v4 & v6). This property is mutually exclusive with the accept_proxy. For backward compatibility, if the list is not empty, HAProxy will listen on an additional health check port (health_check_port + 1) with proxy protocol enabled, by implicitly setting enable_additional_health_check_proxy to true if not set explicitly."
     default: ~
