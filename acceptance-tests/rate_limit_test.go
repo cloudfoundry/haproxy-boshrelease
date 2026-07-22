@@ -3,6 +3,7 @@ package acceptance_tests
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,32 +12,15 @@ import (
 var _ = Describe("Rate-Limiting", func() {
 	It("Connections/Requests aren't blocked when block config isn't set", func() {
 		rateLimit := 5
-		opsfileConnectionsRateLimit := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit?/requests
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/window_size?
-  value: 10s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/table_size?
-  value: 1k
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 10s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 1k
-`, rateLimit, rateLimit)
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
+		}, []string{
+			requestsRateLimitOps(rateLimit, "10s", "1k", false),
+			connectionsRateLimitOps(rateLimit, "10s", "1k", false, nil),
+		}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -60,27 +44,13 @@ var _ = Describe("Rate-Limiting", func() {
 
 	It("Request Based Limiting Works", func() {
 		requestLimit := 5
-		opsfileRequestRateLimit := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit?/requests
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/window_size?
-  value: 10s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/block?
-  value: true
-`, requestLimit)
 
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileRequestRateLimit}, map[string]interface{}{}, true)
+		}, []string{requestsRateLimitOps(requestLimit, "10s", "100", true)}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -112,26 +82,12 @@ var _ = Describe("Rate-Limiting", func() {
 
 	It("Connection Based Limiting Works", func() {
 		connLimit := 5
-		opsfileConnectionsRateLimit := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 10s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 1k
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
-  value: true
-`, connLimit)
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
+		}, []string{connectionsRateLimitOps(connLimit, "10s", "1k", true, nil)}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -169,30 +125,12 @@ var _ = Describe("Rate-Limiting", func() {
 		connLimit := 5
 		// exclude_cidrs covers all IPv4 sources so the test runner's egress IP is
 		// guaranteed to match, proving the negated reject rule lets excluded sources through
-		opsfileConnRateLimitExclude := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
-  value: true
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/exclude_cidrs?
-  value:
-  - 0.0.0.0/0
-`, connLimit)
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnRateLimitExclude}, map[string]interface{}{}, true)
+		}, []string{connectionsRateLimitOps(connLimit, "100s", "100", true, []string{"0.0.0.0/0"})}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -215,31 +153,21 @@ var _ = Describe("Rate-Limiting", func() {
 
 	It("Connection Based Limiting Works with Proxy Protocol enabled", func() {
 		connLimit := 5
-		opsfileConnRateLimitWithProxyProtocol := fmt.Sprintf(`---
-# Enable Proxy Protocol
+		opsfileAcceptProxy := fmt.Sprintf(`---
 - type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
+  path: %s/accept_proxy?
   value: true
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
-  value: true
-`, connLimit)
+`, rateLimitPropsPath)
 
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnRateLimitWithProxyProtocol}, map[string]interface{}{}, true)
+		}, []string{
+			opsfileAcceptProxy,
+			connectionsRateLimitOps(connLimit, "100s", "100", true, nil),
+		}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -272,38 +200,15 @@ var _ = Describe("Rate-Limiting", func() {
 		requestLimit := 5
 		connLimit := 6 // needs to be higher than request limit for this test
 		// connection based rate-limiting has priority over request based rate-limiting so we expect some sucesses, then one status 429 response, then no response at all
-		opsfileConnectionsRateLimit := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit?/requests
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/window_size?
-  value: 10s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/block?
-  value: true
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 100s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
-  value: true
-`, requestLimit, connLimit)
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
+		}, []string{
+			requestsRateLimitOps(requestLimit, "10s", "100", true),
+			connectionsRateLimitOps(connLimit, "100s", "100", true, nil),
+		}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -336,26 +241,12 @@ var _ = Describe("Rate-Limiting", func() {
 
 	It("Connection Based Limiting works via manifest and can be overridden at runtime via socket", func() {
 		connLimit := 5
-		opsfileConnectionsRateLimit := fmt.Sprintf(`---
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
-  value: %d
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
-  value: 10s
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
-  value: 100
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
-  value: true
-`, connLimit)
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    haproxyBackendPort,
 			haproxyBackendServers: []string{"127.0.0.1"},
 			deploymentName:        deploymentNameForTestNode(),
-		}, []string{opsfileConnectionsRateLimit}, map[string]interface{}{}, true)
+		}, []string{connectionsRateLimitOps(connLimit, "10s", "100", true, nil)}, map[string]interface{}{}, true)
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()
@@ -429,3 +320,48 @@ var _ = Describe("Rate-Limiting", func() {
 		Expect(successfulRequestCount).To(Equal(newLimit))
 	})
 })
+
+const rateLimitPropsPath = "/instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy"
+
+// requestsRateLimitOps builds an opsfile fragment configuring the requests_rate_limit properties.
+func requestsRateLimitOps(requests int, windowSize, tableSize string, block bool) string {
+	return fmt.Sprintf(`---
+- type: replace
+  path: %[1]s/requests_rate_limit?/requests
+  value: %[2]d
+- type: replace
+  path: %[1]s/requests_rate_limit/window_size?
+  value: %[3]s
+- type: replace
+  path: %[1]s/requests_rate_limit/table_size?
+  value: %[4]s
+- type: replace
+  path: %[1]s/requests_rate_limit/block?
+  value: %[5]t
+`, rateLimitPropsPath, requests, windowSize, tableSize, block)
+}
+
+// connectionsRateLimitOps builds an opsfile fragment configuring the connections_rate_limit properties.
+func connectionsRateLimitOps(connections int, windowSize, tableSize string, block bool, excludeCIDRs []string) string {
+	quotedCIDRs := make([]string, len(excludeCIDRs))
+	for i, cidr := range excludeCIDRs {
+		quotedCIDRs[i] = fmt.Sprintf("%q", cidr)
+	}
+	return fmt.Sprintf(`---
+- type: replace
+  path: %[1]s/connections_rate_limit?/connections
+  value: %[2]d
+- type: replace
+  path: %[1]s/connections_rate_limit/window_size?
+  value: %[3]s
+- type: replace
+  path: %[1]s/connections_rate_limit/table_size?
+  value: %[4]s
+- type: replace
+  path: %[1]s/connections_rate_limit/block?
+  value: %[5]t
+- type: replace
+  path: %[1]s/connections_rate_limit/exclude_cidrs?
+  value: [%[6]s]
+`, rateLimitPropsPath, connections, windowSize, tableSize, block, strings.Join(quotedCIDRs, ", "))
+}
