@@ -30,6 +30,40 @@ This will not result in a log statement on the HAProxy side, which can make trac
 > If both rate-limits are reached simultaneously (e.g. if they are configured identically and every incoming HTTP request uses a new TCP connection), connection based rate-limiting will come into effect first, resulting in a dropped TCP connection.
 
 
+## Excluding CIDRs from Connection Rate Limiting
+Some sources should never be rate-limited on connections &mdash; for example internal/NAT ranges, health checkers, or trusted peers whose traffic all appears to originate from a small set of IPs. `connections_rate_limit.exclude_cidrs` takes a list of CIDRs that are exempt from connection based rate limiting.
+
+Excluded sources are **still tracked** in the `st_tcp_conn_rate` stick-table (so they remain visible via `show table st_tcp_conn_rate`), but they are **never rejected**, regardless of the configured threshold or the runtime `block` setting.
+
+The list is rendered to `/var/vcap/jobs/haproxy/config/rate_limit_exclusion_cidrs.txt` and referenced by an ACL that negates the reject rule on both the `http-in` and `https-in` frontends.
+
+#### Configuration
+```yml
+config:
+    # [...]
+    connections_rate_limit:
+        connections: 10
+        window_size: 10s
+        table_size: 1m
+        block: true
+        exclude_cidrs:
+        - 10.0.0.0/8
+        - 192.168.0.0/16
+        - 2001:db8::/32
+```
+
+The value may also be provided as a single base64-encoded, gzipped string (useful for very long lists), matching the format accepted by `cidr_whitelist` and `cidr_blocklist_tcp`.
+
+#### Resulting `haproxy.config`
+```ini
+frontend http-in
+    # [...]
+    acl rate_limit_exclude src -f /var/vcap/jobs/haproxy/config/rate_limit_exclusion_cidrs.txt
+    tcp-request connection track-sc0 src table st_tcp_conn_rate
+    tcp-request connection reject if { var(proc.connections_rate_limit_block) -m bool } { var(proc.connections_rate_limit_connections) -m int gt 0 } { sc_conn_rate(0),sub(proc.connections_rate_limit_connections) gt 0 } !rate_limit_exclude
+```
+
+
 ## Configuration Examples
 > Note:
 > The following examples assume only an `http-in` frontend is configured; an `https-in` frontend would behave identically.
