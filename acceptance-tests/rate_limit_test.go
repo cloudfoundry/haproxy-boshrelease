@@ -153,11 +153,11 @@ var _ = Describe("Rate-Limiting", func() {
 
 	It("Connection Based Limiting Works with Proxy Protocol enabled", func() {
 		connLimit := 5
-		opsfileAcceptProxy := fmt.Sprintf(`---
+		opsfileAcceptProxy := `---
 - type: replace
-  path: %s/accept_proxy?
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/accept_proxy?
   value: true
-`, rateLimitPropsPath)
+`
 
 		haproxyBackendPort := 12000
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
@@ -321,24 +321,22 @@ var _ = Describe("Rate-Limiting", func() {
 	})
 })
 
-const rateLimitPropsPath = "/instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy"
-
 // requestsRateLimitOps builds an opsfile fragment configuring the requests_rate_limit properties.
 func requestsRateLimitOps(requests int, windowSize, tableSize string, block bool) string {
 	return fmt.Sprintf(`---
 - type: replace
-  path: %[1]s/requests_rate_limit?/requests
-  value: %[2]d
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit?/requests
+  value: %d
 - type: replace
-  path: %[1]s/requests_rate_limit/window_size?
-  value: %[3]s
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/window_size?
+  value: %s
 - type: replace
-  path: %[1]s/requests_rate_limit/table_size?
-  value: %[4]s
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/table_size?
+  value: %s
 - type: replace
-  path: %[1]s/requests_rate_limit/block?
-  value: %[5]t
-`, rateLimitPropsPath, requests, windowSize, tableSize, block)
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/requests_rate_limit/block?
+  value: %t
+`, requests, windowSize, tableSize, block)
 }
 
 // connectionsRateLimitOps builds an opsfile fragment configuring the connections_rate_limit properties.
@@ -349,19 +347,19 @@ func connectionsRateLimitOps(connections int, windowSize, tableSize string, bloc
 	}
 	return fmt.Sprintf(`---
 - type: replace
-  path: %[1]s/connections_rate_limit?/connections
-  value: %[2]d
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit?/connections
+  value: %d
 - type: replace
-  path: %[1]s/connections_rate_limit/window_size?
-  value: %[3]s
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/window_size?
+  value: %s
 - type: replace
-  path: %[1]s/connections_rate_limit/table_size?
-  value: %[4]s
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/table_size?
+  value: %s
 - type: replace
-  path: %[1]s/connections_rate_limit/block?
-  value: %[5]t
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/block?
+  value: %t
 - type: replace
-  path: %[1]s/connections_rate_limit/exclude_cidrs?
-  value: [%[6]s]
-`, rateLimitPropsPath, connections, windowSize, tableSize, block, strings.Join(quotedCIDRs, ", "))
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/connections_rate_limit/exclude_cidrs?
+  value: [%s]
+`, connections, windowSize, tableSize, block, strings.Join(quotedCIDRs, ", "))
 }
