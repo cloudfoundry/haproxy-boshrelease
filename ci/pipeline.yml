@@ -378,7 +378,7 @@ jobs:
     plan:
       - in_parallel:
           - { get: git-pull-requests, trigger: true, version: every }
-          - { get: docker-cpi-image, trigger: true }
+          - { get: docker-cpi-image }
       - task: create-pr-tag
         image: docker-cpi-image
         config:
