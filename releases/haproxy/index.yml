@@ -109,6 +109,8 @@ builds:
     version: 10.4.0
   7f222cb3-b77d-4821-52aa-295c5a1ba994:
     version: 13.0.0+2.8.3
+  812435e6-26d9-4fe9-4200-88b839c4354e:
+    version: 16.12.0+3.2.21
   8240ec82-50b2-4db8-5291-8c8c5afe50aa:
     version: 8.6.0
   82d75a66-9314-4152-4e26-8e3f4e97fc1d:
