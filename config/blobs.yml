@@ -6,10 +6,10 @@ haproxy/hatop-0.8.2:
   size: 74157
   object_id: 00125e3f-bdaa-4da3-583f-b680b0b30df4
   sha: sha256:6ba2136e98b9a436488be67a54a5295f55f38090157d09df0154dda493ac5815
-haproxy/lua-5.4.8.tar.gz:
-  size: 374332
-  object_id: 11cb896a-5089-432c-7652-fb5504bd13ff
-  sha: sha256:4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
+haproxy/lua-5.4.9.tar.gz:
+  size: 373429
+  object_id: d0d416ad-3f08-494a-4ab9-aa5ae7f97a66
+  sha: sha256:2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6
 haproxy/pcre2-10.47.tar.gz:
   size: 2792969
   object_id: 37761873-8904-4a27-4b0c-df645dffd609
