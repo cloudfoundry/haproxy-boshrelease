@@ -7,6 +7,8 @@ builds:
     version: 14.1.1+2.8.10
   098f2c5b-6245-4b06-5832-6fac079ecc8f:
     version: 10.0.0
+  0a962995-ae92-4a79-4116-e37365a51d9f:
+    version: 16.12.0+3.2.23
   0bbfe6f5-4a2a-44b5-5d5c-fff6ff7267f4:
     version: 12.2.1+2.7.10
   0f5d557a-0e15-400c-44df-f4cd0c928b69:
