@@ -120,6 +120,7 @@ jobs:
   - name: acceptance-tests
     public: true
     serial: true
+    serial_groups: [acceptance-tests]
     plan:
     - do:
       - in_parallel:
@@ -153,14 +154,14 @@ jobs:
   - name: acceptance-tests-pr
     public: true
     serial: true
+    serial_groups: [acceptance-tests]
     plan:
     - do:
-      - { get: git-pull-requests, trigger: true, version: every, passed: [build-haproxy-testflight-image-pr] }
-      - { get: stemcell }
-      - { get: stemcell-jammy }
-      - get: haproxy-boshrelease-testflight-pr
-        trigger: true
-        passed: [build-haproxy-testflight-image-pr]
+      - in_parallel:
+        - { get: git-pull-requests, trigger: true, version: every, passed: [unit-tests-pr] }
+        - { get: stemcell }
+        - { get: stemcell-jammy }
+        - { get: haproxy-boshrelease-testflight-pr, passed: [unit-tests-pr] }
       - put: git-pull-requests
         params:
           path: git-pull-requests
@@ -345,6 +346,7 @@ jobs:
   - name: build-haproxy-testflight-image
     public: true
     serial: true
+    serial_groups: [build-testflight-image]
     plan:
       - in_parallel:
           - get: git-ci
@@ -375,6 +377,7 @@ jobs:
   - name: build-haproxy-testflight-image-pr
     public: true
     serial: true
+    serial_groups: [build-testflight-image]
     plan:
       - in_parallel:
           - { get: git-pull-requests, trigger: true, version: every }
