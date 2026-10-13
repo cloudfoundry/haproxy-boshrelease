@@ -33,6 +33,28 @@ describe 'config/haproxy.config HTTP frontend' do
       end
     end
 
+    context 'when ha_proxy.v4v6 is false and binding_ip is ::' do
+      let(:properties) do
+        { 'v4v6' => false, 'binding_ip' => '::' }
+      end
+
+      it 'does not enable v4v6' do
+        expect(frontend_http).to include('bind :::80')
+        expect(frontend_http).not_to include('v4v6')
+      end
+    end
+
+    context 'when ha_proxy.v4v6 is not set and binding_ip is ::' do
+      let(:properties) do
+        { 'binding_ip' => '::' }
+      end
+
+      it 'does not enable v4v6' do
+        expect(frontend_http).to include('bind :::80')
+        expect(frontend_http).not_to include('v4v6')
+      end
+    end
+
     context 'when ha_proxy.accept_proxy is true' do
       let(:properties) do
         { 'accept_proxy' => true }

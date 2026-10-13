@@ -175,10 +175,8 @@ end
 # }}}
 # IPv4 and IPv6 binding (v4v6) Option {{{
 v4v6 = ""
-if_p("ha_proxy.v4v6") do
-  if p("ha_proxy.binding_ip") == "::"
-    v4v6 = "v4v6"
-  end
+if p("ha_proxy.v4v6") && p("ha_proxy.binding_ip") == "::"
+  v4v6 = "v4v6"
 end
 # }}}
 
