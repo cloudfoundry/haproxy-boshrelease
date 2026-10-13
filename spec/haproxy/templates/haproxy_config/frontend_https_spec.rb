@@ -17,7 +17,7 @@ describe 'config/haproxy.config HTTPS frontend' do
   let(:properties) { default_properties }
 
   it 'binds to all interfaces by default' do
-    expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
+    expect(frontend_https).to include('bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
   end
 
   context 'when ha_proxy.binding_ip is provided' do
@@ -26,7 +26,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
 
     it 'binds to the provided ip' do
-      expect(frontend_https).to include('bind 1.2.3.4:443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      expect(frontend_https).to include('bind 1.2.3.4:443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
     end
 
     context 'when ha_proxy.v4v6 is true and binding_ip is ::' do
@@ -35,7 +35,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'enables ipv6' do
-        expect(frontend_https).to include('bind :::443  ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
       end
     end
 
@@ -45,7 +45,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'does not enable v4v6' do
-        expect(frontend_https).to include('bind :::443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
         expect(frontend_https).not_to include('v4v6')
       end
     end
@@ -56,7 +56,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'does not enable v4v6' do
-        expect(frontend_https).to include('bind :::443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
         expect(frontend_https).not_to include('v4v6')
       end
     end
@@ -92,6 +92,61 @@ describe 'config/haproxy.config HTTPS frontend' do
         expect do
           frontend_https
         end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive/)
+      end
+    end
+  end
+
+  context 'when ha_proxy.binding_ips is provided' do
+    let(:properties) do
+      default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'] })
+    end
+
+    it 'generates two bind directives' do
+      expect(frontend_https).to include('bind 0.0.0.0:443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      expect(frontend_https).to include('bind [::]:443 v6only ssl crt /var/vcap/jobs/haproxy/config/ssl')
+    end
+
+    it 'does not include v4v6' do
+      expect(frontend_https).not_to include('v4v6')
+    end
+
+    context 'when ha_proxy.v4v6 is also true' do
+      let(:properties) do
+        default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'], 'v4v6' => true, 'binding_ip' => '::' })
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect { frontend_https }.to raise_error(/cannot be combined with ha_proxy.v4v6/)
+      end
+    end
+
+    context 'when binding_ips contains duplicates' do
+      let(:properties) do
+        default_properties.merge({ 'binding_ips' => ['0.0.0.0', '0.0.0.0'] })
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect { frontend_https }.to raise_error(/duplicate address/)
+      end
+    end
+
+    context 'when binding_ips contains an invalid IP' do
+      let(:properties) do
+        default_properties.merge({ 'binding_ips' => ['not-an-ip'] })
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect { frontend_https }.to raise_error(/invalid IP address/)
+      end
+    end
+
+    context 'when binding_ips is empty' do
+      let(:properties) do
+        default_properties.merge({ 'binding_ips' => [] })
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect { frontend_https }.to raise_error(/must be a non-empty array/)
       end
     end
   end
@@ -157,7 +212,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
 
     it 'configures ssl to use the client ca' do
-      expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional')
+      expect(frontend_https).to include('bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional')
     end
 
     context 'when ha_proxy.client_cert_ignore_err is all' do
@@ -166,7 +221,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'adds the crt-ignore-err and ca-ignore-err flags' do
-        expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err all ca-ignore-err all')
+        expect(frontend_https).to include('bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err all ca-ignore-err all')
       end
 
       context 'when client_cert is not enabled' do
@@ -188,7 +243,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'references the crl list' do
-        expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem')
+        expect(frontend_https).to include('bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem')
       end
 
       context 'when client_cert is not enabled' do
@@ -818,7 +873,7 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
 
     it 'enables alpn h2 negotiation' do
-      expect(frontend_https).to include('bind :443  ssl crt /var/vcap/jobs/haproxy/config/ssl   alpn h2,http/1.1')
+      expect(frontend_https).to include('bind :443 ssl crt /var/vcap/jobs/haproxy/config/ssl  alpn h2,http/1.1')
     end
   end
 

@@ -587,6 +587,17 @@ properties:
   ha_proxy.v4v6:
     description: "Boolean, disabled by default. Enables binding to all IPv4 and IPv6 interfaces. Only applies if `ha_proxy.binding_ip` is set to `::`."
     default: false
+  ha_proxy.binding_ips:
+    description: |
+      Optional list of IP addresses to bind all generated listeners to.
+      When set, each listener generates one bind directive per address,
+      replacing the single address from ha_proxy.binding_ip.
+      IPv6 addresses automatically receive the v6only option.
+      Cannot be combined with ha_proxy.v4v6: true.
+      Other listeners continue using ha_proxy.binding_ip when this is absent.
+    example:
+    - 0.0.0.0
+    - "::"
 
   ha_proxy.cidr_blacklist:
     description: "List of CIDRs to block for http(s). Format is string array of CIDRs or single string of base64 encoded gzip."

@@ -70,9 +70,9 @@ describe 'config/haproxy.config custom TCP frontends' do
       end
 
       it 'enables ipv6' do
-        expect(frontend_tcp_redis).to include('bind :::6379  v4v6')
-        expect(frontend_tcp_mysql).to include('bind :::3306  v4v6')
-        expect(frontend_tcp_postgres_via_link).to include('bind :::5432  v4v6')
+        expect(frontend_tcp_redis).to include('bind :::6379 v4v6')
+        expect(frontend_tcp_mysql).to include('bind :::3306 v4v6')
+        expect(frontend_tcp_postgres_via_link).to include('bind :::5432 v4v6')
       end
     end
   end
@@ -97,7 +97,7 @@ describe 'config/haproxy.config custom TCP frontends' do
     end
 
     it 'adds the default ssl options' do
-      expect(frontend_tcp_redis).to include('bind :6379  ssl')
+      expect(frontend_tcp_redis).to include('bind :6379 ssl')
       expect(frontend_tcp_mysql).to include('bind :3306')
     end
 
@@ -117,7 +117,7 @@ describe 'config/haproxy.config custom TCP frontends' do
         end
 
         it 'does not set accept-proxy' do
-          expect(frontend_tcp_redis).to include('bind :6379  ssl')
+          expect(frontend_tcp_redis).to include('bind :6379 ssl')
           expect(frontend_tcp_mysql).to include('bind :3306')
         end
       end
@@ -130,7 +130,7 @@ describe 'config/haproxy.config custom TCP frontends' do
       end
 
       it 'sets expect-proxy of tcp connection to the file proxies_cidrs.txt contents' do
-        expect(frontend_tcp_redis).to include('bind :6379  ssl')
+        expect(frontend_tcp_redis).to include('bind :6379 ssl')
         expect(frontend_tcp_redis).to include('tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }')
 
         expect(frontend_tcp_mysql).to include('bind :3306')
