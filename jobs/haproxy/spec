@@ -593,7 +593,7 @@ properties:
       When set, each listener generates one bind directive per address,
       replacing the single address from ha_proxy.binding_ip.
       IPv6 addresses automatically receive the v6only option.
-      Cannot be combined with ha_proxy.v4v6: true.
+      Cannot be combined with ha_proxy.v4v6: true or a non-empty ha_proxy.binding_ip.
       Other listeners continue using ha_proxy.binding_ip when this is absent.
     example:
     - 0.0.0.0

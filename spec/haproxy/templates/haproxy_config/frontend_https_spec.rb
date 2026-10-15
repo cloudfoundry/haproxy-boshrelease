@@ -120,6 +120,16 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
     end
 
+    context 'when ha_proxy.binding_ip is also set' do
+      let(:properties) do
+        default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'], 'binding_ip' => '1.2.3.4' })
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect { frontend_https }.to raise_error(/ha_proxy.binding_ip cannot be set when ha_proxy.binding_ips is provided/)
+      end
+    end
+
     context 'when binding_ips contains duplicates' do
       let(:properties) do
         default_properties.merge({ 'binding_ips' => ['0.0.0.0', '0.0.0.0'] })

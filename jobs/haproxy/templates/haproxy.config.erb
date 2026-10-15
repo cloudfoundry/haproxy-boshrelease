@@ -202,6 +202,9 @@ if_p("ha_proxy.binding_ips") do |ips|
   if p("ha_proxy.v4v6")
     abort("Conflicting configuration: ha_proxy.binding_ips cannot be combined with ha_proxy.v4v6: true")
   end
+  unless p("ha_proxy.binding_ip").empty?
+    abort("Conflicting configuration: ha_proxy.binding_ip cannot be set when ha_proxy.binding_ips is provided")
+  end
   seen = {}
   binding_addresses = ips.map do |ip|
     unless ip.is_a?(String) && !ip.empty?
