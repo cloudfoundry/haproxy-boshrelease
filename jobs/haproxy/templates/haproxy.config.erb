@@ -17,14 +17,14 @@
     end
   end
 
-  def render_bind(binding_addresses, binding_ip, port, extra_options, v4v6_option)
+  def render_bind(binding_addresses, binding_ip, port, extra_options)
     if binding_addresses
       binding_addresses.map do |ba|
         opts = [ba[:opts], *Array(extra_options)].reject(&:empty?).join(' ')
         "    bind #{ba[:addr]}:#{port} #{opts}".rstrip
       end.join("\n")
     else
-      options = [*Array(extra_options), v4v6_option].reject(&:empty?).join(' ')
+      options = [*Array(extra_options)].reject(&:empty?).join(' ')
       "    bind #{binding_ip}:#{port} #{options}".rstrip
     end
   end
@@ -442,7 +442,7 @@ listen stats
 
 <% if p("ha_proxy.enable_health_check_http") %>
 listen health_check_http_url
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port"), "", v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port"), v4v6) %>
     mode http
     option httpclose
     monitor-uri /health
@@ -455,7 +455,7 @@ listen health_check_http_url
 
 <%- if enable_additional_health_check_proxy -%>
 listen health_check_http_url_proxy_protocol
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port") + 1, "accept-proxy", v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port") + 1, ["accept-proxy", v4v6]) %>
     mode http
     option httpclose
     monitor-uri /health
@@ -488,7 +488,7 @@ backend st_tcp_conn_rate
 # HTTP Frontend {{{
 frontend http-in
     mode http
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 80, accept_proxy, v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 80, [accept_proxy, v4v6]) %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
@@ -602,7 +602,7 @@ frontend http-in
 # HTTPS Frontend {{{
 frontend https-in
     mode http
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 443, [accept_proxy, tls_bind_options, default_alpn_config], v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 443, [accept_proxy, tls_bind_options, default_alpn_config, v4v6]) %>
     # Set this acl when the request is a route service request, used by ha_proxy.forward_true_client_ip_header and ha_proxy.forwarded_client_cert
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
   <%- if disable_domain_fronting -%>
@@ -805,7 +805,7 @@ frontend https-in
 # HTTPS Websockets Frontend {{{
 frontend wss-in
     mode http
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 4443, [accept_proxy, tls_bind_options], v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 4443, [accept_proxy, tls_bind_options, v4v6]) %>
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
     # Ensure a host header exists to check against
@@ -1074,7 +1074,7 @@ backend http-routed-backend-<%= prefix_hash %>
 
 frontend cf_tcp_routing
     mode tcp
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.tcp_routing.port_range"), "", v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.tcp_routing.port_range"), v4v6) %>
     default_backend cf_tcp_routers
 
 backend cf_tcp_routers
@@ -1105,9 +1105,9 @@ end -%>
 frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
   <%- if tcp_proxy["ssl"] -%>
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, tls_bind_options], v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, tls_bind_options, v4v6]) %>
   <%- else -%>
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["port"], tcp_accept_proxy, v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, v4v6]) %>
   <%- end -%>
     <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
       tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
@@ -1160,7 +1160,7 @@ backend tcp-<%= tcp_proxy["name"] %>
 
   <%- if tcp_proxy["health_check_http"]  -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"], "", v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"], v4v6) %>
     mode http
     monitor-uri /health
     <%- if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
@@ -1171,7 +1171,7 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 
     <%- if enable_additional_health_check_proxy -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>_proxy_protocol
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"] + 1, "accept-proxy", v4v6) %>
+<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"] + 1, ["accept-proxy", v4v6]) %>
     mode http
     monitor-uri /health
     acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0
