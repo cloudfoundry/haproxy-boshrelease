@@ -44,8 +44,8 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'v4v6' => false, 'binding_ip' => '::' })
       end
 
-      it 'does not enable v4v6' do
-        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      it 'enables v6only' do
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v6only')
         expect(frontend_https).not_to include('v4v6')
       end
     end
@@ -55,8 +55,8 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'binding_ip' => '::' })
       end
 
-      it 'does not enable v4v6' do
-        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      it 'enables v6only' do
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v6only')
         expect(frontend_https).not_to include('v4v6')
       end
     end

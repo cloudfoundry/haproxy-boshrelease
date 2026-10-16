@@ -38,8 +38,8 @@ describe 'config/haproxy.config HTTP frontend' do
         { 'v4v6' => false, 'binding_ip' => '::' }
       end
 
-      it 'does not enable v4v6' do
-        expect(frontend_http).to include('bind :::80')
+      it 'enables v6only' do
+        expect(frontend_http).to include('bind :::80 v6only')
         expect(frontend_http).not_to include('v4v6')
       end
     end
@@ -49,8 +49,8 @@ describe 'config/haproxy.config HTTP frontend' do
         { 'binding_ip' => '::' }
       end
 
-      it 'does not enable v4v6' do
-        expect(frontend_http).to include('bind :::80')
+      it 'enables v6only' do
+        expect(frontend_http).to include('bind :::80 v6only')
         expect(frontend_http).not_to include('v4v6')
       end
     end
