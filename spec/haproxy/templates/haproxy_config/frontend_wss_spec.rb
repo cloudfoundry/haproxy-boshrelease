@@ -98,6 +98,21 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
   end
 
+  context 'when ha_proxy.binding_ips is provided' do
+    let(:properties) do
+      default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'] })
+    end
+
+    it 'generates two bind directives for WSS' do
+      expect(frontend_wss).to include('bind 0.0.0.0:4443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      expect(frontend_wss).to include('bind [::]:4443 v6only ssl crt /var/vcap/jobs/haproxy/config/ssl')
+    end
+
+    it 'does not include v4v6' do
+      expect(frontend_wss).not_to include('v4v6')
+    end
+  end
+
   context 'when ha_proxy.disable_domain_fronting is true' do
     let(:properties) do
       default_properties.merge({ 'disable_domain_fronting' => true })

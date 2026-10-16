@@ -77,6 +77,24 @@ describe 'config/haproxy.config custom TCP frontends' do
     end
   end
 
+  context 'when ha_proxy.binding_ips is provided' do
+    let(:properties) do
+      default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'] })
+    end
+
+    it 'generates two bind directives for TCP frontends' do
+      expect(frontend_tcp_redis).to include('bind 0.0.0.0:6379')
+      expect(frontend_tcp_redis).to include('bind [::]:6379 v6only')
+      expect(frontend_tcp_mysql).to include('bind 0.0.0.0:3306')
+      expect(frontend_tcp_mysql).to include('bind [::]:3306 v6only')
+    end
+
+    it 'does not include v4v6' do
+      expect(frontend_tcp_redis).not_to include('v4v6')
+      expect(frontend_tcp_mysql).not_to include('v4v6')
+    end
+  end
+
   context 'when ssl is enabled on custom backends (not links)' do
     let(:default_properties) do
       {

@@ -19,6 +19,32 @@ bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl v4v6
 
 **Note:** `v4v6` only takes effect when `binding_ip` is `::`.
 
+## IPv6-only mode (v6only)
+
+When `binding_ip` is set to `::` without enabling `v4v6`, the `v6only`
+option is automatically added to all bind directives:
+
+```yaml
+ha_proxy:
+  binding_ip: "::"
+  # v4v6 not set or false
+```
+
+This generates:
+```
+bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl v6only
+```
+
+The `v6only` option ensures the IPv6 socket does not accept IPv4
+connections, regardless of the kernel's `net.ipv6.bindv6only` sysctl
+setting. Without it, behavior depends on the kernel default -- on most
+Linux distributions (including standard BOSH stemcells), an IPv6 wildcard
+socket silently accepts IPv4 connections as `::ffff:` mapped addresses.
+
+**Breaking change:** Deployments using `binding_ip: "::"` without
+`v4v6: true` that relied on the kernel default to accept IPv4 traffic
+must now explicitly set `v4v6: true` to restore dual-stack behavior.
+
 ## Option B: Separate Sockets with binding_ips
 
 For environments that require distinct IPv4 and IPv6 sockets:
@@ -51,6 +77,7 @@ listeners.
 ### Constraints
 
 - `binding_ips` cannot be combined with `v4v6: true`
+- `binding_ips` cannot be combined with a non-empty `binding_ip`
 - Entries must be valid IP address literals (no hostnames, CIDRs, or ports)
 - Duplicate addresses are rejected
 - The list must not be empty when set
