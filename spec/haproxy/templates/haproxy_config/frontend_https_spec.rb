@@ -22,11 +22,21 @@ describe 'config/haproxy.config HTTPS frontend' do
 
   context 'when ha_proxy.binding_ip is provided' do
     let(:properties) do
-      default_properties.merge({ 'binding_ip' => '1.2.3.4' })
+      default_properties.merge({ 'binding_ip' => '0.0.0.0' })
     end
 
     it 'binds to the provided ip' do
-      expect(frontend_https).to include('bind 1.2.3.4:443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      expect(frontend_https).to include('bind 0.0.0.0:443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+    end
+
+    context 'when ha_proxy.v4v6 is true but binding_ip is not ::' do
+      let(:properties) do
+        default_properties.merge({ 'v4v6' => true, 'binding_ip' => '0.0.0.0' })
+      end
+
+      it 'aborts with a meaningful error message' do
+        expect { frontend_https }.to raise_error(/v4v6 is enabled but ha_proxy.binding_ip is not '::'/)
+      end
     end
 
     context 'when ha_proxy.v4v6 is true and binding_ip is ::' do

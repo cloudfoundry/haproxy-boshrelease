@@ -188,6 +188,9 @@ end
 # IPv4 and IPv6 binding (v4v6 / v6only) Options {{{
 v4v6 = ""
 v6only = ""
+if p("ha_proxy.v4v6") && p("ha_proxy.binding_ip") != "::"
+  abort("Conflicting configuration: ha_proxy.v4v6 is enabled but ha_proxy.binding_ip is not '::'. v4v6 only applies to IPv6 wildcard sockets.")
+end
 if p("ha_proxy.binding_ip") == "::"
   if p("ha_proxy.v4v6")
     v4v6 = "v4v6"
