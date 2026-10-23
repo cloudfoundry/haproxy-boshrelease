@@ -1,0 +1,8 @@
+set -euxo pipefail
+
+source aws-lc-versions.sh
+
+# Unpack the AWS-LC source ONCE into this package. Both the non-FIPS (aws-lc) and
+# FIPS (aws-lc-fips) compile packages depend on aws-lc-src and build from here, so
+# the ~130 MB source blob is bundled in exactly one package instead of each.
+tar xzf haproxy/aws-lc-v${AWS_LC_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}

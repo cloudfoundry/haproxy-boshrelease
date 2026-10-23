@@ -1,0 +1,5 @@
+set -euxo pipefail
+
+source haproxy-versions.sh
+SSL_MAKE_FLAGS="USE_OPENSSL=1"
+source build-haproxy.sh

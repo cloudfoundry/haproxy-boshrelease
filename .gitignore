@@ -6,6 +6,7 @@ releases/**/*.tgz
 ci/scripts/stemcell/*.tgz
 ci/scripts/stemcell-jammy/*.tgz
 dev_releases
+builds
 blobs/*
 .blobs
 .dev_builds
@@ -21,6 +22,9 @@ blobs/*
 tmp
 my*.yml
 .bundle
+.pytest_cache
+__pycache__
+*.pyc
 vendor
 .vscode/launch.json
 .vscode/settings.json

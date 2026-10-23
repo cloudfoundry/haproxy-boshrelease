@@ -226,8 +226,21 @@ func expectTLSCertificateRequiredErr(err error) {
 	checkNetOpErr(err, "tls: certificate required")
 }
 
-func expectTLSUnrecognizedNameErr(err error) {
-	checkNetOpErr(err, "tls: unrecognized name")
+// expectStrictSNIRejectedErr asserts that a strict-sni handshake was rejected.
+//   - OpenSSL registers the SNI reject through the servername callback and sends
+//     unrecognized_name(112)  => "tls: unrecognized name"
+//   - AWS-LC uses the select_certificate_cb path, which sends
+//     handshake_failure(40)    => "tls: handshake failure"
+func expectStrictSNIRejectedErr(err error) {
+	msg := netOpErrString(err)
+	if strings.HasPrefix(config.Variant, "awslc") {
+		Expect(msg).To(Or(
+			ContainSubstring("tls: handshake failure"),
+			ContainSubstring("tls: unrecognized name"),
+		))
+		return
+	}
+	Expect(msg).To(ContainSubstring("tls: unrecognized name"))
 }
 
 func expectConnectionRefusedErr(err error) {
@@ -239,11 +252,18 @@ func expectConnectionResetErr(err error) {
 }
 
 func checkNetOpErr(err error, expectString string) {
+	Expect(netOpErrString(err)).To(ContainSubstring(expectString))
+}
+
+// netOpErrString unwraps an http client error down to the underlying
+// *net.OpError and returns its message, failing the test if the error is not
+// shaped that way.
+func netOpErrString(err error) string {
 	Expect(err).To(HaveOccurred())
 	urlErr, ok := err.(*url.Error)
 	Expect(ok).To(BeTrue())
 	tlsErr := urlErr.Unwrap()
 	var opErr *net.OpError
 	Expect(errors.As(tlsErr, &opErr)).To(BeTrue())
-	Expect(opErr.Err.Error()).To(ContainSubstring(expectString))
+	return opErr.Err.Error()
 }

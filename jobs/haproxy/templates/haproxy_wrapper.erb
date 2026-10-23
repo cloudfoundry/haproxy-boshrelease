@@ -3,7 +3,32 @@
 
 set -e
 
-export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
+# --- Select the HAProxy binary package ------------------------------------------------
+# The release bundles every SSL variant; two orthogonal properties choose the binary, whose
+# package name follows the convention haproxy-<ssl_variant>[-patched]:
+#   ha_proxy.ssl_variant             openssl (default) | awslc | awslc-fips
+#   ha_proxy.include_haproxy_patches false (default) | true -> append "-patched"
+<%-
+  base    = p("ha_proxy.ssl_variant").to_s.strip
+  patches = p("ha_proxy.include_haproxy_patches")
+  want    = "haproxy-#{base}" + (patches ? "-patched" : "")
+-%>
+<%- unless %w[openssl awslc awslc-fips].include?(base) -%>
+echo "$(date): ERROR: ha_proxy.ssl_variant='<%= base %>' is not a valid SSL variant (openssl, awslc, awslc-fips)" >&2
+exit 1
+<%- end -%>
+
+HAPROXY_PKG="/var/vcap/packages/<%= want %>"
+if [ ! -x "${HAPROXY_PKG}/bin/haproxy" ]; then
+  avail=""
+  for d in /var/vcap/packages/haproxy-*; do
+    [ -x "$d/bin/haproxy" ] && avail="${avail} $(basename "$d" | sed 's/^haproxy-//')"
+  done
+  echo "$(date): ERROR: '<%= want %>' is not bundled in this release; available:${avail}" >&2
+  exit 1
+fi
+
+export PATH=$PATH:${HAPROXY_PKG}/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock

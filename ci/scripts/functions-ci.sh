@@ -54,6 +54,8 @@ function bosh_release() {
     echo "----- Creating candidate BOSH release..."
     bosh -n reset-release # in case dev_releases/ is in repo accidentally
 
+    # Single release: the committed tree bundles every SSL variant; the backend is
+    # selected at deploy time via ha_proxy.ssl_variant (see the acceptance harness).
     bosh create-release --force
     bosh upload-release --rebase
     release_final_version=$(spruce json dev_releases/*/index.yml | jq -r ".builds[].version" | sed -e "s%+.*%%")

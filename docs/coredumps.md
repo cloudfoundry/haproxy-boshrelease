@@ -48,10 +48,12 @@ Add the `set-dumpable` directive to the `global` section in `haproxy.config.erb`
 
 Core dump files are written to `/var/vcap/data/haproxy/`.
 
-To analyze a core dump, use `gdb` with the HAProxy binary and the core file:
+To analyze a core dump, use `gdb` with the HAProxy binary and the core file. The binary lives in the
+variant package (`haproxy-openssl`, `haproxy-awslc`, `haproxy-awslc-fips`), so resolve the running
+one via its pid rather than hardcoding a package name:
 
 ```bash
-gdb /var/vcap/packages/haproxy/bin/haproxy /var/vcap/data/haproxy/core.<executable>.<pid>.<timestamp>
+gdb "$(readlink -f /proc/"$(pgrep -n haproxy)"/exe)" /var/vcap/data/haproxy/core.<executable>.<pid>.<timestamp>
 ```
 
 Useful GDB commands once loaded:

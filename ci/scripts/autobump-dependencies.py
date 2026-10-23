@@ -24,18 +24,26 @@ HAPROXY_VERSION = "3.2"
 LUA_VERSION = "5.4"
 PCRE_VERSION = "10"
 HATOP_VERSION = "0"
+AWS_LC_VERSION = "4"  # LTS line (v4.x); builds both FIPS and non-FIPS
+CMAKE_VERSION = "4"
+GOLANG_VERSION = "1.27"
 
-# Required Environment Vars
-BLOBSTORE_SECRET_ACCESS_KEY = os.environ["GCP_SERVICE_KEY"]
-gh = github.Github(login_or_token=os.environ["GITHUB_COM_TOKEN"])
-PR_ORG = os.environ["PR_ORG"]
-PR_BASE = os.environ["PR_BASE"]
-PR_LABEL = os.environ["PR_LABEL"]
+# Required environment variables — read lazily (via .get) so this module can be
+# imported without them (e.g. by the offline resolution tests). main() validates
+# that they are actually set before doing any real work.
+BLOBSTORE_SECRET_ACCESS_KEY = os.environ.get("GCP_SERVICE_KEY")
+_github_token = os.environ.get("GITHUB_COM_TOKEN")
+gh = github.Github(auth=github.Auth.Token(_github_token)) if _github_token else github.Github()
+PR_ORG = os.environ.get("PR_ORG")
+PR_BASE = os.environ.get("PR_BASE")
+PR_LABEL = os.environ.get("PR_LABEL")
 # if DRY_RUN is set, blobs will not be uploaded and no PR created (downloads and local changes are still performed)
 DRY_RUN = "DRY_RUN" in os.environ
 
 # Other Global Variables
 BLOBS_PATH = "config/blobs.yml"
+VERSIONS_PATH = "src/haproxy-versions.sh"
+AWS_LC_VERSIONS_PATH = "src/aws-lc-versions.sh"
 PACKAGING_PATH = "packages/{}/packaging"
 
 
@@ -105,27 +113,44 @@ class Dependency:
     pinned_version: str
     root_url: str
     package: str = "haproxy"
-    remote_repo = gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
+    filename_suffix: str = ".tar.gz"
+    blob_version_prefix: str = ""
+    # Explicit path to the file holding this dependency's version constant.
+    # Defaults (below) to src/haproxy-versions.sh for package "haproxy"; the
+    # crypto deps override it to src/aws-lc-versions.sh.
+    versions_path: Optional[str] = None
 
     _latest_release: Optional[Release] = None
     _current_version: version.Version = None
+
+    @property
+    def remote_repo(self):
+        # Lazy so importing this module does not hit the GitHub API (keeps resolution testable offline).
+        return gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
 
     @property
     def pr_branch(self):
         return f"{self.name}-auto-bump-{PR_BASE}"
 
     @property
+    def versions_file(self) -> str:
+        if self.versions_path:
+            return self.versions_path
+        if self.package == "haproxy":
+            return VERSIONS_PATH
+        return PACKAGING_PATH.format(self.package)
+
+    @property
     def current_version(self) -> version.Version:
         """
-        Fetches the current version of the release from the packaging file if not already known.
+        Fetches the current version of the release from the versions file if not already known.
         (Should always be identical to the version in blobs.yml)
         """
         if self._current_version:
             return self._current_version
-        with open(PACKAGING_PATH.format(self.package), "r") as packaging_file:
-            for line in packaging_file.readlines():
+        with open(self.versions_file, "r") as versions_file:
+            for line in versions_file.readlines():
                 if line.startswith(self.version_var_name):
-                    # Regex: expecting e.g. "RELEASE_VERSION=1.2.3  # http://release.org/download". extracting Semver Group
                     rgx = rf"{self.version_var_name}=((?:[0-9]+\.){{1,3}}[0-9]+)\s+#.*$"
                     match = re.match(rgx, line)
                     if match:
@@ -155,8 +180,11 @@ class Dependency:
         """
         raise NotImplementedError
 
+    def blob_filename(self, ver) -> str:
+        return f"{self.name}-{self.blob_version_prefix}{ver}{self.filename_suffix}"
+
     def remove_current_blob(self):
-        current_blob_path = f"{self.package}/{self.name}-{self.current_version}.tar.gz"
+        current_blob_path = f"{self.package}/{self.blob_filename(self.current_version)}"
         if self._check_blob_exists(current_blob_path):
             BoshHelper.remove_blob(current_blob_path)
         else:
@@ -172,17 +200,17 @@ class Dependency:
 
     def update_packaging_file(self):
         """
-        Writes the new dependency version and download-url into packages/haproxy/packaging
+        Writes the new dependency version and download-url into the versions file.
         """
-        with open(PACKAGING_PATH.format(self.package), "r") as packaging_file:
+        with open(self.versions_file, "r") as f:
             replacement = ""
-            for line in packaging_file.readlines():
+            for line in f.readlines():
                 if line.startswith(self.version_var_name):
                     line = f"{self.version_var_name}={self.latest_release.version}  # {self.latest_release.url}\n"
                 replacement += line
 
-        with open(PACKAGING_PATH.format(self.package), "w") as packaging_file_write:
-            packaging_file_write.write(replacement)
+        with open(self.versions_file, "w") as f:
+            f.write(replacement)
 
     def open_pr_exists(self) -> bool:
         prs_exist = False
@@ -208,7 +236,7 @@ class Dependency:
 
             self._update_file(
                 self.remote_repo,
-                PACKAGING_PATH.format(self.package),
+                self.versions_file,
                 self.pr_branch,
                 f"Bump {self.name} version to {self.latest_release.version}",
             )
@@ -254,10 +282,9 @@ class Dependency:
 class GithubDependency(Dependency):
 
     tagname_prefix: str = ""
-    filename_suffix: str = ".tar.gz"
 
     def fetch_latest_release(self) -> Release:
-        repo_org_and_name = self.root_url.lstrip("https://github.com/")
+        repo_org_and_name = self.root_url.removeprefix("https://github.com/")
         repo = gh.get_repo(repo_org_and_name)
         releases = repo.get_releases()
 
@@ -274,14 +301,14 @@ class GithubDependency(Dependency):
         for rel in releases:
             if rel.prerelease:
                 continue
-            current_raw = rel.tag_name.lstrip(self.tagname_prefix)
+            current_raw = rel.tag_name.removeprefix(self.tagname_prefix)
             current_version = version.parse(current_raw)
             if latest_version < current_version and current_raw.startswith(self.pinned_version):
                 latest_version = current_version
                 latest_release = Release(
                     rel.name,
                     get_release_download_url(rel),
-                    f"{self.name}-{str(current_version)}{self.filename_suffix}",
+                    self.blob_filename(current_version),
                     current_version,
                 )
 
@@ -331,6 +358,94 @@ class WebLinkDependency(Dependency):
 
     def get_release_notes(self) -> str:
         return f"Make sure to check the [CHANGELOG]({self.changelog_url}) for any breaking changes."
+
+
+@dataclass
+class GolangDependency(Dependency):
+    """
+    Handles Go toolchain downloads from go.dev/dl/.
+    Go binaries are named go1.X.Y.linux-amd64.tar.gz but stored as golang-X.Y.Z.tar.gz in blobs.
+    """
+
+    def fetch_latest_release(self) -> Release:
+        data = requests.get(self.root_url)
+        html = BeautifulSoup(data.text, "html.parser")
+
+        versions = []
+        links = [link for link in html.select("a") if "href" in link.attrs]
+
+        pattern = rf"go({self.pinned_version}(?:\.[0-9]+)*)\.linux-amd64\.tar\.gz"
+
+        for link in links:
+            match = re.search(pattern, link.attrs["href"])
+            if match:
+                ver = version.parse(match.group(1))
+                url = requests.compat.urljoin(self.root_url, link.attrs["href"])
+                versions.append(
+                    Release(
+                        f"golang-{match.group(1)}",
+                        url,
+                        self.blob_filename(ver),
+                        ver,
+                    )
+                )
+
+        if versions:
+            return sorted(versions, key=lambda r: r.version, reverse=True)[0]
+
+        raise Exception(f"Failed to get latest {self.name} version from {self.root_url}")
+
+    def get_release_notes(self) -> str:
+        return f"Make sure to check the [CHANGELOG](https://go.dev/doc/devel/release) for any breaking changes."
+
+
+@dataclass
+class GithubArchiveDependency(Dependency):
+    """
+    For GitHub repos where we resolve versions from git tags and download the
+    archive tarball, rather than from published Releases with attached assets.
+    AWS-LC LTS point releases (e.g. 4.0.1) are tagged but not always published
+    as GitHub Releases, so tag-based resolution avoids silently missing a bump.
+    """
+
+    tagname_prefix: str = ""
+
+    def fetch_latest_release(self) -> Release:
+        repo_org_and_name = self.root_url.removeprefix("https://github.com/")
+        repo = gh.get_repo(repo_org_and_name)
+        tags = repo.get_tags()
+
+        latest_release = None
+        latest_version = version.parse("0.0.0")
+
+        for tag in tags:
+            current_raw = tag.name.removeprefix(self.tagname_prefix)
+            if not current_raw.startswith(self.pinned_version):
+                continue
+            try:
+                current_version = version.parse(current_raw)
+            except version.InvalidVersion:
+                # tags that aren't plain version numbers (e.g. FIPS branch tags)
+                continue
+            if current_version.is_prerelease:
+                continue
+            if latest_version < current_version:
+                latest_version = current_version
+                url = f"{self.root_url}/archive/refs/tags/{tag.name}.tar.gz"
+                latest_release = Release(
+                    tag.name,
+                    url,
+                    self.blob_filename(current_version),
+                    current_version,
+                )
+
+        if latest_version == version.parse("0.0.0") or latest_release is None:
+            raise Exception(f"No tag found for '{self.root_url}'")
+
+        return latest_release
+
+    def get_release_notes(self) -> str:
+        return f"Make sure to check the [CHANGELOG]({self.root_url}/releases) for any breaking changes."
 
 
 @dataclass
@@ -456,8 +571,14 @@ def cleanup_local_changes():
     local_git.clean("-fx")
 
 
-def main() -> None:
-    dependencies: List[Dependency] = [
+def _require_env():
+    missing = [v for v in ("GCP_SERVICE_KEY", "GITHUB_COM_TOKEN", "PR_ORG", "PR_BASE", "PR_LABEL") if not os.environ.get(v)]
+    if missing:
+        raise SystemExit("Missing required environment variables: " + ", ".join(missing))
+
+
+def build_dependencies() -> List[Dependency]:
+    return [
         WebLinkDependency(
             "keepalived",
             "KEEPALIVED_VERSION",
@@ -500,9 +621,48 @@ def main() -> None:
             tagname_prefix="v",
             filename_suffix="",
         ),
+        # AWS-LC LTS line (v4.x). One source blob builds both the non-FIPS and
+        # FIPS variants; FIPS is a build-time flag, not a separate release.
+        # LTS tags ship as archive tarballs (no release assets), so use
+        # GithubArchiveDependency; blob_version_prefix keeps the aws-lc-v* name.
+        GithubArchiveDependency(
+            "aws-lc",
+            "AWS_LC_VERSION",
+            AWS_LC_VERSION,
+            "https://github.com/aws/aws-lc",
+            tagname_prefix="v",
+            blob_version_prefix="v",
+            versions_path=AWS_LC_VERSIONS_PATH,
+        ),
+        GithubDependency(
+            "cmake",
+            "CMAKE_VERSION",
+            CMAKE_VERSION,
+            "https://github.com/Kitware/CMake",
+            tagname_prefix="v",
+            # We ship the prebuilt Linux binary tarball, not the source. This
+            # both selects the right release asset and produces a blob name
+            # (cmake-X.Y.Z-linux-x86_64.tar.gz) matching the packaging scripts.
+            filename_suffix="-linux-x86_64.tar.gz",
+            versions_path=AWS_LC_VERSIONS_PATH,
+        ),
+        GolangDependency(
+            "golang",
+            "GOLANG_VERSION",
+            GOLANG_VERSION,
+            "https://go.dev/dl/",
+            versions_path=AWS_LC_VERSIONS_PATH,
+        ),
     ]
 
-    write_private_yaml()
+
+def main() -> None:
+    _require_env()
+    dependencies = build_dependencies()
+
+    # private.yml (blobstore creds) is only needed to upload blobs, which a dry run skips.
+    if not DRY_RUN:
+        write_private_yaml()
 
     for dependency in dependencies:
         current_version = dependency.current_version
@@ -513,6 +673,15 @@ def main() -> None:
             print(f"[{dependency.name}] already on the latest version: {latest_version} " f"(pinned: {dependency.pinned_version}.*)")
             continue
 
+        if DRY_RUN:
+            # Read-only report: announce the bump but touch nothing — no PR-exists check,
+            # download, bosh blob op, file edit, upload, PR, or git reset/clean.
+            print(
+                f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version} "
+                f"(dry-run: would download {latest_release.url} -> blob {latest_release.file})"
+            )
+            continue
+
         if dependency.open_pr_exists():
             print(f"[{dependency.name}] Open bump PR exists (for branch: {dependency.pr_branch})")
             continue
@@ -521,8 +690,7 @@ def main() -> None:
         dependency.remove_current_blob()
         latest_release.add_blob(dependency.package)
         dependency.update_packaging_file()
-        if not DRY_RUN:
-            BoshHelper.upload_blobs()
+        BoshHelper.upload_blobs()
         dependency.create_pr()
 
         # clear the working directory for the next dependency bump.

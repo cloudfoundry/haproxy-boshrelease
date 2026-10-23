@@ -129,11 +129,11 @@ var _ = Describe("Strict SNI", func() {
 
 			By("Sending a request to HAProxy with no SNI is forbidden")
 			_, err := httpClientNoSNI.Get("https://haproxy.internal")
-			expectTLSUnrecognizedNameErr(err)
+			expectStrictSNIRejectedErr(err)
 
 			By("Sending a request to HAProxy with an incorrect SNI is forbidden")
 			_, err = httpClientWrongSNI.Get("https://haproxy.internal")
-			expectTLSUnrecognizedNameErr(err)
+			expectStrictSNIRejectedErr(err)
 		})
 	})
 })

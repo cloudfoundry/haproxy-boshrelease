@@ -64,11 +64,18 @@ git submodule update --init --recursive --force
 cd -
 
 version() {
-  # extract the version variable $1 from the packaging script $2 (default 'haproxy')
   pattern='s/VERSION=(.*)(\s?#.*)/\1/p'
-  package=${2:-haproxy}
-  # extract version and remove all spaces
-  sed -n -E "${pattern//VERSION/${1:?}}" "${REPO_ROOT}/packages/${package}/packaging" | sed 's/ *//g'
+  package=${2:-}
+  if [[ -n "${package}" ]]; then
+    source_file="${REPO_ROOT}/packages/${package}/packaging"
+    sed -n -E "${pattern//VERSION/${1:?}}" "${source_file}" | sed 's/ *//g'
+  else
+    # AWS_LC_VERSION / CMAKE_VERSION / GOLANG_VERSION live in aws-lc-versions.sh;
+    # the rest in haproxy-versions.sh. Each var appears in exactly one, so search both.
+    sed -n -E "${pattern//VERSION/${1:?}}" \
+      "${REPO_ROOT}/src/haproxy-versions.sh" \
+      "${REPO_ROOT}/src/aws-lc-versions.sh" | sed 's/ *//g'
+  fi
 }
 
 HAPROXY_VERSION=$(version HAPROXY_VERSION)
@@ -76,11 +83,21 @@ LUA_VERSION=$(version LUA_VERSION)
 SOCAT_VERSION=$(version SOCAT_VERSION)
 PCRE_VERSION=$(version PCRE_VERSION)
 KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
+AWS_LC_VERSION=$(version AWS_LC_VERSION)
+CMAKE_VERSION=$(version CMAKE_VERSION)
+GOLANG_VERSION=$(version GOLANG_VERSION)
 
-VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
+VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}-awslc-${AWS_LC_VERSION}"
 
 cd "${REPO_ROOT}"
 header "Create final release..."
+
+# Single release: the committed tree bundles every build — SSL variant (openssl, awslc,
+# awslc-fips), each with and without the HAProxy community patches. One is selected at deploy
+# time via ha_proxy.ssl_variant + ha_proxy.include_haproxy_patches (default openssl, unpatched).
+# A plain create-release of the tree produces it.
+bosh upload-blobs
+
 bosh -n create-release --final --version "${VERSION}"
 bosh -n create-release "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.yml" \
               --tarball "releases/${RELEASE_NAME}/${RELEASE_NAME}-${VERSION}.tgz"
@@ -94,8 +111,6 @@ echo "SHA1=${SHA1}"
 # shellcheck disable=SC2155
 export SHA256=$(sha256sum "${RELEASE_TGZ}" | head -n1 | awk '{print $1}')
 echo "SHA256=${SHA256}"
-
-
 
 mkdir -p "${RELEASE_ROOT}/artifacts"
 echo "v${VERSION}"                            > "${RELEASE_ROOT}/tag"
@@ -119,7 +134,7 @@ cat >> "${RELEASE_ROOT}/notes.md" <<EOF
 
 ## Upgrades
 <!--
-- `component` has been upgraded from v1.0.0 to v1.2.3
+- \`component\` has been upgraded from v1.0.0 to v1.2.3
 //-->
 
 ### Versions
@@ -133,6 +148,9 @@ The following versions of upstream components are included in this haproxy-boshr
 | Lua         | \`${LUA_VERSION}\` |
 | PCRE        | \`${PCRE_VERSION}\` |
 | socat       | \`${SOCAT_VERSION}\` |
+| AWS-LC (LTS) | \`${AWS_LC_VERSION}\` |
+| cmake       | \`${CMAKE_VERSION}\` |
+| Go          | \`${GOLANG_VERSION}\` |
 
 ### Deployment
 \`\`\`yaml
@@ -144,6 +162,10 @@ releases:
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${SHA256}"
+
+# The release bundles every SSL variant; select one at deploy time (defaults to openssl, stock):
+# ha_proxy.ssl_variant: openssl | awslc | awslc-fips
+# ha_proxy.include_haproxy_patches: false | true   # append the bundled community patches
 \`\`\`
 EOF
 
@@ -167,46 +189,7 @@ pushd "${REPO_ROOT}"
   git add -A
   git status
   git commit -m "release v${VERSION}"
-
-  # After creating a final release we will also create a dev release patches from haproxy-patches directory
-  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
-  tar -czvf haproxy-patches.tar.gz haproxy-patches
-  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
-  bosh upload-blobs
-
-  bosh -n create-release --force --version "${VERSION}-patched" \
-    --tarball "../${RELEASE_NAME}-${VERSION}-patched.tgz"
-
-  # Undo changes to repo from creating dev release
-  git clean -df
-  git reset --hard
 popd
-
-mkdir -p "${RELEASE_ROOT}/artifacts-patched"
-mv "${RELEASE_NAME}-${VERSION}-patched.tgz" "${RELEASE_ROOT}/artifacts-patched"
-
-PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-patched/${RELEASE_NAME}-${VERSION}-patched.tgz
-# shellcheck disable=SC2155
-export PATCHED_SHA1=$(sha1sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
-echo "PATCHED_SHA1=${PATCHED_SHA1}"
-# shellcheck disable=SC2155
-export PATCHED_SHA256=$(sha256sum "${PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
-echo "PATCHED_SHA256=${PATCHED_SHA256}"
-
-cat >> "${RELEASE_ROOT}/notes.md" <<EOF
-
-### Deployment (patched)
-\`\`\`yaml
-releases:
-- name: "${RELEASE_NAME}"
-  version: "${VERSION}-patched"
-  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-patched.tgz"
-  sha1: "${PATCHED_SHA1}"
-
-# for deployments with sha256, use the following line instead:
-# sha1: "sha256:${PATCHED_SHA256}"
-\`\`\`
-EOF
 
 # so that future steps in the pipeline can push our changes
 cp -a "${REPO_ROOT}" "${REPO_OUT}"

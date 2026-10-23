@@ -1,0 +1,10 @@
+---
+name: haproxy-openssl-patched
+dependencies:
+- haproxy-deps
+files:
+- haproxy/haproxy-*.tar.gz
+- haproxy-patches/*.patch
+- haproxy-versions.sh
+- apply-patches.sh
+- build-haproxy.sh
