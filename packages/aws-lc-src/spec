@@ -1,0 +1,5 @@
+---
+name: aws-lc-src
+files:
+- haproxy/aws-lc-v*.tar.gz
+- aws-lc-versions.sh

@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub mkdir_p {
+	for my $path (map { (my $t = $_) =~ s|^/*||; $t } @_) {
+		my $parent = '/';
+		for (split '/', $path) {
+			mkdir $parent unless -d $parent;
+			$parent = "${parent}${_}/";
+		}
+	}
+}
+
+my $fh;
+while (<>) {
+	if (m|^={3,} (/.+)$|) {
+		close $fh if $fh;
+		mkdir_p("$1");
+		print STDERR "$1\n";
+		open $fh, ">", $1;
+
+	} elsif (m|^={3,} ([0-7]{3,}) (/.+)$|) {
+		close $fh if $fh;
+		mkdir_p("$2");
+		print STDERR "$2\n";
+		open $fh, ">", $2;
+		chmod oct($1), $2;
+
+	} elsif ($fh) {
+		print $fh $_;
+	}
+}
+close $fh if $fh;

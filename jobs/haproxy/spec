@@ -4,8 +4,13 @@ name: haproxy
 description: "The HAProxy server can be used to terminate SSL in front of the Routers. Each HAProxy instance should point to multiple Routers."
 
 packages:
-- haproxy
-- ttar
+- haproxy-deps
+- haproxy-openssl
+- haproxy-openssl-patched
+- haproxy-awslc
+- haproxy-awslc-patched
+- haproxy-awslc-fips
+- haproxy-awslc-fips-patched
 
 templates:
   haproxy_wrapper.erb:          bin/haproxy_wrapper
@@ -42,6 +47,14 @@ consumes:
     optional: true
 
 properties:
+  ha_proxy.ssl_variant:
+    default: openssl
+    description: |
+      SSL library the HAProxy binary links against: openssl (default) | awslc | awslc-fips.
+  ha_proxy.include_haproxy_patches:
+    default: false
+    description: |
+      Run the HAProxy build that includes the bundled community patches
   ha_proxy.pre_start_script:
     description: |
       This script will be appended to the pre-start script and run before the job starts.
