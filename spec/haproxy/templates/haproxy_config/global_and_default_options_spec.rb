@@ -13,6 +13,26 @@ describe 'config/haproxy.config global and default options' do
 
   let(:properties) { {} }
 
+  context 'when ha_proxy.ssl_variant is an invalid value' do
+    let(:properties) { { 'ssl_variant' => 'openss' } }
+
+    it 'aborts rendering with a meaningful error message' do
+      expect do
+        template.render({ 'ha_proxy' => properties })
+      end.to raise_error(/Unknown 'ssl_variant' option: openss\. Known options: 'openssl', 'awslc', 'awslc-fips'/)
+    end
+  end
+
+  context 'when ha_proxy.include_haproxy_patches is an invalid value' do
+    let(:properties) { { 'include_haproxy_patches' => 'nope' } }
+
+    it 'aborts rendering with a meaningful error message' do
+      expect do
+        template.render({ 'ha_proxy' => properties })
+      end.to raise_error(/Unknown 'include_haproxy_patches' option: nope\. Known options: true or false/)
+    end
+  end
+
   it 'renders a valid haproxy template' do
     expect do
       HAProxy::Parser.new.parse(template.render({}))

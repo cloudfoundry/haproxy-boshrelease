@@ -172,6 +172,16 @@ if ![true, false, "true", "false", "mtls_only"].include?(disable_domain_fronting
   abort("Unknown 'disable_domain_fronting' option: #{disable_domain_fronting}. Known options: true, false or 'mtls_only'")
 end
 
+ssl_variant = p("ha_proxy.ssl_variant")
+if !["openssl", "awslc", "awslc-fips"].include?(ssl_variant)
+  abort("Unknown 'ssl_variant' option: #{ssl_variant}. Known options: 'openssl', 'awslc', 'awslc-fips'")
+end
+
+include_haproxy_patches = p("ha_proxy.include_haproxy_patches")
+if ![true, false].include?(include_haproxy_patches)
+  abort("Unknown 'include_haproxy_patches' option: #{include_haproxy_patches}. Known options: true or false")
+end
+
 # }}}
 # IPv4 and IPv6 binding (v4v6) Option {{{
 v4v6 = ""
