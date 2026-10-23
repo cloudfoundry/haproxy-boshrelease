@@ -111,3 +111,9 @@ bundle the HAProxy version file, their fingerprints are independent of HAProxy â
 the cached AWS-LC compile instead of rebuilding it. The HAProxy community patches (the optional
 `-patched` builds) are plain source files under `src/haproxy-patches/`, applied at compile time by
 `src/apply-patches.sh`.
+
+### Package dependency diagram
+
+![haproxy-boshrelease package dependency graph](docs/package-dependencies.png)
+
+Source: [`docs/package-dependencies.drawio`](docs/package-dependencies.drawio) (editable in [diagrams.net](https://app.diagrams.net/)).
