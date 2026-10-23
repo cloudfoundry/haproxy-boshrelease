@@ -28,7 +28,7 @@ if [ ! -x "${HAPROXY_PKG}/bin/haproxy" ]; then
   exit 1
 fi
 
-export PATH=$PATH:${HAPROXY_PKG}/bin:/var/vcap/packages/ttar/bin
+export PATH=$PATH:${HAPROXY_PKG}/bin:/var/vcap/packages/haproxy-deps/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
 PID_FILE=/var/vcap/sys/run/haproxy/haproxy.pid
 DRAIN_LOCK=/var/vcap/sys/run/haproxy/drain.lock

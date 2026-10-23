@@ -59,8 +59,6 @@ blobstore:
 ${PADDED_GCP_SERVICE_KEY}
 YAML
 
-header "Pulling in any git submodules..."
-git submodule update --init --recursive --force
 cd -
 
 version() {

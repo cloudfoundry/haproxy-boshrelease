@@ -34,3 +34,7 @@ cp haproxy/hatop-${HATOP_VERSION} ${BOSH_INSTALL_TARGET}/bin/hatop
 chmod 755 ${BOSH_INSTALL_TARGET}/bin/hatop
 cp hatop-wrapper ${BOSH_INSTALL_TARGET}/
 chmod 755 ${BOSH_INSTALL_TARGET}/hatop-wrapper
+
+echo "Installing ttar..."
+cp ttar/ttar ${BOSH_INSTALL_TARGET}/bin/ttar
+chmod 755 ${BOSH_INSTALL_TARGET}/bin/ttar

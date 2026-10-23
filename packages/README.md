@@ -4,7 +4,7 @@ This directory holds **every** package in the release. `bosh create-release` bun
 plain `bosh create-release` of the committed tree produces the one and only release — there is no
 build-time assembly.
 
-- `haproxy-deps`, `ttar`, `keepalived` — shared, compiled once
+- `haproxy-deps` (lua, pcre2, socat, hatop, and the `ttar` helper), `keepalived` — shared, compiled once
 - `haproxy-openssl`, `haproxy-openssl-patched`, `haproxy-awslc`, `haproxy-awslc-patched`,
   `haproxy-awslc-fips`, `haproxy-awslc-fips-patched` — the six HAProxy binaries: each SSL
   variant (openssl, awslc, awslc-fips) built with and without the community patches
