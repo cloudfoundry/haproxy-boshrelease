@@ -161,7 +161,7 @@ releases:
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${SHA256}"
 
-# The release bundles every SSL variant; select one at deploy time (defaults to openssl, stock):
+# The release bundles every SSL variant; select one at deploy time (defaults to openssl, no patches):
 # ha_proxy.ssl_variant: openssl | awslc | awslc-fips
 # ha_proxy.include_haproxy_patches: false | true   # append the bundled community patches
 \`\`\`
