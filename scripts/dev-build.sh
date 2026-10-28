@@ -15,6 +15,7 @@
 #   ./scripts/dev-build.sh                          # build and upload, BASE=highest final release
 #   ./scripts/dev-build.sh --version 17.0.0         # same, and override BASE
 #   ./scripts/dev-build.sh --upload-only            # no build, only upload everything in builds/
+#   ./scripts/dev-build.sh --fix                    # force re-upload AND full recompile (corrupt blobstore)
 
 set -euo pipefail
 
@@ -28,11 +29,16 @@ source src/aws-lc-versions.sh
 UPLOAD_ONLY=false
 BASE_VERSION=""
 OUTPUT_DIR="./builds"
+BOSH_UPLOAD_RELEASE_OPTS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --upload-only)
       UPLOAD_ONLY=true
+      shift
+      ;;
+    --fix)
+      BOSH_UPLOAD_RELEASE_OPTS+=(--fix)
       shift
       ;;
     --version)
@@ -99,7 +105,7 @@ shopt -s nullglob
 uploaded=0
 for tgz in $upload_glob; do
   echo "Uploading: $tgz"
-  bosh upload-release "$tgz" --fix
+  bosh upload-release "$tgz" "${BOSH_UPLOAD_RELEASE_OPTS[@]}"
   uploaded=$((uploaded + 1))
 done
 shopt -u nullglob
