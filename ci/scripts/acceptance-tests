@@ -4,11 +4,13 @@ set -e
 source "${REPO_ROOT}/ci/scripts/functions-ci.sh"
 START_DIR="${PWD}"  # Differs for CI and manual execution
 
+ADDITIONAL_ARGS=()
+
 if [ -n "$FOCUS" ]; then
   echo "------------------------------------------------------------------"
   echo "FOCUS is set. Will only run tests matching '$FOCUS'"
   echo "------------------------------------------------------------------"
-  ADDITIONAL_ARGS=("--focus" "$FOCUS")
+  ADDITIONAL_ARGS+=("--focus" "$FOCUS")
 fi
 
 git_pull
@@ -67,6 +69,42 @@ else
 fi
 echo "------------------------------------------------------------------"
 
-ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts "$FLAKE_ATTEMPTS" "${ADDITIONAL_ARGS[@]}"
+# ------------------------------------------------------------------
+# Run the suite once per SSL variant against the release built above.
+#
+# The release bundles every SSL variant and is built/uploaded only once
+# (prepare_bosh -> bosh_release). Each phase redeploys HAProxy with the
+# matching ha_proxy.ssl_variant (selected by the Go harness from the VARIANT
+# env), so nothing is rebuilt between variants -- the director just reuses the
+# already-uploaded release and compiles each variant's packages on first use.
+#
+#   openssl     -> full suite
+#   awslc       -> TLS-exercising subset only (--label-filter tls)
+#   awslc-fips  -> TLS-exercising subset only (--label-filter tls)
+#
+# A local/debug run can pin a single variant via VARIANT (and optionally
+# LABEL_FILTER); CI leaves VARIANT unset and runs all three sequentially.
+# ------------------------------------------------------------------
+if [ -n "${VARIANT:-}" ]; then
+  PHASES=("${VARIANT}|${LABEL_FILTER:-}")
+else
+  PHASES=("openssl|" "awslc|tls" "awslc-fips|tls")
+fi
+
+for phase in "${PHASES[@]}"; do
+  phase_variant="${phase%%|*}"
+  phase_label="${phase#*|}"
+
+  phase_args=("${ADDITIONAL_ARGS[@]}")
+  if [ -n "$phase_label" ]; then
+    phase_args+=("--label-filter" "$phase_label")
+  fi
+
+  echo "=================================================================="
+  echo "  Acceptance tests -- variant='${phase_variant}' label-filter='${phase_label:-<none>}'"
+  echo "=================================================================="
+
+  VARIANT="$phase_variant" ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts "$FLAKE_ATTEMPTS" "${phase_args[@]}"
+done
 
 keep_running_info

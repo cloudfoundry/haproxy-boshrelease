@@ -25,7 +25,7 @@ var (
 	sslFIPSModeOnRe = regexp.MustCompile(`SSL library FIPS mode\s*:\s*yes`)
 )
 
-var _ = Describe("SSL variant", func() {
+var _ = Describe("SSL variant", Label("tls"), func() {
 	It("Runs the HAProxy binary for the configured SSL variant", func() {
 		haproxyInfo, _ := deployHAProxy(baseManifestVars{
 			haproxyBackendPort:    12000,

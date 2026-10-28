@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Strict SNI", func() {
+var _ = Describe("Strict SNI", Label("tls"), func() {
 	opsfile := `---
 # Strict SNI
 - type: replace

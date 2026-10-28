@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Domain fronting", func() {
+var _ = Describe("Domain fronting", Label("tls"), func() {
 	opsfile := `---
 # Disable domain fronting
 - type: replace

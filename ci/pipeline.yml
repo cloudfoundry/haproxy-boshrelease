@@ -6,11 +6,7 @@ groups:
       - unit-tests
       - unit-tests-pr
       - acceptance-tests
-      - acceptance-tests-awslc
-      - acceptance-tests-awslc-fips
       - acceptance-tests-pr
-      - acceptance-tests-awslc-pr
-      - acceptance-tests-awslc-fips-pr
       - rc
       - shipit
       - patch
@@ -155,76 +151,6 @@ jobs:
           icon_url: "((slack.icon))"
           text:     "((slack.fail_url)) haproxy-boshrelease : acceptance tests failed"
 
-  - name: acceptance-tests-awslc
-    public: true
-    serial: true
-    serial_groups: [acceptance-tests]
-    plan:
-    - do:
-      - in_parallel:
-        - { get: git, trigger: true, passed: [acceptance-tests] }
-        - { get: stemcell }
-        - { get: stemcell-jammy }
-        - { get: haproxy-boshrelease-testflight, trigger: true, passed: [acceptance-tests] }
-      - task: acceptance-tests-awslc
-        privileged: true
-        timeout: 4h
-        image: haproxy-boshrelease-testflight
-        config:
-          platform: linux
-          inputs:
-            - { name: git }
-            - { name: stemcell }
-            - { name: stemcell-jammy }
-          run:
-            path: ./git/ci/scripts/acceptance-tests
-            args: []
-          params:
-            REPO_ROOT:            git
-            VARIANT:              awslc
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:     "((slack.fail_url)) haproxy-boshrelease : acceptance tests (AWS-LC) failed"
-
-  - name: acceptance-tests-awslc-fips
-    public: true
-    serial: true
-    serial_groups: [acceptance-tests]
-    plan:
-    - do:
-      - in_parallel:
-        - { get: git, trigger: true, passed: [acceptance-tests-awslc] }
-        - { get: stemcell }
-        - { get: stemcell-jammy }
-        - { get: haproxy-boshrelease-testflight, trigger: true, passed: [acceptance-tests-awslc] }
-      - task: acceptance-tests-awslc-fips
-        privileged: true
-        timeout: 4h
-        image: haproxy-boshrelease-testflight
-        config:
-          platform: linux
-          inputs:
-            - { name: git }
-            - { name: stemcell }
-            - { name: stemcell-jammy }
-          run:
-            path: ./git/ci/scripts/acceptance-tests
-            args: []
-          params:
-            REPO_ROOT:            git
-            VARIANT:              awslc-fips
-      on_failure:
-        put: notify
-        params:
-          channel:  "#haproxy-boshrelease"
-          username: ci-bot
-          icon_url: "((slack.icon))"
-          text:     "((slack.fail_url)) haproxy-boshrelease : acceptance tests (AWS-LC FIPS) failed"
-
   - name: acceptance-tests-pr
     public: true
     serial: true
@@ -271,106 +197,12 @@ jobs:
         status: failure
         context: acceptance-tests
 
-  - name: acceptance-tests-awslc-pr
-    public: true
-    serial: true
-    serial_groups: [acceptance-tests]
-    plan:
-    - do:
-      - in_parallel:
-        - { get: git-pull-requests-awslc, trigger: true, version: every }
-        - { get: stemcell }
-        - { get: stemcell-jammy }
-        - { get: haproxy-boshrelease-testflight-pr, passed: [acceptance-tests-pr] }
-      - put: git-pull-requests-awslc
-        params:
-          path: git-pull-requests-awslc
-          status: pending
-          context: acceptance-tests-awslc
-        get_params:
-          list_changed_files: true
-      - task: acceptance-tests-awslc
-        privileged: true
-        timeout: 4h
-        image: haproxy-boshrelease-testflight-pr
-        config:
-          platform: linux
-          inputs:
-            - { name: git-pull-requests-awslc }
-            - { name: stemcell }
-            - { name: stemcell-jammy }
-          run:
-            path: ./git-pull-requests-awslc/ci/scripts/acceptance-tests
-            args: []
-          params:
-            REPO_ROOT:            git-pull-requests-awslc
-            VARIANT:              awslc
-    on_success:
-      put: git-pull-requests-awslc
-      params:
-        path: git-pull-requests-awslc
-        status: success
-        context: acceptance-tests-awslc
-    on_failure:
-      put: git-pull-requests-awslc
-      params:
-        path: git-pull-requests-awslc
-        status: failure
-        context: acceptance-tests-awslc
-
-  - name: acceptance-tests-awslc-fips-pr
-    public: true
-    serial: true
-    serial_groups: [acceptance-tests]
-    plan:
-    - do:
-      - in_parallel:
-        - { get: git-pull-requests-awslc, trigger: true, version: every }
-        - { get: stemcell }
-        - { get: stemcell-jammy }
-        - { get: haproxy-boshrelease-testflight-pr, passed: [acceptance-tests-awslc-pr] }
-      - put: git-pull-requests-awslc
-        params:
-          path: git-pull-requests-awslc
-          status: pending
-          context: acceptance-tests-awslc-fips
-        get_params:
-          list_changed_files: true
-      - task: acceptance-tests-awslc-fips
-        privileged: true
-        timeout: 4h
-        image: haproxy-boshrelease-testflight-pr
-        config:
-          platform: linux
-          inputs:
-            - { name: git-pull-requests-awslc }
-            - { name: stemcell }
-            - { name: stemcell-jammy }
-          run:
-            path: ./git-pull-requests-awslc/ci/scripts/acceptance-tests
-            args: []
-          params:
-            REPO_ROOT:            git-pull-requests-awslc
-            VARIANT:              awslc-fips
-    on_success:
-      put: git-pull-requests-awslc
-      params:
-        path: git-pull-requests-awslc
-        status: success
-        context: acceptance-tests-awslc-fips
-    on_failure:
-      put: git-pull-requests-awslc
-      params:
-        path: git-pull-requests-awslc
-        status: failure
-        context: acceptance-tests-awslc-fips
-
   - name: rc
     public: true
     plan:
     - do:
       - in_parallel:
-          - { get: git,     trigger: true,  passed: [acceptance-tests, acceptance-tests-awslc, acceptance-tests-awslc-fips] }
+          - { get: git,     trigger: true,  passed: [acceptance-tests] }
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}
@@ -602,21 +434,7 @@ resources:
       access_token: ((github.access_token))
       repository:   cloudfoundry/haproxy-boshrelease
       base_branch:  master
-      labels:       [run-ci, run-ci-awslc]
-      required_review_approvals: 1
-      trusted_teams:
-        - "wg-app-runtime-platform-networking-approvers"
-      trusted_users:
-        - "dependabot"
-        - "CFN-CI"
-
-  - name: git-pull-requests-awslc
-    type: pull-request
-    source:
-      access_token: ((github.access_token))
-      repository:   cloudfoundry/haproxy-boshrelease
-      base_branch:  master
-      labels:       [run-ci-awslc]
+      labels:       [run-ci]
       required_review_approvals: 1
       trusted_teams:
         - "wg-app-runtime-platform-networking-approvers"

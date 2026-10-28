@@ -14,12 +14,18 @@ cd acceptance-tests
 
 ### TLS Backend Variant
 
-There is a single release that bundles every SSL variant. By default, the tests deploy it with the
-system OpenSSL backend. To exercise a different TLS backend, set the `VARIANT` environment variable —
-it drives the `ha_proxy.ssl_variant` deployment property. The HAProxy patches are toggled with
-`INCLUDE_HAPROXY_PATCHES` (which drives `ha_proxy.include_haproxy_patches`). Examples:
+There is a single release that bundles every SSL variant. The release is built and uploaded
+**once**; each variant is selected at deploy time via the `ha_proxy.ssl_variant` property (driven
+by the `VARIANT` environment variable), so nothing is rebuilt between variants. The HAProxy patches
+are toggled with `INCLUDE_HAPROXY_PATCHES` (which drives `ha_proxy.include_haproxy_patches`).
+
+With **no `VARIANT` set**, the runner exercises all three backends sequentially against that one
+build — `openssl` (full suite), then `awslc`, then `awslc-fips` (the latter two limited to the
+TLS-exercising specs via `--label-filter tls`). This is what CI runs. To focus on a single backend,
+set `VARIANT`:
 
 ```shell
+./run-local.sh                                                   # all three variants, sequentially
 VARIANT=awslc                              ./run-local.sh   # AWS-LC, non-FIPS
 VARIANT=awslc-fips                         ./run-local.sh   # AWS-LC FIPS
 INCLUDE_HAPROXY_PATCHES=true               ./run-local.sh   # system OpenSSL + HAProxy patches
@@ -27,11 +33,13 @@ VARIANT=awslc      INCLUDE_HAPROXY_PATCHES=true ./run-local.sh   # AWS-LC + patc
 VARIANT=awslc-fips INCLUDE_HAPROXY_PATCHES=true ./run-local.sh   # AWS-LC FIPS + patches
 ```
 
-`VARIANT` accepts `openssl` (default), `awslc`, or `awslc-fips`.
+`VARIANT` accepts `openssl` (default when running a single variant), `awslc`, or `awslc-fips`. When
+`VARIANT` is pinned, the full suite runs for that backend unless you also set `LABEL_FILTER=tls` to
+restrict it to the TLS subset.
 
-A single invocation runs the suite against the chosen variant.
-
-Each run builds the release from scratch, compiling every bundled binary (AWS-LC and its FIPS toolchain included) inside the BOSH compilation VM.
+The release is built from scratch once per run, compiling every bundled binary (AWS-LC and its FIPS
+toolchain included) inside the BOSH compilation VM; subsequent variant deploys within the same run
+reuse those compiled packages.
 
 When using `-k` (keep BOSH running, see below) the cached state belongs to whichever variant ran last — switching `VARIANT` inside a kept container is not supported. Stop the container between variants, or run without `-k`.
 
