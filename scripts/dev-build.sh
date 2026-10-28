@@ -7,8 +7,8 @@
 # Usage: ./scripts/dev-build.sh [--upload-only] [--version BASE] [--output-dir DIR]
 ##
 # Versioning:
-#   Each invocation produces a release version of the form <BASE>+dev-awslc-<AWS_LC_VERSION>.<unix_timestamp>
-#   e.g. "16.9.0+dev-awslc-4.0.0.1779286286". BASE defaults to the highest existing final release in
+#   Each invocation produces a release version of the form <BASE>+dev.<unix_timestamp>
+#   e.g. "16.9.0+dev.1779286286". BASE defaults to the highest existing final release in
 #   releases/haproxy/ and can be overridden with --version. Each run uses a fresh timestamp.
 #
 # Examples:
@@ -21,10 +21,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
-
-# Pull in AWS_LC_VERSION so it can be embedded in the dev version
-# shellcheck disable=SC1091
-source src/aws-lc-versions.sh
 
 UPLOAD_ONLY=false
 BASE_VERSION=""
@@ -71,7 +67,7 @@ TIMESTAMP=$(date +%s)
 mkdir -p "$OUTPUT_DIR"
 
 if [[ "$UPLOAD_ONLY" == false ]]; then
-  VERSION="${BASE_VERSION}+dev-awslc-${AWS_LC_VERSION}.${TIMESTAMP}"
+  VERSION="${BASE_VERSION}+dev.${TIMESTAMP}"
   TARBALL="$OUTPUT_DIR/haproxy-${VERSION}.tgz"
 
   echo ""
