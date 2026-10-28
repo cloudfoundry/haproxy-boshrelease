@@ -1,0 +1,235 @@
+<mxfile host="Electron">
+  <diagram id="haproxy-package-deps" name="Package dependencies">
+    <mxGraphModel dx="2698" dy="1424" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=16;fontStyle=1;" value="haproxy-boshrelease — package dependency graph (arrow = &quot;depends on&quot;)" vertex="1">
+          <mxGeometry height="30" width="820" x="40" y="16" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-openssl" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-openssl" vertex="1">
+          <mxGeometry height="40" width="180" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-openssl-patched" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-openssl-patched" vertex="1">
+          <mxGeometry height="40" width="180" x="240" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-awslc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-awslc" vertex="1">
+          <mxGeometry height="40" width="180" x="440" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-awslc-patched" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-awslc-patched" vertex="1">
+          <mxGeometry height="40" width="180" x="640" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-awslc-fips" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-awslc-fips" vertex="1">
+          <mxGeometry height="40" width="180" x="840" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-awslc-fips-patched" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-awslc-fips-patched" vertex="1">
+          <mxGeometry height="40" width="190" x="1040" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="haproxy-deps" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="haproxy-deps&lt;br&gt;(ttar, lua, pcre2, socat, hatop)" vertex="1">
+          <mxGeometry height="50" width="200" x="130" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="aws-lc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="aws-lc&#xa;(non-FIPS)" vertex="1">
+          <mxGeometry height="50" width="150" x="600" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="aws-lc-src" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" value="aws-lc-src&#xa;(shared AWS-LC source)" vertex="1">
+          <mxGeometry height="50" width="140" x="900" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="cmake" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" value="cmake&#xa;(prebuilt binary)" vertex="1">
+          <mxGeometry height="50" width="140" x="640" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="golang-blob" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" value="golang&#xa;(blob, not a package —&#xa;FIPS integrity step)" vertex="1">
+          <mxGeometry height="50" width="190" x="1080" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="keepalived" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=0;" value="keepalived&#xa;(keepalived job — standalone)" vertex="1">
+          <mxGeometry height="50" width="220" x="40" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="e-awslcfips-go" edge="1" parent="1" source="aws-lc-fips" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" target="golang-blob" value="uses blob">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=none;strokeColor=#999999;" value="Legend" vertex="1">
+          <mxGeometry height="150" width="430" x="40" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="lg-bin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="haproxy-&lt;ssl&gt;[-patched] — selectable binary (haproxy job)" vertex="1">
+          <mxGeometry height="24" width="400" x="55" y="628" as="geometry" />
+        </mxCell>
+        <mxCell id="lg-lib" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="shared / crypto library package" vertex="1">
+          <mxGeometry height="24" width="400" x="55" y="658" as="geometry" />
+        </mxCell>
+        <mxCell id="lg-leaf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" value="leaf package (no dependencies)" vertex="1">
+          <mxGeometry height="24" width="400" x="55" y="688" as="geometry" />
+        </mxCell>
+        <mxCell id="lg-blob" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" value="blob (not a package); dashed arrow = consumed as a file" vertex="1">
+          <mxGeometry height="24" width="400" x="55" y="718" as="geometry" />
+        </mxCell>
+        <mxCell id="aws-lc-fips" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="aws-lc-fips&#xa;(FIPS)" vertex="1">
+          <mxGeometry height="50" width="160" x="920" y="280" as="geometry" />
+        </mxCell>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-6">
+          <mxCell edge="1" parent="1" source="haproxy-openssl" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.449;exitY=0.988;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="haproxy-deps">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="170" y="160" />
+              </Array>
+              <mxPoint x="110" y="190" as="sourcePoint" />
+              <mxPoint x="300" y="250" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-7">
+          <mxCell edge="1" parent="1" source="haproxy-openssl-patched" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="haproxy-deps">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="280" y="170" />
+              </Array>
+              <mxPoint x="361" y="190" as="sourcePoint" />
+              <mxPoint x="470" y="350" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-8">
+          <mxCell edge="1" parent="1" source="haproxy-awslc" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="haproxy-deps">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="380" y="180" />
+              </Array>
+              <mxPoint x="420" y="200" as="sourcePoint" />
+              <mxPoint x="320" y="360" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-9">
+          <mxCell edge="1" parent="1" source="haproxy-awslc-patched" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="haproxy-deps">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="570" y="190" />
+              </Array>
+              <mxPoint x="790" y="220" as="sourcePoint" />
+              <mxPoint x="440" y="330" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-10">
+          <mxCell edge="1" parent="1" source="haproxy-awslc-fips" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="haproxy-deps">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="715" y="200" />
+              </Array>
+              <mxPoint x="875" y="130" as="sourcePoint" />
+              <mxPoint x="230" y="270" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-11">
+          <mxCell edge="1" parent="1" source="haproxy-awslc-fips-patched" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="haproxy-deps">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="680" y="210" />
+              </Array>
+              <mxPoint x="1080" y="160" as="sourcePoint" />
+              <mxPoint x="580" y="320" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-12">
+          <mxCell edge="1" parent="1" source="haproxy-awslc" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aws-lc">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="600" y="220" />
+              </Array>
+              <mxPoint x="510" y="410" as="sourcePoint" />
+              <mxPoint x="560" y="460" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-13">
+          <mxCell edge="1" parent="1" source="haproxy-awslc-patched" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aws-lc">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="710" y="220" />
+              </Array>
+              <mxPoint x="770" y="130" as="sourcePoint" />
+              <mxPoint x="915" y="290" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-14">
+          <mxCell edge="1" parent="1" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aws-lc-fips">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="1100" y="220" />
+              </Array>
+              <mxPoint x="930" y="130" as="sourcePoint" />
+              <mxPoint x="1060" y="270" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-15">
+          <mxCell edge="1" parent="1" source="haproxy-awslc-fips-patched" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aws-lc-fips">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="1070" y="220" />
+              </Array>
+              <mxPoint x="1220" y="190" as="sourcePoint" />
+              <mxPoint x="1270" y="240" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-16">
+          <mxCell edge="1" parent="1" source="aws-lc" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cmake">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <mxPoint x="460" y="410" as="sourcePoint" />
+              <mxPoint x="510" y="460" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-17">
+          <mxCell edge="1" parent="1" source="aws-lc" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aws-lc-src">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="830" y="370" />
+              </Array>
+              <mxPoint x="660" y="370" as="sourcePoint" />
+              <mxPoint x="695" y="470" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-18">
+          <mxCell edge="1" parent="1" source="aws-lc-fips" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cmake">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <mxPoint x="1070" y="380" as="sourcePoint" />
+              <mxPoint x="1105" y="480" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <object label="" TAM_Diagram_Type="State" TAM_Element_Type="Transition-N" id="Xywzry7rtQ7VOphuMKL_-19">
+          <mxCell edge="1" parent="1" source="aws-lc-fips" style="edgeStyle=elbowEdgeStyle;elbow=vertical;rounded=1;endArrow=classic;html=1;endFill=1;align=center;labelBackgroundColor=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aws-lc-src">
+            <mxGeometry height="50" relative="1" width="50" as="geometry">
+              <mxPoint y="-10" as="offset" />
+              <Array as="points">
+                <mxPoint x="980" y="390" />
+              </Array>
+              <mxPoint x="1220" y="370" as="sourcePoint" />
+              <mxPoint x="970" y="420" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <mxCell id="Xywzry7rtQ7VOphuMKL_-20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=0;" value="ttar" vertex="1">
+          <mxGeometry height="50" width="220" x="350" y="420" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
