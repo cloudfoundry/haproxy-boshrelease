@@ -1,93 +1,110 @@
 # Dual-Stack (IPv4 + IPv6) Configuration
 
-HAProxy can serve traffic on both IPv4 and IPv6 using two approaches.
+Use `ha_proxy.bindings` to configure the sockets used by every generated
+listener. This includes HTTP, HTTPS, WSS, HTTP health checks, CF TCP routing,
+generic TCP frontends, and TCP health checks. The stats listener continues to
+use `ha_proxy.stats_bind`.
 
-## Option A: Single Socket with v4v6
+## Explicit bindings
 
-A single IPv6 wildcard socket accepts both IPv4 and IPv6 connections:
+Each entry has an `address`. Addresses are IP literals, not hostnames, CIDRs,
+ports, bracketed IPv6 literals, or zone IDs. Input order is retained in the
+generated `bind` directives.
 
-```yaml
-ha_proxy:
-  binding_ip: "::"
-  v4v6: true
-```
-
-This generates one bind directive per listener:
-```
-bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl v4v6
-```
-
-**Note:** `v4v6` only takes effect when `binding_ip` is `::`.
-
-## IPv6-only mode (v6only)
-
-When `binding_ip` is set to `::` without enabling `v4v6`, the `v6only`
-option is automatically added to all bind directives:
+### IPv4 only
 
 ```yaml
 ha_proxy:
-  binding_ip: "::"
-  # v4v6 not set or false
+  bindings:
+  - address: 0.0.0.0
 ```
 
-This generates:
-```
-bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl v6only
-```
+IPv4 is inherently IPv4-only, so it has no `ipv6_mode` option:
 
-The `v6only` option ensures the IPv6 socket does not accept IPv4
-connections, regardless of the kernel's `net.ipv6.bindv6only` sysctl
-setting. Without it, behavior depends on the kernel default -- on most
-Linux distributions (including standard BOSH stemcells), an IPv6 wildcard
-socket silently accepts IPv4 connections as `::ffff:` mapped addresses.
-
-**Breaking change:** Deployments using `binding_ip: "::"` without
-`v4v6: true` that relied on the kernel default to accept IPv4 traffic
-must now explicitly set `v4v6: true` to restore dual-stack behavior.
-
-## Option B: Separate Sockets with binding_ips
-
-For environments that require distinct IPv4 and IPv6 sockets:
-
-```yaml
-ha_proxy:
-  binding_ips:
-  - 0.0.0.0
-  - "::"
-```
-
-This generates two bind directives per listener:
 ```
 bind 0.0.0.0:443 ssl crt /var/vcap/jobs/haproxy/config/ssl
+```
+
+### IPv6 wildcard
+
+The IPv6 wildcard must explicitly state how it handles IPv4:
+
+```yaml
+ha_proxy:
+  bindings:
+  - address: "::"
+    ipv6_mode: v6only
+```
+
+This produces an IPv6-only socket:
+
+```
 bind [::]:443 v6only ssl crt /var/vcap/jobs/haproxy/config/ssl
 ```
 
-IPv6 addresses automatically receive the `v6only` option to prevent
-them from also accepting IPv4 connections.
+For a single dual-stack socket, use `v4v6` instead:
 
-### Scope
+```yaml
+ha_proxy:
+  bindings:
+  - address: "::"
+    ipv6_mode: v4v6
+```
 
-`binding_ips` applies globally to all generated listeners:
-HTTP, HTTPS, WSS (port 4443), health checks, CF TCP routing, and
-generic TCP frontends.
+```
+bind [::]:443 v4v6 ssl crt /var/vcap/jobs/haproxy/config/ssl
+```
 
-When `binding_ips` is set, `binding_ip` is ignored for generated
-listeners.
+Only wildcard `::` accepts `ipv6_mode`, because it can be an IPv4 wildcard as
+well. A specific IPv6 address cannot act as an IPv4 wildcard and therefore has
+no mode:
 
-### Constraints
+```yaml
+ha_proxy:
+  bindings:
+  - address: "fd00::12"
+```
 
-- `binding_ips` cannot be combined with `v4v6: true`
-- `binding_ips` cannot be combined with a non-empty `binding_ip`
-- Entries must be valid IP address literals (no hostnames, CIDRs, or ports)
-- Duplicate addresses are rejected
-- The list must not be empty when set
+### Separate IPv4 and IPv6 sockets
 
-### Migrating from frontend_config
+Use an IPv4 wildcard and an IPv6-only wildcard when separate sockets are
+required:
 
-If you previously used `frontend_config` to add a second bind line,
-you can replace it with `binding_ips` and remove the raw configuration:
+```yaml
+ha_proxy:
+  bindings:
+  - address: 0.0.0.0
+  - address: "::"
+    ipv6_mode: v6only
+```
+
+All listener-specific options, including TLS, ALPN, and PROXY protocol, are
+rendered on every generated bind directive.
+
+## Validation and compatibility
+
+`bindings` is a non-empty array of maps. Duplicate normalized addresses are
+rejected, as are wildcard/specific combinations in the same address family.
+An IPv6 wildcard with `ipv6_mode: v4v6` cannot be combined with an IPv4
+binding. `bindings` cannot be used with a non-empty legacy `binding_ip` or
+with `v4v6: true`; set those legacy values to their defaults (`""` and
+`false`) before migrating.
+
+When `bindings` is absent, the existing `binding_ip` and `v4v6` behavior is
+unchanged, including its historical `if_p("ha_proxy.v4v6")` handling. Do not
+rely on a legacy bare `binding_ip: "::"` IPv6 socket to select an IPv4 policy:
+whether that socket also accepts IPv4 is kernel-dependent
+(`net.ipv6.bindv6only`). Use explicit bindings to make the choice portable and
+unambiguous.
+
+## Migrating from `frontend_config`
+
+If `frontend_config` was used to add a second bind directive, replace the
+manual configuration with explicit bindings. This avoids duplicating TLS and
+other listener options and applies the same sockets to all generated listeners.
 
 Before:
+
 ```yaml
 ha_proxy:
   binding_ip: 0.0.0.0
@@ -97,13 +114,11 @@ ha_proxy:
 ```
 
 After:
+
 ```yaml
 ha_proxy:
-  binding_ips:
-  - 0.0.0.0
-  - "::"
+  bindings:
+  - address: 0.0.0.0
+  - address: "::"
+    ipv6_mode: v6only
 ```
-
-The `binding_ips` approach is safer because it automatically applies
-all TLS, ALPN, mTLS, and PROXY protocol options to every bind directive,
-and does not require disabling other frontends.

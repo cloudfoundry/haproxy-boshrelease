@@ -28,7 +28,7 @@ To make alterations to the deployment you can use the `bosh deploy [-o operator-
 ## Documentation
 
 - [External Certificates](/docs/external_certs.md) - Using HAProxy with additional external certificates
-- [Dual-Stack Configuration](docs/dual-stack.md)
+- [Explicit Dual-Stack Bindings](docs/dual-stack.md)
 - [Mutual TLS](/docs/mutual_tls.md) - Mutual TLS configuration
 - [Rate Limiting](/docs/rate_limiting.md) - Client IP based rate limiting
 - [Keepalived](/docs/keepalived.md) - Keepalived integration for high availability
