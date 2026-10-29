@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram id="haproxy-package-deps" name="Package dependencies">
-    <mxGraphModel dx="2698" dy="1424" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
+    <mxGraphModel dx="1945" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -41,7 +41,7 @@
           <mxGeometry height="50" width="190" x="1080" y="430" as="geometry" />
         </mxCell>
         <mxCell id="keepalived" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=0;" value="keepalived&#xa;(keepalived job — standalone)" vertex="1">
-          <mxGeometry height="50" width="220" x="40" y="420" as="geometry" />
+          <mxGeometry height="50" width="210" x="300" y="430" as="geometry" />
         </mxCell>
         <mxCell id="e-awslcfips-go" edge="1" parent="1" source="aws-lc-fips" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" target="golang-blob" value="uses blob">
           <mxGeometry relative="1" as="geometry" />
@@ -226,9 +226,6 @@
             </mxGeometry>
           </mxCell>
         </object>
-        <mxCell id="Xywzry7rtQ7VOphuMKL_-20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=0;" value="ttar" vertex="1">
-          <mxGeometry height="50" width="220" x="350" y="420" as="geometry" />
-        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
