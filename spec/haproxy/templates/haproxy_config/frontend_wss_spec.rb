@@ -46,9 +46,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         default_properties.merge({ 'v4v6' => false, 'binding_ip' => '::' })
       end
 
-      it 'enables v6only' do
-        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v6only')
-        expect(frontend_wss).not_to include('v4v6')
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_wss).not_to include('v6only')
       end
     end
 
@@ -57,9 +57,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
         default_properties.merge({ 'binding_ip' => '::' })
       end
 
-      it 'enables v6only' do
-        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v6only')
-        expect(frontend_wss).not_to include('v4v6')
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_wss).not_to include('v6only')
       end
     end
 
@@ -98,9 +98,9 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
   end
 
-  context 'when ha_proxy.binding_ips is provided' do
+  context 'when ha_proxy.bindings is provided' do
     let(:properties) do
-      default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'] })
+      default_properties.merge({ 'bindings' => [{ 'address' => '0.0.0.0' }, { 'address' => '::', 'ipv6_mode' => 'v6only' }] })
     end
 
     it 'generates two bind directives for WSS' do

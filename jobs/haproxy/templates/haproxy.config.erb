@@ -17,11 +17,11 @@
     end
   end
 
-  def render_bind(binding_addresses, binding_ip, port, extra_options)
-    if binding_addresses
-      binding_addresses.map do |ba|
-        opts = [ba[:opts], *Array(extra_options)].reject(&:empty?).join(' ')
-        "    bind #{ba[:addr]}:#{port} #{opts}".rstrip
+  def render_bind(bindings, binding_ip, port, extra_options)
+    if bindings
+      bindings.map do |binding|
+        opts = [binding[:ipv6_mode], *Array(extra_options)].compact.reject(&:empty?).join(' ')
+        "    bind #{binding[:address]}:#{port} #{opts}".rstrip
       end.join("\n")
     else
       options = [*Array(extra_options)].reject(&:empty?).join(' ')
@@ -185,54 +185,99 @@ if ![true, false, "true", "false", "mtls_only"].include?(disable_domain_fronting
 end
 
 # }}}
-# IPv4 and IPv6 binding (v4v6 / v6only) Options {{{
+# Legacy IPv4 and IPv6 binding (v4v6) Option {{{
 v4v6 = ""
-v6only = ""
-if p("ha_proxy.v4v6") && p("ha_proxy.binding_ip") != "::"
-  abort("Conflicting configuration: ha_proxy.v4v6 is enabled but ha_proxy.binding_ip is not '::'. v4v6 only applies to IPv6 wildcard sockets.")
-end
-if p("ha_proxy.binding_ip") == "::"
-  if p("ha_proxy.v4v6")
+if_p("ha_proxy.v4v6") do
+  if p("ha_proxy.binding_ip") == "::"
     v4v6 = "v4v6"
-  else
-    v6only = "v6only"
   end
 end
 # }}}
 
-# Multiple Bind Addresses (binding_ips) Option {{{
+# Explicit Bindings Option {{{
 require 'ipaddr'
-binding_addresses = nil
-if_p("ha_proxy.binding_ips") do |ips|
-  unless ips.is_a?(Array) && !ips.empty?
-    abort("ha_proxy.binding_ips must be a non-empty array of IP addresses")
+bindings = nil
+if_p("ha_proxy.bindings") do |configured_bindings|
+  unless configured_bindings.is_a?(Array) && !configured_bindings.empty?
+    abort("ha_proxy.bindings must be a non-empty array of maps")
   end
-  if p("ha_proxy.v4v6")
-    abort("Conflicting configuration: ha_proxy.binding_ips cannot be combined with ha_proxy.v4v6: true")
+  if p("ha_proxy.v4v6") == true
+    abort("Conflicting configuration: ha_proxy.bindings cannot be combined with ha_proxy.v4v6: true")
   end
-  unless p("ha_proxy.binding_ip").empty?
-    abort("Conflicting configuration: ha_proxy.binding_ip cannot be set when ha_proxy.binding_ips is provided")
+  legacy_binding_ip = p("ha_proxy.binding_ip")
+  unless legacy_binding_ip.nil? || legacy_binding_ip.empty?
+    abort("Conflicting configuration: ha_proxy.bindings cannot be combined with a non-empty ha_proxy.binding_ip")
   end
+
   seen = {}
-  binding_addresses = ips.map do |ip|
-    unless ip.is_a?(String) && !ip.empty?
-      abort("ha_proxy.binding_ips: each entry must be a non-empty IP address string, got: #{ip.inspect}")
+  has_ipv4_wildcard = false
+  has_ipv4_specific = false
+  has_ipv6_wildcard = false
+  has_ipv6_specific = false
+
+  bindings = configured_bindings.map do |binding|
+    unless binding.is_a?(Hash)
+      abort("ha_proxy.bindings: each entry must be a map, got: #{binding.inspect}")
     end
+
+    keys = binding.keys.map(&:to_s)
+    unless keys.include?("address") && (keys - %w[address ipv6_mode]).empty? && keys.uniq.length == keys.length
+      abort("ha_proxy.bindings: each entry requires address and only permits ipv6_mode where applicable")
+    end
+
+    address = binding["address"] || binding[:address]
+    ipv6_mode_provided = binding.key?("ipv6_mode") || binding.key?(:ipv6_mode)
+    ipv6_mode = binding["ipv6_mode"] || binding[:ipv6_mode]
+    unless address.is_a?(String) && !address.empty? && address == address.strip && address !~ /[\[\]\/%]/
+      abort("ha_proxy.bindings: address must be a non-empty, unbracketed IP literal, got: #{address.inspect}")
+    end
+
     begin
-      parsed = IPAddr.new(ip)
+      parsed = IPAddr.new(address)
     rescue IPAddr::InvalidAddressError
-      abort("ha_proxy.binding_ips: invalid IP address: #{ip.inspect}")
+      abort("ha_proxy.bindings: invalid IP address: #{address.inspect}")
     end
+
+    if parsed.ipv6? && parsed.ipv4_mapped?
+      abort("ha_proxy.bindings: IPv4-mapped IPv6 addresses are not supported: #{address.inspect}")
+    end
+
     normalized = parsed.to_s
     if seen[normalized]
-      abort("ha_proxy.binding_ips: duplicate address: #{ip}")
+      abort("ha_proxy.bindings: duplicate address: #{address}")
     end
     seen[normalized] = true
+
     if parsed.ipv6?
-      { addr: "[#{normalized}]", opts: "v6only" }
+      if normalized == "::"
+        unless ipv6_mode_provided && %w[v6only v4v6].include?(ipv6_mode)
+          abort("ha_proxy.bindings: IPv6 wildcard :: requires ipv6_mode v6only or v4v6")
+        end
+        has_ipv6_wildcard = true
+      else
+        abort("ha_proxy.bindings: specific IPv6 addresses cannot specify ipv6_mode") if ipv6_mode_provided
+        has_ipv6_specific = true
+      end
+      { address: "[#{normalized}]", ipv6_mode: ipv6_mode }
     else
-      { addr: normalized, opts: "" }
+      abort("ha_proxy.bindings: IPv4 addresses cannot specify ipv6_mode") if ipv6_mode_provided
+      if normalized == "0.0.0.0"
+        has_ipv4_wildcard = true
+      else
+        has_ipv4_specific = true
+      end
+      { address: normalized, ipv6_mode: nil }
     end
+  end
+
+  if has_ipv4_wildcard && has_ipv4_specific
+    abort("ha_proxy.bindings: IPv4 wildcard 0.0.0.0 cannot be combined with a specific IPv4 address")
+  end
+  if has_ipv6_wildcard && has_ipv6_specific
+    abort("ha_proxy.bindings: IPv6 wildcard :: cannot be combined with a specific IPv6 address")
+  end
+  if bindings.any? { |binding| binding[:ipv6_mode] == "v4v6" } && bindings.any? { |binding| binding[:ipv6_mode].nil? }
+    abort("ha_proxy.bindings: IPv6 wildcard :: with ipv6_mode v4v6 cannot be combined with an IPv4 binding")
   end
 end
 # }}}
@@ -453,7 +498,7 @@ listen stats
 
 <% if p("ha_proxy.enable_health_check_http") %>
 listen health_check_http_url
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port"), [v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port"), [v4v6]) %>
     mode http
     option httpclose
     monitor-uri /health
@@ -466,7 +511,7 @@ listen health_check_http_url
 
 <%- if enable_additional_health_check_proxy -%>
 listen health_check_http_url_proxy_protocol
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port") + 1, ["accept-proxy", v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), p("ha_proxy.health_check_port") + 1, ["accept-proxy", v4v6]) %>
     mode http
     option httpclose
     monitor-uri /health
@@ -499,7 +544,7 @@ backend st_tcp_conn_rate
 # HTTP Frontend {{{
 frontend http-in
     mode http
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 80, [accept_proxy, v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), 80, [accept_proxy, v4v6]) %>
   <%- if properties.ha_proxy.frontend_config -%>
     <%= format_indented_multiline_config(p("ha_proxy.frontend_config")) %>
   <%- end -%>
@@ -613,7 +658,7 @@ frontend http-in
 # HTTPS Frontend {{{
 frontend https-in
     mode http
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 443, [accept_proxy, tls_bind_options, default_alpn_config, v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), 443, [accept_proxy, tls_bind_options, default_alpn_config, v4v6]) %>
     # Set this acl when the request is a route service request, used by ha_proxy.forward_true_client_ip_header and ha_proxy.forwarded_client_cert
     acl route_service_request hdr(X-Cf-Proxy-Signature) -m found
   <%- if disable_domain_fronting -%>
@@ -816,7 +861,7 @@ frontend https-in
 # HTTPS Websockets Frontend {{{
 frontend wss-in
     mode http
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), 4443, [accept_proxy, tls_bind_options, v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), 4443, [accept_proxy, tls_bind_options, v4v6]) %>
   <%- if disable_domain_fronting -%>
     # Check whether the client is attempting domain fronting.
     # Ensure a host header exists to check against
@@ -1085,7 +1130,7 @@ backend http-routed-backend-<%= prefix_hash %>
 
 frontend cf_tcp_routing
     mode tcp
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), p("ha_proxy.tcp_routing.port_range"), [v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), p("ha_proxy.tcp_routing.port_range"), [v4v6]) %>
     default_backend cf_tcp_routers
 
 backend cf_tcp_routers
@@ -1116,9 +1161,9 @@ end -%>
 frontend tcp-frontend_<%= tcp_proxy["name"]%>
     mode tcp
   <%- if tcp_proxy["ssl"] -%>
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, tls_bind_options, v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, tls_bind_options, v4v6]) %>
   <%- else -%>
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), tcp_proxy["port"], [tcp_accept_proxy, v4v6]) %>
   <%- end -%>
     <%- if p("ha_proxy.expect_proxy_cidrs", []).size > 0 -%>
       tcp-request connection expect-proxy layer4 if { src -f /var/vcap/jobs/haproxy/config/expect_proxy_cidrs.txt }
@@ -1171,7 +1216,7 @@ backend tcp-<%= tcp_proxy["name"] %>
 
   <%- if tcp_proxy["health_check_http"]  -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"], [v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"], [v4v6]) %>
     mode http
     monitor-uri /health
     <%- if p("ha_proxy.accept_proxy") && !p("ha_proxy.disable_health_check_proxy") -%>
@@ -1182,7 +1227,7 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
 
     <%- if enable_additional_health_check_proxy -%>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>_proxy_protocol
-<%= render_bind(binding_addresses, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"] + 1, ["accept-proxy", v4v6, v6only]) %>
+<%= render_bind(bindings, p("ha_proxy.binding_ip"), tcp_proxy["health_check_http"] + 1, ["accept-proxy", v4v6]) %>
     mode http
     monitor-uri /health
     acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0

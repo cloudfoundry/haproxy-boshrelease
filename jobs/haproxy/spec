@@ -582,22 +582,21 @@ properties:
   ha_proxy.enable_additional_health_check_proxy:
       description: "Enable the additional health check listener with use of the PROXY protocol"
   ha_proxy.binding_ip:
-    description: "If there are multiple ethernet interfaces, specify which one to bind. Set to `::` to bind to all IPv6 interfaces only (v6only is set automatically). To also accept IPv4, set ha_proxy.v4v6 to true. IPv6 must be enabled on the HAProxy VM in the deployment manifest."
+    description: "If there are multiple ethernet interfaces, specify which one to bind. Set to `::` to bind to all IPv6 interfaces. To also accept IPv4, set ha_proxy.v4v6 to true. IPv6 must be enabled on the HAProxy VM in the deployment manifest."
     default: ""
   ha_proxy.v4v6:
     description: "Boolean, disabled by default. Enables binding to all IPv4 and IPv6 interfaces. Only applies if `ha_proxy.binding_ip` is set to `::`."
     default: false
-  ha_proxy.binding_ips:
+  ha_proxy.bindings:
     description: |
-      Optional list of IP addresses to bind all generated listeners to.
-      When set, each listener generates one bind directive per address,
-      replacing the single address from ha_proxy.binding_ip.
-      IPv6 addresses automatically receive the v6only option.
+      Optional explicit list of bind sockets for all generated listeners. Each entry
+      requires address. IPv4 addresses have no mode. The IPv6 wildcard :: requires
+      ipv6_mode, either v6only or v4v6; specific IPv6 addresses have no mode.
       Cannot be combined with ha_proxy.v4v6: true or a non-empty ha_proxy.binding_ip.
-      Other listeners continue using ha_proxy.binding_ip when this is absent.
     example:
-    - 0.0.0.0
-    - "::"
+    - address: 0.0.0.0
+    - address: "::"
+      ipv6_mode: v6only
 
   ha_proxy.cidr_blacklist:
     description: "List of CIDRs to block for http(s). Format is string array of CIDRs or single string of base64 encoded gzip."

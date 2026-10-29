@@ -77,9 +77,9 @@ describe 'config/haproxy.config custom TCP frontends' do
     end
   end
 
-  context 'when ha_proxy.binding_ips is provided' do
+  context 'when ha_proxy.bindings is provided' do
     let(:properties) do
-      default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'] })
+      default_properties.merge({ 'bindings' => [{ 'address' => '0.0.0.0' }, { 'address' => '::', 'ipv6_mode' => 'v6only' }] })
     end
 
     it 'generates two bind directives for TCP frontends' do

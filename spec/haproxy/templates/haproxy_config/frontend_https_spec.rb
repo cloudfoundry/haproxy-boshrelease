@@ -34,8 +34,9 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'v4v6' => true, 'binding_ip' => '0.0.0.0' })
       end
 
-      it 'aborts with a meaningful error message' do
-        expect { frontend_https }.to raise_error(/v4v6 is enabled but ha_proxy.binding_ip is not '::'/)
+      it 'preserves the legacy IPv4 bind' do
+        expect(frontend_https).to include('bind 0.0.0.0:443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+        expect(frontend_https).not_to include('v4v6')
       end
     end
 
@@ -54,9 +55,9 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'v4v6' => false, 'binding_ip' => '::' })
       end
 
-      it 'enables v6only' do
-        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v6only')
-        expect(frontend_https).not_to include('v4v6')
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_https).not_to include('v6only')
       end
     end
 
@@ -65,9 +66,9 @@ describe 'config/haproxy.config HTTPS frontend' do
         default_properties.merge({ 'binding_ip' => '::' })
       end
 
-      it 'enables v6only' do
-        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v6only')
-        expect(frontend_https).not_to include('v4v6')
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_https).to include('bind :::443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_https).not_to include('v6only')
       end
     end
 
@@ -106,9 +107,9 @@ describe 'config/haproxy.config HTTPS frontend' do
     end
   end
 
-  context 'when ha_proxy.binding_ips is provided' do
+  context 'when ha_proxy.bindings is provided' do
     let(:properties) do
-      default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'] })
+      default_properties.merge({ 'bindings' => [{ 'address' => '0.0.0.0' }, { 'address' => '::', 'ipv6_mode' => 'v6only' }] })
     end
 
     it 'generates two bind directives' do
@@ -122,27 +123,27 @@ describe 'config/haproxy.config HTTPS frontend' do
 
     context 'when ha_proxy.v4v6 is also true' do
       let(:properties) do
-        default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'], 'v4v6' => true, 'binding_ip' => '::' })
+        default_properties.merge({ 'bindings' => [{ 'address' => '::', 'ipv6_mode' => 'v4v6' }], 'v4v6' => true })
       end
 
       it 'aborts with a meaningful error message' do
-        expect { frontend_https }.to raise_error(/cannot be combined with ha_proxy.v4v6/)
+        expect { frontend_https }.to raise_error(/ha_proxy.bindings cannot be combined with ha_proxy.v4v6/)
       end
     end
 
     context 'when ha_proxy.binding_ip is also set' do
       let(:properties) do
-        default_properties.merge({ 'binding_ips' => ['0.0.0.0', '::'], 'binding_ip' => '1.2.3.4' })
+        default_properties.merge({ 'bindings' => [{ 'address' => '0.0.0.0' }], 'binding_ip' => '1.2.3.4' })
       end
 
       it 'aborts with a meaningful error message' do
-        expect { frontend_https }.to raise_error(/ha_proxy.binding_ip cannot be set when ha_proxy.binding_ips is provided/)
+        expect { frontend_https }.to raise_error(/ha_proxy.bindings cannot be combined with a non-empty ha_proxy.binding_ip/)
       end
     end
 
-    context 'when binding_ips contains duplicates' do
+    context 'when bindings contains duplicates' do
       let(:properties) do
-        default_properties.merge({ 'binding_ips' => ['0.0.0.0', '0.0.0.0'] })
+        default_properties.merge({ 'bindings' => [{ 'address' => '0.0.0.0' }, { 'address' => '0.0.0.0' }] })
       end
 
       it 'aborts with a meaningful error message' do
@@ -150,9 +151,9 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
     end
 
-    context 'when binding_ips contains an invalid IP' do
+    context 'when bindings contains an invalid IP' do
       let(:properties) do
-        default_properties.merge({ 'binding_ips' => ['not-an-ip'] })
+        default_properties.merge({ 'bindings' => [{ 'address' => 'not-an-ip' }] })
       end
 
       it 'aborts with a meaningful error message' do
@@ -160,9 +161,9 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
     end
 
-    context 'when binding_ips is empty' do
+    context 'when bindings is empty' do
       let(:properties) do
-        default_properties.merge({ 'binding_ips' => [] })
+        default_properties.merge({ 'bindings' => [] })
       end
 
       it 'aborts with a meaningful error message' do
