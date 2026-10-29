@@ -137,7 +137,7 @@ describe 'config/haproxy.config HTTPS frontend' do
       end
 
       it 'aborts with a meaningful error message' do
-        expect { frontend_https }.to raise_error(/ha_proxy.bindings cannot be combined with a non-empty ha_proxy.binding_ip/)
+        expect { frontend_https }.to raise_error(/requires ha_proxy.binding_ip to be nil or an empty string/)
       end
     end
 

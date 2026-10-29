@@ -582,17 +582,18 @@ properties:
   ha_proxy.enable_additional_health_check_proxy:
       description: "Enable the additional health check listener with use of the PROXY protocol"
   ha_proxy.binding_ip:
-    description: "If there are multiple ethernet interfaces, specify which one to bind. Set to `::` to bind to all IPv6 interfaces. To also accept IPv4, set ha_proxy.v4v6 to true. IPv6 must be enabled on the HAProxy VM in the deployment manifest."
+    description: "If there are multiple ethernet interfaces, specify which one to bind. Set to `::` to bind to all IPv6 interfaces. For compatibility, the legacy renderer adds `v4v6` whenever this is `::`, even if ha_proxy.v4v6 is false or omitted; this presence-based behavior is intentionally preserved. Use ha_proxy.bindings to explicitly select `v6only` or `v4v6`. IPv6 must be enabled on the HAProxy VM in the deployment manifest."
     default: ""
   ha_proxy.v4v6:
-    description: "Boolean, disabled by default. Enables binding to all IPv4 and IPv6 interfaces. Only applies if `ha_proxy.binding_ip` is set to `::`."
+    description: "Legacy compatibility property, disabled by default. The legacy renderer still adds `v4v6` when ha_proxy.binding_ip is `::` even if this is false or omitted, because of its historical presence-based behavior. This behavior is intentionally preserved; use ha_proxy.bindings with ipv6_mode to explicitly select `v6only` or `v4v6`."
     default: false
   ha_proxy.bindings:
     description: |
       Optional explicit list of bind sockets for all generated listeners. Each entry
       requires address. IPv4 addresses have no mode. The IPv6 wildcard :: requires
       ipv6_mode, either v6only or v4v6; specific IPv6 addresses have no mode.
-      Cannot be combined with ha_proxy.v4v6: true or a non-empty ha_proxy.binding_ip.
+      Cannot be combined with ha_proxy.v4v6: true or a legacy ha_proxy.binding_ip
+      other than nil or an empty string.
     example:
     - address: 0.0.0.0
     - address: "::"

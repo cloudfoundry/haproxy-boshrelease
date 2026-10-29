@@ -146,10 +146,22 @@ describe 'config/haproxy.config explicit bindings' do
   it 'rejects non-empty legacy binding settings' do
     expect do
       render_with([{ 'address' => '0.0.0.0' }], 'binding_ip' => '192.0.2.10')
-    end.to raise_error(/non-empty ha_proxy\.binding_ip/)
+    end.to raise_error(/requires ha_proxy\.binding_ip to be nil or an empty string/)
     expect do
       render_with([{ 'address' => '::', 'ipv6_mode' => 'v4v6' }], 'v4v6' => true)
     end.to raise_error(/ha_proxy\.bindings cannot be combined with ha_proxy\.v4v6/)
+  end
+
+  {
+    'false' => false,
+    'an integer' => 12_345,
+    'a collection' => ['192.0.2.10']
+  }.each do |description, malformed_binding_ip|
+    it "rejects #{description} as a legacy binding_ip when bindings are set" do
+      expect do
+        render_with([{ 'address' => '0.0.0.0' }], 'binding_ip' => malformed_binding_ip)
+      end.to raise_error(/requires ha_proxy\.binding_ip to be nil or an empty string/)
+    end
   end
 
   it 'does not evaluate bindings when raw_config is used' do

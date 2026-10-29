@@ -91,11 +91,13 @@ with `v4v6: true`; set those legacy values to their defaults (`""` and
 `false`) before migrating.
 
 When `bindings` is absent, the existing `binding_ip` and `v4v6` behavior is
-unchanged, including its historical `if_p("ha_proxy.v4v6")` handling. Do not
-rely on a legacy bare `binding_ip: "::"` IPv6 socket to select an IPv4 policy:
-whether that socket also accepts IPv4 is kernel-dependent
-(`net.ipv6.bindv6only`). Use explicit bindings to make the choice portable and
-unambiguous.
+unchanged, including its historical `if_p("ha_proxy.v4v6")` handling. Because
+`v4v6` has a false default, that legacy presence-based block runs when
+`v4v6` is false or omitted. As a result, legacy `binding_ip: "::"` currently
+renders `v4v6` regardless of whether `v4v6` is true, false, or omitted. This
+compatibility quirk is intentionally preserved. Use `bindings` with
+`ipv6_mode: v6only` or `ipv6_mode: v4v6` to explicitly select the IPv6/IPv4
+behavior.
 
 ## Migrating from `frontend_config`
 

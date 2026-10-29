@@ -205,8 +205,8 @@ if_p("ha_proxy.bindings") do |configured_bindings|
     abort("Conflicting configuration: ha_proxy.bindings cannot be combined with ha_proxy.v4v6: true")
   end
   legacy_binding_ip = p("ha_proxy.binding_ip")
-  unless legacy_binding_ip.nil? || legacy_binding_ip.empty?
-    abort("Conflicting configuration: ha_proxy.bindings cannot be combined with a non-empty ha_proxy.binding_ip")
+  unless legacy_binding_ip.nil? || (legacy_binding_ip.is_a?(String) && legacy_binding_ip.empty?)
+    abort("Conflicting configuration: ha_proxy.bindings requires ha_proxy.binding_ip to be nil or an empty string")
   end
 
   seen = {}
