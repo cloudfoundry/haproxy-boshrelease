@@ -479,7 +479,7 @@ resources:
     source:
       bucket:   haproxy-boshrelease
       json_key: ((gcp.service_key))
-      regexp:   haproxy-([0-9a-z\.+-]+)\.tgz
+      regexp:   haproxy-([0-9\.+-]+).tgz
 
   - name: daily
     type: time
