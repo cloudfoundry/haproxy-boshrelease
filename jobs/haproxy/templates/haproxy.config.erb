@@ -220,16 +220,17 @@ if_p("ha_proxy.bindings") do |configured_bindings|
       abort("ha_proxy.bindings: each entry must be a map, got: #{binding.inspect}")
     end
 
-    keys = binding.keys.map(&:to_s)
-    unless keys.include?("address") && (keys - %w[address ipv6_mode]).empty? && keys.uniq.length == keys.length
+    keys = binding.keys
+    unless keys.include?("address") && (keys - %w[address ipv6_mode]).empty?
       abort("ha_proxy.bindings: each entry requires address and only permits ipv6_mode where applicable")
     end
 
-    address = binding["address"] || binding[:address]
-    ipv6_mode_provided = binding.key?("ipv6_mode") || binding.key?(:ipv6_mode)
-    ipv6_mode = binding["ipv6_mode"] || binding[:ipv6_mode]
-    unless address.is_a?(String) && !address.empty? && address == address.strip && address !~ /[\[\]\/%]/
-      abort("ha_proxy.bindings: address must be a non-empty, unbracketed IP literal, got: #{address.inspect}")
+    address = binding["address"]
+    ipv6_mode_provided = binding.key?("ipv6_mode")
+    ipv6_mode = binding["ipv6_mode"]
+
+    if address.to_s =~ %r{[/%]}
+      abort("ha_proxy.bindings: address must be a plain IP literal (no CIDR or zone ID): #{address.inspect}")
     end
 
     begin
