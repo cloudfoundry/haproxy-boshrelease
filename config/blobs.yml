@@ -6,10 +6,10 @@ haproxy/cmake-4.4.5-linux-x86_64.tar.gz:
   size: 64865573
   object_id: d5adb72a-dd49-4003-5e10-0fc6554a497d
   sha: sha256:ed85135c5a5135b45e50423cb406dea04ca3338da0b8ef3c9ede963559680be0
-haproxy/golang-1.27.1.tar.gz:
-  size: 70553950
-  object_id: 3b678ee3-040f-4cde-7c9a-8a94ca41ff4c
-  sha: sha256:63d339f0da5ab53635a56f2490a7984dfe12dfcff22ad749f63edaf590168445
+haproxy/golang-1.27.3.tar.gz:
+  size: 70588678
+  object_id: 07689c2f-c7ff-4886-6f72-8627d71649cb
+  sha: sha256:65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
 haproxy/haproxy-3.2.26.tar.gz:
   size: 5203667
   object_id: b8a0ebf0-e6bc-4486-7873-12805ca22ba3
