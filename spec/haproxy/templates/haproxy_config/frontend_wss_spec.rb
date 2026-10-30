@@ -19,7 +19,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
   let(:properties) { default_properties }
 
   it 'binds to all interfaces by default' do
-    expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
+    expect(frontend_wss).to include('bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
   end
 
   context 'when ha_proxy.binding_ip is provided' do
@@ -28,7 +28,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
 
     it 'binds to the provided ip' do
-      expect(frontend_wss).to include('bind 1.2.3.4:4443  ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      expect(frontend_wss).to include('bind 1.2.3.4:4443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
     end
 
     context 'when ha_proxy.v4v6 is true and binding_ip is ::' do
@@ -37,7 +37,29 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       end
 
       it 'enables ipv6' do
-        expect(frontend_wss).to include('bind :::4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+      end
+    end
+
+    context 'when ha_proxy.v4v6 is false and binding_ip is ::' do
+      let(:properties) do
+        default_properties.merge({ 'v4v6' => false, 'binding_ip' => '::' })
+      end
+
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_wss).not_to include('v6only')
+      end
+    end
+
+    context 'when ha_proxy.v4v6 is not set and binding_ip is ::' do
+      let(:properties) do
+        default_properties.merge({ 'binding_ip' => '::' })
+      end
+
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_wss).to include('bind :::4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  v4v6')
+        expect(frontend_wss).not_to include('v6only')
       end
     end
 
@@ -73,6 +95,21 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
           frontend_wss
         end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive/)
       end
+    end
+  end
+
+  context 'when ha_proxy.bindings is provided' do
+    let(:properties) do
+      default_properties.merge({ 'bindings' => [{ 'address' => '0.0.0.0' }, { 'address' => '::', 'ipv6_mode' => 'v6only' }] })
+    end
+
+    it 'generates two bind directives for WSS' do
+      expect(frontend_wss).to include('bind 0.0.0.0:4443 ssl crt /var/vcap/jobs/haproxy/config/ssl')
+      expect(frontend_wss).to include('bind [::]:4443 v6only ssl crt /var/vcap/jobs/haproxy/config/ssl')
+    end
+
+    it 'does not include v4v6' do
+      expect(frontend_wss).not_to include('v4v6')
     end
   end
 
@@ -127,7 +164,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
     end
 
     it 'configures ssl to use the client ca' do
-      expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional')
+      expect(frontend_wss).to include('bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional')
     end
 
     context 'when ha_proxy.client_cert_ignore_err is all' do
@@ -136,7 +173,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       end
 
       it 'adds the crt-ignore-err and ca-ignore-err flags' do
-        expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err all ca-ignore-err all')
+        expect(frontend_wss).to include('bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crt-ignore-err all ca-ignore-err all')
       end
 
       context 'when client_cert is not enabled' do
@@ -158,7 +195,7 @@ describe 'config/haproxy.config HTTPS Websockets frontend' do
       end
 
       it 'references the crl list' do
-        expect(frontend_wss).to include('bind :4443  ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem')
+        expect(frontend_wss).to include('bind :4443 ssl crt /var/vcap/jobs/haproxy/config/ssl  ca-file /etc/ssl/certs/ca-certificates.crt verify optional crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem')
       end
 
       context 'when client_cert is not enabled' do
