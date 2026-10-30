@@ -81,3 +81,39 @@ Unit/RSpec tests can also be debugged/stepped through when needed. See for examp
 ### Acceptance Tests
 
 See [acceptance-tests README](/acceptance-tests/README.md).
+
+### Local Dev Builds
+
+`scripts/dev-build.sh` builds the release tarball and uploads it to the targeted BOSH
+director. Useful for iterating on packaging changes without going through CI.
+
+```bash
+./scripts/dev-build.sh                       # build, version=dev
+./scripts/dev-build.sh --version 1.0         # custom version tag
+./scripts/dev-build.sh --upload-only         # re-upload previously built tarballs
+```
+
+Tarballs are written to `./builds/` and uploaded with `bosh upload-release --fix`.
+
+### Packaging model
+
+`packages/` holds **every** package, and `bosh create-release` bundles all of them, so a plain
+`bosh create-release` of the committed tree produces the one release — there is no build-time
+assembly. The `haproxy` job lists all six `haproxy-*` binaries; the SSL backend is chosen at deploy
+time via `ha_proxy.ssl_variant` (default `openssl`) and `ha_proxy.include_haproxy_patches` 
+(default `false`), handled in `jobs/haproxy/templates/haproxy_wrapper.erb`.
+
+Dependencies are one-directional: every `haproxy-*` binary depends on the shared `haproxy-deps`
+(lua, pcre2, socat, hatop), compiled once. AWS-LC is compiled from a single shared `aws-lc-src` source
+package used by both the non-FIPS `aws-lc` and the FIPS `aws-lc-fips` compile packages (FIPS differs
+only by `-DFIPS=1` plus the Go toolchain for the integrity step). Because `aws-lc`/`aws-lc-fips` do not
+bundle the HAProxy version file, their fingerprints are independent of HAProxy — a HAProxy bump reuses
+the cached AWS-LC compile instead of rebuilding it. The HAProxy community patches (the optional
+`-patched` builds) are plain source files under `src/haproxy-patches/`, applied at compile time by
+`src/apply-patches.sh`.
+
+### Package dependency diagram
+
+![haproxy-boshrelease package dependency graph](docs/package-dependencies.png)
+
+Source: [`docs/package-dependencies.drawio`](docs/package-dependencies.drawio) (editable in [diagrams.net](https://app.diagrams.net/)).

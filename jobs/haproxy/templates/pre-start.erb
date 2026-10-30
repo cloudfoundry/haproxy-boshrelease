@@ -13,13 +13,10 @@ if [ ! -e /usr/bin/python ] && [ -e /usr/bin/python3 ]; then
   sudo ln -s /usr/bin/python3 /usr/bin/python
 fi
 
-if [ ! -e /usr/local/bin/hatop ]; then
-  sudo ln -s /var/vcap/packages/haproxy/hatop-wrapper /usr/local/bin/hatop
-fi
-
-if [ ! -e /usr/local/bin/socat ]; then
-  sudo ln -s /var/vcap/packages/haproxy/bin/socat /usr/local/bin/socat
-fi
+# socat and the hatop wrapper live in the shared haproxy-deps package.
+DEPS_PKG="/var/vcap/packages/haproxy-deps"
+sudo ln -sf ${DEPS_PKG}/hatop-wrapper /usr/local/bin/hatop
+sudo ln -sf ${DEPS_PKG}/bin/socat /usr/local/bin/socat
 
 <%- if_p("ha_proxy.pre_start_script") do |script| -%>
 # ha_proxy.pre_start_script {{{

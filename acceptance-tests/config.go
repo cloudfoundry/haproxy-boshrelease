@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 )
 
 var config Config
@@ -18,6 +19,8 @@ type Config struct {
 	BoshPath         string `json:"boshPath"`
 	BaseManifestPath string `json:"baseManifestPath"`
 	HomePath         string `json:"homePath"`
+	Variant          string `json:"variant"`
+	IncludePatches   bool   `json:"includePatches"`
 }
 
 func loadConfig() (Config, error) {
@@ -67,6 +70,15 @@ func loadConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	// VARIANT selects the SSL library (openssl|awslc|awslc-fips); empty means openssl.
+	variant := os.Getenv("VARIANT")
+	if variant == "" {
+		variant = "openssl"
+	}
+
+	// INCLUDE_HAPROXY_PATCHES toggles the patched build (orthogonal to VARIANT).
+	includePatches, _ := strconv.ParseBool(os.Getenv("INCLUDE_HAPROXY_PATCHES"))
+
 	return Config{
 		ReleaseRepoPath:  releaseRepoPath,
 		ReleaseVersion:   releaseVersion,
@@ -77,6 +89,8 @@ func loadConfig() (Config, error) {
 		BoshPath:         boshPath,
 		BaseManifestPath: baseManifestPath,
 		HomePath:         homePath,
+		Variant:          variant,
+		IncludePatches:   includePatches,
 	}, nil
 }
 

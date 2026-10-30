@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Backend match HTTP protocol", func() {
+var _ = Describe("Backend match HTTP protocol", Label("tls"), func() {
 	var haproxyInfo haproxyInfo
 	var closeTunnel func()
 	var closeLocalServer func()

@@ -26,7 +26,7 @@ import (
 
 */
 
-var _ = Describe("External Certificate Lists", func() {
+var _ = Describe("External Certificate Lists", Label("tls"), func() {
 	haproxyBackendPort := 12000
 
 	It("Uses the correct certs", func() {

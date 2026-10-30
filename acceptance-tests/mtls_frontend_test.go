@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("mTLS", func() {
+var _ = Describe("mTLS", Label("tls"), func() {
 	var haproxyInfo haproxyInfo
 	var closeTunnel func()
 	var closeLocalServer func()

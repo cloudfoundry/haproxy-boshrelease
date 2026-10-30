@@ -14,7 +14,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 )
 
-var _ = Describe("HTTPS Frontend", func() {
+var _ = Describe("HTTPS Frontend", Label("tls"), func() {
 	var haproxyInfo haproxyInfo
 	var closeTunnel func()
 	var closeLocalServer func()

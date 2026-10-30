@@ -137,4 +137,4 @@ For creating a new release please follow the versioning guide based on the [Sema
 
 Since releases `11.16.3` and `11.17.5` the build metadata has been included into the version number. The build metadata denotes the contained HAProxy version. As an example, `11.16.2+2.6.9` means that HAProxy 2.6.9 is used.
 
-The `haproxy-boshrelease` also contains patches (see [haproxy-patches](../haproxy-patches)). The patched version is a part of the build metadata and is denoted by appending a hyphen and key word `patched`, like `11.17.4+2.6.9-patched`.
+The release bundles every SSL variant and the HAProxy community patches (see [haproxy-patches](../src/haproxy-patches)). One build is selected at deploy time via the `ha_proxy.ssl_variant` (`openssl` | `awslc` | `awslc-fips`) and `ha_proxy.include_haproxy_patches` (`true` | `false`) job properties.

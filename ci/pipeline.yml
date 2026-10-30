@@ -302,7 +302,7 @@ jobs:
           name:   gh/name
           tag:    gh/tag
           body:   gh/notes.md
-          globs:  [gh/artifacts/*, gh/artifacts-patched/*]
+          globs:  [gh/artifacts/*]
       - put: notify
         params:
           channel:  "#haproxy-boshrelease"

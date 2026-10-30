@@ -1,0 +1,21 @@
+set -euxo pipefail
+
+source aws-lc-versions.sh
+
+export PATH=/var/vcap/packages/cmake/bin:$PATH
+
+# Build from the shared aws-lc-src package (source bundled once, not per variant).
+cp -a /var/vcap/packages/aws-lc-src/aws-lc-${AWS_LC_VERSION} .
+pushd aws-lc-${AWS_LC_VERSION}
+  mkdir -p build && cd build
+  cmake -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=0 \
+        -DDISABLE_GO=1 \
+        -DDISABLE_PERL=1 \
+        -DBUILD_TESTING=0 \
+        -DBUILD_TOOL=0 \
+        -DCMAKE_INSTALL_PREFIX=${BOSH_INSTALL_TARGET} \
+        ..
+  make -j$(nproc)
+  make install
+popd

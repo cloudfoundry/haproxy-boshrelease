@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Headers", func() {
+var _ = Describe("Headers", Label("tls"), func() {
 	opsfileHeaders := `---
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/strip_headers?

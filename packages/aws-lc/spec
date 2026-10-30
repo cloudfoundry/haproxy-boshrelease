@@ -1,0 +1,7 @@
+---
+name: aws-lc
+dependencies:
+- cmake
+- aws-lc-src
+files:
+- aws-lc-versions.sh

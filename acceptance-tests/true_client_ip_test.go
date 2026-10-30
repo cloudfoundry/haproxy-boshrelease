@@ -13,7 +13,7 @@ import (
 const TrueClientIpHeader string = "X-Cf-True-Client-Ip"
 const MockClientIp string = "8.8.8.8"
 
-var _ = Describe("True Client IP", func() {
+var _ = Describe("True Client IP", Label("tls"), func() {
 
 	opsFileTrueClientIp := fmt.Sprintf(`---
 - type: replace

@@ -93,6 +93,21 @@ var opsfileConfigureSSH string = `---
 var defaultOpsfiles = []string{opsfileChangeName, opsfileChangeVersion, opsfileConfigureSSH}
 var defaultSSHUser string = "ginkgo"
 
+// The release bundles every SSL variant; this selects one at deploy time.
+var opsfileSSLVariant string = `---
+# Select the SSL variant at deploy time (the release bundles all of them)
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/ssl_variant?
+  value: ((ssl-variant))
+`
+
+// Orthogonal to the SSL variant: run the patched HAProxy build.
+var opsfileIncludePatches string = `---
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/include_haproxy_patches?
+  value: ((include-haproxy-patches))
+`
+
 func buildManifestVars(baseManifestVars baseManifestVars, customVars map[string]interface{}) map[string]interface{} {
 	vars := map[string]interface{}{
 		"release-version":         config.ReleaseVersion,
@@ -146,6 +161,21 @@ func buildHAProxyInfo(baseManifestVars baseManifestVars, varsStoreReader varsSto
 func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, customVars map[string]interface{}, expectSuccess bool) (haproxyInfo, varsStoreReader) {
 	manifestVars := buildManifestVars(baseManifestVars, customVars)
 	opsfiles := append(defaultOpsfiles, customOpsfiles...)
+
+	// The release bundles every SSL variant; select the one under test at deploy time.
+	// config.Variant comes from the VARIANT env (default "openssl"); openssl is the job's
+	// own default, so we only inject the property for the non-default variants.
+	if config.Variant != "" && config.Variant != "openssl" {
+		opsfiles = append(opsfiles, opsfileSSLVariant)
+		manifestVars["ssl-variant"] = config.Variant
+	}
+
+	// INCLUDE_HAPROXY_PATCHES selects the patched build (orthogonal to the SSL variant).
+	if config.IncludePatches {
+		opsfiles = append(opsfiles, opsfileIncludePatches)
+		manifestVars["include-haproxy-patches"] = config.IncludePatches
+	}
+
 	cmd, varsStoreReader := deployBaseManifestCmd(baseManifestVars.deploymentName, opsfiles, manifestVars)
 
 	dumpCmd(cmd)
@@ -332,3 +362,11 @@ func runHAProxySocketCommand(haproxyInfo haproxyInfo, command string) string {
 	return strings.TrimSpace(stdout)
 }
 
+// runningHAProxyVersionInfo returns `haproxy -vv` for the HAProxy binary that is
+// actually running on the VM.
+func runningHAProxyVersionInfo(haproxyInfo haproxyInfo) string {
+	cmd := `sudo sh -c 'exe=$(readlink -f /proc/$(pgrep -x -n haproxy)/exe); "$exe" -vv'`
+	stdout, _, err := runOnRemote(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, cmd)
+	Expect(err).NotTo(HaveOccurred())
+	return strings.TrimSpace(stdout)
+}

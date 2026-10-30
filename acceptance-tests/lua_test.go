@@ -16,7 +16,7 @@ var _ = Describe("Lua scripting", func() {
 # Enable Lua scripting
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/lua_scripts?/-
-  value: "/var/vcap/packages/haproxy/lua_test.lua"
+  value: "/var/vcap/packages/haproxy-deps/lua_test.lua"
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/frontend_config?
   value: "http-request use-service lua.lua_test if { path /lua_test }"
@@ -53,7 +53,7 @@ core.register_service("lua_test", "http", lua_test)
 		Expect(boshInstances(deploymentNameForTestNode())[0].ProcessState).To(Or(Equal("failing"), Equal("unresponsive agent")))
 
 		// upload Lua script file
-		uploadFile(haproxyInfo, strings.NewReader(replyLuaContent), "/var/vcap/packages/haproxy/lua_test.lua")
+		uploadFile(haproxyInfo, strings.NewReader(replyLuaContent), "/var/vcap/packages/haproxy-deps/lua_test.lua")
 
 		closeLocalServer, localPort := startDefaultTestServer()
 		defer closeLocalServer()

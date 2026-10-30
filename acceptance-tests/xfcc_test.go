@@ -28,21 +28,22 @@ type Certificate struct {
 }
 
 /*
-	https://bosh.io/jobs/haproxy?source=github.com/cloudfoundry-community/haproxy-boshrelease#p%3dha_proxy.forwarded_client_cert
-	forwarded_client_cert
-		always_forward_only 					=> X-Forwarded-Client-Cert is always forwarded
+https://bosh.io/jobs/haproxy?source=github.com/cloudfoundry-community/haproxy-boshrelease#p%3dha_proxy.forwarded_client_cert
+forwarded_client_cert
 
-		forward_only 									=> X-Forwarded-Client-Cert is removed for non-mTLS connections
-																	=> X-Forwarded-Client-Cert is forwarded for mTLS connections
+	always_forward_only 					=> X-Forwarded-Client-Cert is always forwarded
 
-		sanitize_set 									=> X-Forwarded-Client-Cert is removed for non-mTLS connections
-																	=> X-Forwarded-Client-Cert is overwritten for mTLS connections
+	forward_only 									=> X-Forwarded-Client-Cert is removed for non-mTLS connections
+																=> X-Forwarded-Client-Cert is forwarded for mTLS connections
 
-		forward_only_if_route_service => X-Forwarded-Client-Cert is removed for non-mTLS connections when X-Cf-Proxy-Signature header is not present
-																		 X-Forwarded-Client-Cert is forwarded for non-mTLS connections when X-Cf-Proxy-Signature header is present
-																		 X-Forwarded-Client-Cert is overwritten for mTLS connections
+	sanitize_set 									=> X-Forwarded-Client-Cert is removed for non-mTLS connections
+																=> X-Forwarded-Client-Cert is overwritten for mTLS connections
+
+	forward_only_if_route_service => X-Forwarded-Client-Cert is removed for non-mTLS connections when X-Cf-Proxy-Signature header is not present
+																	 X-Forwarded-Client-Cert is forwarded for non-mTLS connections when X-Cf-Proxy-Signature header is present
+																	 X-Forwarded-Client-Cert is overwritten for mTLS connections
 */
-var _ = Describe("forwarded_client_cert", func() {
+var _ = Describe("forwarded_client_cert", Label("tls"), func() {
 	opsfileForwardedClientCert := `---
 # Configure X-Forwarded-Client-Cert handling
 - type: replace
@@ -396,17 +397,17 @@ func generateClientCerts() (*Certificate, *Certificate, error) {
 	}
 
 	return &Certificate{
-			X509Cert:      ca,
-			CertPEM:       string(caPEMBytes),
-			PrivateKey:    caKeyPair,
-			PrivateKeyPEM: string(caKeyPEMBytes),
-		}, &Certificate{
-			X509Cert:      cert,
-			CertPEM:       string(certPEMBytes),
-			PrivateKey:    certKeyPair,
-			PrivateKeyPEM: string(certKeyPEMBytes),
-			TLSCert:       clientTLSCert,
-		}, nil
+		X509Cert:      ca,
+		CertPEM:       string(caPEMBytes),
+		PrivateKey:    caKeyPair,
+		PrivateKeyPEM: string(caKeyPEMBytes),
+	}, &Certificate{
+		X509Cert:      cert,
+		CertPEM:       string(certPEMBytes),
+		PrivateKey:    certKeyPair,
+		PrivateKeyPEM: string(certKeyPEMBytes),
+		TLSCert:       clientTLSCert,
+	}, nil
 }
 
 func pemEncodeCert(derBytes []byte) ([]byte, error) {
