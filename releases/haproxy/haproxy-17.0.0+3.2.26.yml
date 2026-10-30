@@ -1,0 +1,103 @@
+name: haproxy
+version: 17.0.0+3.2.26
+commit_hash: "9739218"
+uncommitted_changes: false
+jobs:
+- name: haproxy
+  version: d879a3dd324bfc0e5475575ab25455d45f38b051b69046f105301666d17ca67f
+  fingerprint: d879a3dd324bfc0e5475575ab25455d45f38b051b69046f105301666d17ca67f
+  sha1: sha256:d0e95251cf4166859df7723a7f0e2aed0b4c9aa40ea6be6a5781a4d178e63947
+  packages:
+  - haproxy-deps
+  - haproxy-openssl
+  - haproxy-openssl-patched
+  - haproxy-awslc
+  - haproxy-awslc-patched
+  - haproxy-awslc-fips
+  - haproxy-awslc-fips-patched
+- name: keepalived
+  version: db24c81e600a163a0dc2c7fd02165fae9a0483a08e33baf39222fa8cf701d63a
+  fingerprint: db24c81e600a163a0dc2c7fd02165fae9a0483a08e33baf39222fa8cf701d63a
+  sha1: sha256:92d8f1996f108950d19400fb0af33350892599b3f921a0a81f7baebacacc11fb
+  packages:
+  - keepalived
+packages:
+- name: aws-lc
+  version: f81862ae8db09945ae778e14214573a78712dd8cb51dcfd629da4a3de56e535a
+  fingerprint: f81862ae8db09945ae778e14214573a78712dd8cb51dcfd629da4a3de56e535a
+  sha1: sha256:f5bffea20cc9c506b50cb33c4dc3e84f9738fea6d9a131c7ffdf7529319a4a5a
+  dependencies:
+  - cmake
+  - aws-lc-src
+- name: aws-lc-fips
+  version: 681fcd5fe3ac67ddc08d5be568d6865d8f26f8754f5c56bae125d674e9684883
+  fingerprint: 681fcd5fe3ac67ddc08d5be568d6865d8f26f8754f5c56bae125d674e9684883
+  sha1: sha256:94d9f806986a4601d636cfc2ad603ec67925db56742760d6ce6623f4dcb4a7aa
+  dependencies:
+  - cmake
+  - aws-lc-src
+- name: aws-lc-src
+  version: 62b11b3d18f91f042dd1e9794331734c37dbcdefee58719d4cee75e0a6ca05fd
+  fingerprint: 62b11b3d18f91f042dd1e9794331734c37dbcdefee58719d4cee75e0a6ca05fd
+  sha1: sha256:416fcb7e282b6ffa75da754d88fc3d9c6ef6614e4810ae7db3baa137f4bf31b8
+  dependencies: []
+- name: cmake
+  version: 5d9eb7c60b7ad6ae34e747b7a94ad5eda739147472fb5b089bba736f72616799
+  fingerprint: 5d9eb7c60b7ad6ae34e747b7a94ad5eda739147472fb5b089bba736f72616799
+  sha1: sha256:8e2344ba883f14c390ec191aca7007f431ad8844ad8601b4cca922f4e9c4a831
+  dependencies: []
+- name: haproxy-awslc
+  version: 22cb8bab36c7db70a15895d1ba32214ba29f878bc4200e9505e6e8833bf05601
+  fingerprint: 22cb8bab36c7db70a15895d1ba32214ba29f878bc4200e9505e6e8833bf05601
+  sha1: sha256:f60f3e547111035df77eca5cd7045b78efa6fb8b7dc0cfa752de008e1a002477
+  dependencies:
+  - haproxy-deps
+  - aws-lc
+- name: haproxy-awslc-fips
+  version: 50301e0a32844e5c616e74e388ef04ac1fa7059d69c02bde7459b44fcf03a55c
+  fingerprint: 50301e0a32844e5c616e74e388ef04ac1fa7059d69c02bde7459b44fcf03a55c
+  sha1: sha256:50f1a45112f83c1bde7cc4c9add90521c9f639ca32ce293b1caa17229232e8d9
+  dependencies:
+  - haproxy-deps
+  - aws-lc-fips
+- name: haproxy-awslc-fips-patched
+  version: 6c4677d4f0d04ee6cf28e50d573974be5e2bc602a7169a69da3f98357ef26271
+  fingerprint: 6c4677d4f0d04ee6cf28e50d573974be5e2bc602a7169a69da3f98357ef26271
+  sha1: sha256:cd3a6d611e0b19e2fb8257c3117dcef6fc50b838da629317fa58f01ef89ac08f
+  dependencies:
+  - haproxy-deps
+  - aws-lc-fips
+- name: haproxy-awslc-patched
+  version: ed2aada0af0ed90d50a14767608d3a4f20dbaba944bd6b93925743265e1ae3ae
+  fingerprint: ed2aada0af0ed90d50a14767608d3a4f20dbaba944bd6b93925743265e1ae3ae
+  sha1: sha256:e97d57d83305b1ade283a8c277064bfe8a085d19d5a9fdf888458a93f7e3ffc1
+  dependencies:
+  - haproxy-deps
+  - aws-lc
+- name: haproxy-deps
+  version: 7cda25098e4399ab58076102a8c0d7282ac7f1939c40c7ef1319f6c02616441e
+  fingerprint: 7cda25098e4399ab58076102a8c0d7282ac7f1939c40c7ef1319f6c02616441e
+  sha1: sha256:283c2006db9ba6c2236a72e8d8173395392d4ffa4bdbed8b6cc38bf0b88d60a3
+  dependencies: []
+- name: haproxy-openssl
+  version: fd4c603dc77500b406e32cbe0e47cc585d1049a7f2280e42cf73ffc86feb0d08
+  fingerprint: fd4c603dc77500b406e32cbe0e47cc585d1049a7f2280e42cf73ffc86feb0d08
+  sha1: sha256:3a6ef75685fc51ba4a31123dbb980845c79fc40b0f6dbc2e797b0d24accdac57
+  dependencies:
+  - haproxy-deps
+- name: haproxy-openssl-patched
+  version: 91f6036316359d7f3d41cb27d283a2f06cb0669888c8ac76aaf6ee1accbaee3c
+  fingerprint: 91f6036316359d7f3d41cb27d283a2f06cb0669888c8ac76aaf6ee1accbaee3c
+  sha1: sha256:ad7e1e75044a48fdbaab58f91e2b5b2f10c128e40596bf5fb57ec9aa2a07334e
+  dependencies:
+  - haproxy-deps
+- name: keepalived
+  version: 785619a7aa13a5f5719975c8a26e9303bc4c037b60228d6ec79e2ce15a94a05f
+  fingerprint: 785619a7aa13a5f5719975c8a26e9303bc4c037b60228d6ec79e2ce15a94a05f
+  sha1: sha256:5216008ca23b80f90840ada7b21d16d2cdb58962474b7c2da65535a4cff60348
+  dependencies: []
+license:
+  version: eba49a3e88a4329d6b7943df92467659a9badda7319648d5e78d45d7f1a19bc4
+  fingerprint: eba49a3e88a4329d6b7943df92467659a9badda7319648d5e78d45d7f1a19bc4
+  sha1: sha256:4462ba848d0f1d9489aab87c79816652cce6d3467153c5e78a6db13931a6b602
+no_compression: false
