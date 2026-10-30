@@ -2,10 +2,10 @@ haproxy/aws-lc-v4.0.0.tar.gz:
   size: 130854647
   object_id: d911b2d3-6b54-4621-7d49-fb71b48d0968
   sha: sha256:dec49e5c38dd8d3b4c2700c692bbb457a149cd6d23ad99463ce3612720c23bb0
-haproxy/cmake-4.4.3-linux-x86_64.tar.gz:
-  size: 64872980
-  object_id: b0d691d9-69ed-4964-51e8-cfaa7848976f
-  sha: sha256:d6c83076c575bc00b823522ac974bda66d0af05d6ddc30e739c12385cf32c6cc
+haproxy/cmake-4.4.5-linux-x86_64.tar.gz:
+  size: 64865573
+  object_id: d5adb72a-dd49-4003-5e10-0fc6554a497d
+  sha: sha256:ed85135c5a5135b45e50423cb406dea04ca3338da0b8ef3c9ede963559680be0
 haproxy/golang-1.27.3.tar.gz:
   size: 70588678
   object_id: 07689c2f-c7ff-4886-6f72-8627d71649cb
