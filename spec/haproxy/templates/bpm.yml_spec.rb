@@ -76,7 +76,7 @@ describe 'config/bpm.yml' do
           'max_open_files' => 123,
           'additional_unrestricted_volumes' => [
             # See following for format
-            # https://github.com/cloudfoundry/bpm-release/blob/master/docs/config.md
+            # https://github.com/cloudfoundry/bpm-release/blob/main/docs/config.md
             {
               'path' => '/my-volume',
               'writeable' => false
