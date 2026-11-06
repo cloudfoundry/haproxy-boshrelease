@@ -568,7 +568,15 @@ def write_private_yaml():
 def cleanup_local_changes():
     local_git = Repo(os.curdir).git
     local_git.reset("--hard")
-    local_git.clean("-fx")
+    # Keep config/private.yml (blobstore creds) through the per-bump cleanup
+    local_git.clean("-fx", "-e", "config/private.yml")
+
+
+def remove_private_yaml():
+    try:
+        os.remove("config/private.yml")
+    except OSError as err:
+        print(f"WARNING: could not remove config/private.yml: {err}", file=sys.stderr)
 
 
 def _require_env():
@@ -664,37 +672,41 @@ def main() -> None:
     if not DRY_RUN:
         write_private_yaml()
 
-    for dependency in dependencies:
-        current_version = dependency.current_version
-        latest_release = dependency.latest_release
-        latest_version = latest_release.version
+    try:
+        for dependency in dependencies:
+            current_version = dependency.current_version
+            latest_release = dependency.latest_release
+            latest_version = latest_release.version
 
-        if latest_version <= current_version:
-            print(f"[{dependency.name}] already on the latest version: {latest_version} " f"(pinned: {dependency.pinned_version}.*)")
-            continue
+            if latest_version <= current_version:
+                print(f"[{dependency.name}] already on the latest version: {latest_version} " f"(pinned: {dependency.pinned_version}.*)")
+                continue
 
-        if DRY_RUN:
-            # Read-only report: announce the bump but touch nothing — no PR-exists check,
-            # download, bosh blob op, file edit, upload, PR, or git reset/clean.
-            print(
-                f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version} "
-                f"(dry-run: would download {latest_release.url} -> blob {latest_release.file})"
-            )
-            continue
+            if DRY_RUN:
+                # Read-only report: announce the bump but touch nothing — no PR-exists check,
+                # download, bosh blob op, file edit, upload, PR, or git reset/clean.
+                print(
+                    f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version} "
+                    f"(dry-run: would download {latest_release.url} -> blob {latest_release.file})"
+                )
+                continue
 
-        if dependency.open_pr_exists():
-            print(f"[{dependency.name}] Open bump PR exists (for branch: {dependency.pr_branch})")
-            continue
-        print(f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version}")
-        latest_release.download()
-        dependency.remove_current_blob()
-        latest_release.add_blob(dependency.package)
-        dependency.update_packaging_file()
-        BoshHelper.upload_blobs()
-        dependency.create_pr()
+            if dependency.open_pr_exists():
+                print(f"[{dependency.name}] Open bump PR exists (for branch: {dependency.pr_branch})")
+                continue
+            print(f"[{dependency.name}] Version-Bump required: {current_version} --> {latest_version}")
+            latest_release.download()
+            dependency.remove_current_blob()
+            latest_release.add_blob(dependency.package)
+            dependency.update_packaging_file()
+            BoshHelper.upload_blobs()
+            dependency.create_pr()
 
-        # clear the working directory for the next dependency bump.
-        cleanup_local_changes()
+            # clear the working directory for the next dependency bump.
+            cleanup_local_changes()
+    finally:
+        if not DRY_RUN:
+            remove_private_yaml()
 
 
 if __name__ == "__main__":
