@@ -29,7 +29,29 @@ describe 'config/haproxy.config HTTP frontend' do
       end
 
       it 'enables ipv6' do
-        expect(frontend_http).to include('bind :::80  v4v6')
+        expect(frontend_http).to include('bind :::80 v4v6')
+      end
+    end
+
+    context 'when ha_proxy.v4v6 is false and binding_ip is ::' do
+      let(:properties) do
+        { 'v4v6' => false, 'binding_ip' => '::' }
+      end
+
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_http).to include('bind :::80 v4v6')
+        expect(frontend_http).not_to include('v6only')
+      end
+    end
+
+    context 'when ha_proxy.v4v6 is not set and binding_ip is ::' do
+      let(:properties) do
+        { 'binding_ip' => '::' }
+      end
+
+      it 'preserves origin/master if_p handling' do
+        expect(frontend_http).to include('bind :::80 v4v6')
+        expect(frontend_http).not_to include('v6only')
       end
     end
 
@@ -87,6 +109,17 @@ describe 'config/haproxy.config HTTP frontend' do
           frontend_http
         end.to raise_error(/Conflicting configuration: accept_proxy and expect_proxy_cidrs are mutually exclusive/)
       end
+    end
+  end
+
+  context 'when ha_proxy.bindings is provided' do
+    let(:properties) do
+      { 'bindings' => [{ 'address' => '0.0.0.0' }, { 'address' => '::', 'ipv6_mode' => 'v6only' }] }
+    end
+
+    it 'generates two bind directives for HTTP' do
+      expect(frontend_http).to include('bind 0.0.0.0:80')
+      expect(frontend_http).to include('bind [::]:80 v6only')
     end
   end
 
